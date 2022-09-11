@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<VBox alignment="TOP_LEFT" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="de.macniel.campaignwriter.MainController">
+    <MenuBar>
+        <menus>
+            <Menu text="Datei" accelerator="F">
+                <items>
+                    <MenuItem text="Neu" accelerator="Ctrl+N" onAction="#createNewCampaign"/>
+                    <MenuItem text="Öffnen..." accelerator="Ctrl+O" onAction="#openCampaign"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Speichern" accelerator="Ctrl+S" onAction="#saveCampaign"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Beenden" accelerator="Alt+F4"/>
+                </items>
+            </Menu>
+            <Menu text="Bearbeiten" accelerator="E">
+                <items>
+                    <MenuItem text="Rückgänig" accelerator="Ctrl+Z"/>
+                    <MenuItem text="Wiederholen" accelerator="Ctrl+Y"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Kopieren" accelerator="Ctrl+C"/>
+                    <MenuItem text="Ausschneiden" accelerator="Ctrl+X"/>
+                    <MenuItem text="Einfügen" accelerator="Ctrl+V"/>
+                    <MenuItem text="Einfügen ohne Formatierung" />
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Einstellungen..." accelerator="Ctrl+."/>
+                </items>
+            </Menu>
+            <Menu text="Ansicht" accelerator="V">
+                <items>
+                    <MenuItem text="Worldbuilding" accelerator="1"/>
+                    <MenuItem text="Sitzung" accelerator="2"/>
+                    <MenuItem text="Begegnung" accelerator="3"/>
+                </items>
+            </Menu>
+            <Menu text="Daten" accelerator="D">
+                <items>
+                    <MenuItem text="Importieren..."/>
+                    <MenuItem text="Exportieren..."/>
+                </items>
+            </Menu>
+            <Menu text="Plugins">
+                <items>
+                    <MenuItem text="Keine Plugins geladen" disable="true"/>
+                    <SeparatorMenuItem/>
+                </items>
+            </Menu>
+
+        </menus>
+    </MenuBar>
+    <SplitPane VBox.vgrow="ALWAYS">
+        <VBox>
+            <ListView fx:id="notesLister" VBox.vgrow="ALWAYS"></ListView>
+            <HBox>
+                <ComboBox fx:id="sortlistSelector" promptText="Sortieren" HBox.hgrow="ALWAYS">
+
+                </ComboBox>
+                <Pane minWidth="10" minHeight="1" HBox.hgrow="ALWAYS">
+                </Pane>
+                <ButtonBar>
+                    <buttons>
+                        <SplitMenuButton text="Neu" fx:id="creationMenuButton" onAction="#createNewNote">
+                        </SplitMenuButton>
+
+                        <Button onMouseClicked="#deleteCurrentNote">
+                            <graphic>
+                                <FontIcon iconLiteral="icm-bin"/>
+                            </graphic>
+                        </Button>
+                    </buttons>
+                </ButtonBar>
+            </HBox>
+        </VBox>
+
+        <VBox>
+            <ToolBar visible="false" fx:id="editorToolbar"></ToolBar>
+            <ScrollPane fx:id="editorWindow" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+                <!-- Contains the editor view -->
+            </ScrollPane>
+        </VBox>
+    </SplitPane>
+</VBox>
