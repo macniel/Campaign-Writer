@@ -1,5 +1,8 @@
 package de.macniel.campaignwriter;
 
+import de.macniel.campaignwriter.editors.EditorPlugin;
+import de.macniel.campaignwriter.editors.PictureNoteEditor;
+import de.macniel.campaignwriter.editors.TextNoteEditor;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -171,7 +174,7 @@ public class MainController {
 
         if (newEditor != null) {
             Node editor = newEditor.defineEditor();
-            newEditor.prepareToolbar(editorToolbar);
+            newEditor.prepareToolbar(editorToolbar, stage);
             editorWindow.setContent(editor);
 
             Callback<Note, Boolean> loadEditor = newEditor.defineLoadCallback();
@@ -206,13 +209,9 @@ public class MainController {
 
     @FXML public void createNewCampaign() throws IOException {
         // unsaved data check
-        FileChooser dialog = new FileChooser();
-        dialog.setTitle("Speicherort");
-        File newFile = dialog.showSaveDialog(stage);
-        this.currentFile = newFile;
+        this.currentFile = null;
 
         Note.removeAll();
-        FileAccessLayer.saveToFile(this.currentFile, Note.getAll());
         notesLister.setItems(FXCollections.observableArrayList(Note.getAll()));
 
     }

@@ -1,14 +1,17 @@
-package de.macniel.campaignwriter;
+package de.macniel.campaignwriter.editors;
 
+import de.macniel.campaignwriter.Note;
+import de.macniel.campaignwriter.NoteType;
 import javafx.scene.Node;
 import javafx.scene.control.ToolBar;
+import javafx.stage.Window;
 import javafx.util.Callback;
 
 public interface EditorPlugin {
 
     NoteType defineHandler();
 
-    void prepareToolbar(ToolBar t);
+    void prepareToolbar(ToolBar t, Window w);
 
     Node defineEditor();
 
@@ -16,7 +19,4 @@ public interface EditorPlugin {
 
     Callback<Note, Boolean> defineLoadCallback();
 
-    void loadContent(Note note);
-
-    void saveContent(Note note);
 }

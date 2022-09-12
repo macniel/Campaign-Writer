@@ -1,10 +1,13 @@
-package de.macniel.campaignwriter;
+package de.macniel.campaignwriter.editors;
 
+import de.macniel.campaignwriter.Note;
+import de.macniel.campaignwriter.NoteType;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.ToolBar;
 import javafx.scene.input.KeyEvent;
+import javafx.stage.Window;
 import javafx.util.Callback;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -20,7 +23,7 @@ public class TextNoteEditor implements EditorPlugin {
     }
 
     @Override
-    public void prepareToolbar(ToolBar t) {
+    public void prepareToolbar(ToolBar t, Window w) {
         t.getItems().clear();
 
         Button boldButton = new Button("", new FontIcon("icm-bold"));
@@ -57,7 +60,6 @@ public class TextNoteEditor implements EditorPlugin {
                 if (contentHasChanged) {
                     note.setContent(editor.getText());
                 }
-                System.out.println("saving editor");
                 return true;
             }
         };
@@ -72,22 +74,11 @@ public class TextNoteEditor implements EditorPlugin {
                     editor.setText(note.getContent());
                     contentHasChanged = false;
                     editor.requestFocus();
-                    System.out.println("loading editor");
                     return true;
                 }
                 return false;
             }
         };
-    }
-
-    @Override
-    public void loadContent(Note note) {
-        editor.setText(note.getContent());
-    }
-
-    @Override
-    public void saveContent(Note note) {
-        note.setContent(editor.getText());
     }
 
 }

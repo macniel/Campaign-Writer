@@ -8,4 +8,6 @@ module de.macniel.campaignwriter {
 
     opens de.macniel.campaignwriter to javafx.fxml;
     exports de.macniel.campaignwriter;
+    exports de.macniel.campaignwriter.editors;
+    opens de.macniel.campaignwriter.editors to javafx.fxml;
 }
