@@ -31,6 +31,8 @@ public class MainController {
 
     private File currentFile;
 
+    private ArrayList<FileChooser.ExtensionFilter> supportedFileExtensions;
+
     @FXML
     public ComboBox sortlistSelector;
 
@@ -56,18 +58,7 @@ public class MainController {
         );
         sortlistSelector.setItems(sortingOptions);
 
-        Note mod = new Note("Burg Wurxen", NoteType.LOCATION_NOTE);
-        mod.increaseLevel();
-
-        notes = FXCollections.observableArrayList(
-                new Note("Aushang", NoteType.TEXT_NOTE),
-                new Note("Valia", NoteType.MAP_NOTE),
-                mod,
-                new Note("Wolden", NoteType.LOCATION_NOTE),
-                new Note("Jolanta", NoteType.PICTURE_NOTE)
-        );
-
-
+        notes = FXCollections.observableArrayList();
 
         plugins = new ArrayList<>();
         plugins.add(new TextNoteEditor());
@@ -134,6 +125,8 @@ public class MainController {
             });
             creationMenuButton.getItems().add(tmp);
         }
+        supportedFileExtensions = new ArrayList<>();
+        supportedFileExtensions.add(new FileChooser.ExtensionFilter("campaign file", "*.campaign"));
     }
 
     private EditorPlugin getByType (NoteType type) {
@@ -146,6 +139,7 @@ public class MainController {
 
     public void createNote(NoteType type) {
         Note newNote = new Note(type.label, type, UUID.randomUUID(), new Date(), new Date(), "");
+        newNote.setPosition(Note.getAll().size());
         notesLister.getItems().add(newNote);
         saveAndLoad(activeNote, newNote);
         lastCreationAction = type;
@@ -218,19 +212,31 @@ public class MainController {
 
     @FXML public void openCampaign() throws IOException {
         FileChooser dialog = new FileChooser();
-        dialog.setTitle("Speicherort");
+        dialog.setTitle("Kampagne zum Öffnen auswählen");
+
+        dialog.getExtensionFilters().setAll(supportedFileExtensions);
         File newFile = dialog.showOpenDialog(stage);
         this.currentFile = newFile;
-        FileAccessLayer.loadFromFile(this.currentFile);
-        notesLister.setItems(FXCollections.observableArrayList(Note.getAll()));
+        if (newFile != null) {
+            FileAccessLayer.loadFromFile(this.currentFile);
+            notesLister.setItems(FXCollections.observableArrayList(Note.getAll()));
+        }
     }
 
     @FXML public void saveCampaign() throws IOException {
-        FileChooser dialog = new FileChooser();
-        dialog.setTitle("Speicherort");
-        File newFile = dialog.showSaveDialog(stage);
-        this.currentFile = newFile;
-        FileAccessLayer.saveToFile(this.currentFile, Note.getAll());
+        // save current note just in case
+        if (activeNote != null) {
+            getByType(activeNote.getType()).defineSaveCallback().call(activeNote);
+        }
+        if (this.currentFile == null) {
+            FileChooser dialog = new FileChooser();
+            dialog.setTitle("Kampagne zum Speichern auswählen");
+            dialog.getExtensionFilters().setAll(supportedFileExtensions);
+            this.currentFile = dialog.showSaveDialog(stage);
+        }
+        if (this.currentFile != null) {
+            FileAccessLayer.saveToFile(this.currentFile, Note.getAll());
+        }
     }
 
 }

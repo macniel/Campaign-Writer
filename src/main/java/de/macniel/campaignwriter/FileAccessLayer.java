@@ -1,38 +1,52 @@
 package de.macniel.campaignwriter;
 
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+
 import java.io.*;
 import java.util.ArrayList;
 
 public class FileAccessLayer {
 
-    public static ArrayList<Note> loadFromFile(File f) throws IOException {
-        ObjectInputStream ois = null;
-        ArrayList<Note> concrete = null;
+    private static Gson gsonParser;
+    {
+        gsonParser = new Gson();
+    }
+
+    public static void loadFromFile(File f) throws IOException {
+        JsonReader reader = null;
         try {
             Note.removeAll();
-            ois = new ObjectInputStream(new FileInputStream(f));
-            concrete = (ArrayList<Note>) ois.readObject();
-            concrete.forEach( note -> Note.addOrphanedNote(note));
+            reader = new JsonReader(new FileReader(f));
+            if (gsonParser == null) {
+                gsonParser = new Gson();
+            }
+            Note[] concrete = gsonParser.fromJson(reader, Note[].class);
         } catch (Exception e) {
             System.err.println(e);
         } finally {
-            assert ois != null;
-            ois.close();
+            assert reader != null;
+            reader.close();
         }
-        return concrete;
     }
 
     public static void saveToFile(File f, ArrayList<Note> notes) throws IOException {
-        ObjectOutputStream oos = null;
+        JsonWriter writer = null;
         try {
-            oos = new ObjectOutputStream(new FileOutputStream(f));
-            oos.writeObject(notes);
+            writer = new JsonWriter(new FileWriter(f));
+            Note[] concrete = Note.getAll().toArray(new Note[Note.getAll().size()]);
+            if (gsonParser == null) {
+                gsonParser = new Gson();
+            }
+            gsonParser.toJson(concrete, Note[].class, writer);
+
         } catch (Exception e) {
             System.err.println(e);
         } finally {
-            assert oos != null;
-            oos.flush();
-            oos.close();
+            assert writer != null;
+            writer.flush();
+            writer.close();
         }
     }
 

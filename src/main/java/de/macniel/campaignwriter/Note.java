@@ -7,17 +7,19 @@ import java.util.UUID;
 
 public class Note implements Serializable {
 
-    private String label;
-    private NoteType type;
-    private UUID reference;
+    public String label;
+    public NoteType type;
+    public UUID reference;
 
-    private Date createdDate;
+    public Date createdDate;
 
-    private Date lastModifiedDate;
+    public Date lastModifiedDate;
 
-    private String content;
+    public String content;
 
-    private int level;
+    public int level;
+
+    public int position;
 
     public Note(String label, NoteType type) {
         this(label, type, UUID.randomUUID());
@@ -29,15 +31,14 @@ public class Note implements Serializable {
         }
     }
 
-    public static void addOrphanedNote(Note t) {
-        dataset.add(t);
-    }
-
     public static void removeAll() {
         dataset.clear();
     }
 
     public static ArrayList<Note> getAll() {
+        dataset.sort( (Note a, Note b) -> {
+            return a.getPosition() - b.getPosition();
+        });
         return dataset;
     }
 
@@ -118,5 +119,13 @@ public class Note implements Serializable {
 
     public void setLabel(String s) {
         this.label = s;
+    }
+
+    public int getPosition() {
+        return position;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
     }
 }

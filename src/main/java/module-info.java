@@ -5,9 +5,10 @@ module de.macniel.campaignwriter {
     requires org.controlsfx.controls;
     requires com.dlsc.formsfx;
     requires org.kordamp.ikonli.javafx;
+    requires com.google.gson;
 
     opens de.macniel.campaignwriter to javafx.fxml;
     exports de.macniel.campaignwriter;
     exports de.macniel.campaignwriter.editors;
-    opens de.macniel.campaignwriter.editors to javafx.fxml;
+    opens de.macniel.campaignwriter.editors to com.google.gson, javafx.fxml;
 }
