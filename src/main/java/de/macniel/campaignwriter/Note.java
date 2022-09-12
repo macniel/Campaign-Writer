@@ -27,6 +27,18 @@ public class Note implements Serializable {
         }
     }
 
+    public static void addOrphanedNote(Note t) {
+        dataset.add(t);
+    }
+
+    public static void removeAll() {
+        dataset.clear();
+    }
+
+    public static ArrayList<Note> getAll() {
+        return dataset;
+    }
+
     public UUID getReference() {
         return this.reference;
     }
@@ -44,6 +56,11 @@ public class Note implements Serializable {
         this.createdDate = createdDate;
         this.lastModifiedDate = lastModifiedDate;
         this.content = content;
+        dataset.add(this);
+    }
+
+    public Note() {
+        System.out.println("Default constructor for rehydration");
         dataset.add(this);
     }
 

@@ -13,6 +13,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.NoSuchElementException;
@@ -131,7 +132,7 @@ public class MainController {
             saveOkay = saveEditor.call(oldNote);
         }
 
-        if (saveOkay && newEditor != null) {
+        if (newEditor != null) {
             Node editor = newEditor.defineEditor();
             newEditor.prepareToolbar(editorToolbar);
             editorWindow.setContent(editor);
@@ -158,7 +159,7 @@ public class MainController {
         Note selectedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
         if (selectedNote != null) {
             Note.remove(selectedNote);
-            notes.remove(selectedNote);
+            notesLister.getItems().remove(selectedNote);
         }
     }
 
@@ -166,29 +167,34 @@ public class MainController {
         this.stage = stage;
     }
 
-    @FXML public void createNewCampaign() {
+    @FXML public void createNewCampaign() throws IOException {
         // unsaved data check
         FileChooser dialog = new FileChooser();
         dialog.setTitle("Speicherort");
         File newFile = dialog.showSaveDialog(stage);
         this.currentFile = newFile;
-        // write empty Note[] structure to DataObjectStream of File
+
+        Note.removeAll();
+        FileAccessLayer.saveToFile(this.currentFile, Note.getAll());
+        notesLister.setItems(FXCollections.observableArrayList(Note.getAll()));
+
     }
 
-    @FXML public void openCampaign() {
+    @FXML public void openCampaign() throws IOException {
         FileChooser dialog = new FileChooser();
         dialog.setTitle("Speicherort");
         File newFile = dialog.showOpenDialog(stage);
         this.currentFile = newFile;
-        // read Note[] structure from DataObjectStream of File
+        FileAccessLayer.loadFromFile(this.currentFile);
+        notesLister.setItems(FXCollections.observableArrayList(Note.getAll()));
     }
 
-    @FXML public void saveCampaign() {
+    @FXML public void saveCampaign() throws IOException {
         FileChooser dialog = new FileChooser();
         dialog.setTitle("Speicherort");
         File newFile = dialog.showSaveDialog(stage);
         this.currentFile = newFile;
-        // write Note[] structure to DataObjectStream of File
+        FileAccessLayer.saveToFile(this.currentFile, Note.getAll());
     }
 
 }
