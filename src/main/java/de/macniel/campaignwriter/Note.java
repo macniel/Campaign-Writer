@@ -17,6 +17,8 @@ public class Note implements Serializable {
 
     private String content;
 
+    private int level;
+
     public Note(String label, NoteType type) {
         this(label, type, UUID.randomUUID());
     }
@@ -56,6 +58,7 @@ public class Note implements Serializable {
         this.createdDate = createdDate;
         this.lastModifiedDate = lastModifiedDate;
         this.content = content;
+        this.level = 0;
         dataset.add(this);
     }
 
@@ -93,7 +96,27 @@ public class Note implements Serializable {
         lastModifiedDate = new Date();
     }
 
+    public void increaseLevel() {
+        this.level++;
+    }
+
+    public void decreaseLevel() {
+        if (this.level > 0) {
+            this.level--;
+        } else {
+            this.level = 0;
+        }
+    }
+
     public NoteType getType() {
         return type;
+    }
+
+    public int getLevel() {
+        return this.level;
+    }
+
+    public void setLabel(String s) {
+        this.label = s;
     }
 }

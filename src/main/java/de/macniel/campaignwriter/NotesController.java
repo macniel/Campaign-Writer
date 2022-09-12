@@ -2,6 +2,7 @@ package de.macniel.campaignwriter;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -45,6 +46,8 @@ public class NotesController {
     }
 
     public void setItem(Note note) {
+
+        view.setPadding(new Insets(0, 0, 0, note.getLevel()*8));
         this.note = note;
         this.label.setText(note.getLabel());
         switch (note.getType()) {

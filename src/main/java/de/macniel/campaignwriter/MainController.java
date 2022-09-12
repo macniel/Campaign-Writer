@@ -14,10 +14,7 @@ import javafx.util.Callback;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
 
 public class MainController {
 
@@ -56,10 +53,13 @@ public class MainController {
         );
         sortlistSelector.setItems(sortingOptions);
 
+        Note mod = new Note("Burg Wurxen", NoteType.LOCATION_NOTE);
+        mod.increaseLevel();
+
         notes = FXCollections.observableArrayList(
                 new Note("Aushang", NoteType.TEXT_NOTE),
-                new Note("Burg Wurxen", NoteType.LOCATION_NOTE),
                 new Note("Valia", NoteType.MAP_NOTE),
+                mod,
                 new Note("Wolden", NoteType.LOCATION_NOTE),
                 new Note("Jolanta", NoteType.PICTURE_NOTE)
         );
@@ -74,6 +74,43 @@ public class MainController {
         notesLister.setCellFactory(listView -> {
             return new NotesRenderer();
         });
+
+        ContextMenu notesListerMenu = new ContextMenu();
+        MenuItem deleteNoteMenuItem = new MenuItem("Löschen");
+        deleteNoteMenuItem.onActionProperty().set( event -> {
+            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+            Note.remove(contextedNote);
+            notesLister.getItems().remove(contextedNote);
+            notesLister.refresh();
+        });
+        MenuItem renameNoteMenuItem = new MenuItem("Umbenenen");
+        renameNoteMenuItem.onActionProperty().set( event -> {
+            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+
+            TextInputDialog input = new TextInputDialog();
+            input.setTitle("Neuer Name der Notiz " + contextedNote.getLabel());
+            Optional<String> result = input.showAndWait();
+            contextedNote.setLabel(result.get());
+            notesLister.refresh();
+        });
+        MenuItem indentNoteMenuItem = new MenuItem("Einrücken");
+        indentNoteMenuItem.onActionProperty().set( event -> {
+            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+            contextedNote.increaseLevel();
+            notesLister.refresh();
+        });
+        MenuItem deindentNoteMenuItem = new MenuItem("Ausrücken");
+        deindentNoteMenuItem.onActionProperty().set( event -> {
+            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+            contextedNote.decreaseLevel();
+            notesLister.refresh();
+        });
+        notesListerMenu.getItems().add(renameNoteMenuItem);
+        notesListerMenu.getItems().add(indentNoteMenuItem);
+        notesListerMenu.getItems().add(deindentNoteMenuItem);
+        notesListerMenu.getItems().add(new SeparatorMenuItem());
+        notesListerMenu.getItems().add(deleteNoteMenuItem);
+        notesLister.setContextMenu(notesListerMenu);
 
         notesLister.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Note>() {
             @Override
