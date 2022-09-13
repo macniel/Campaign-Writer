@@ -2,8 +2,6 @@ package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
@@ -11,6 +9,7 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Window;
 import javafx.util.Callback;
+
 import org.kordamp.ikonli.javafx.FontIcon;
 
 public class TextNoteEditor implements EditorPlugin {

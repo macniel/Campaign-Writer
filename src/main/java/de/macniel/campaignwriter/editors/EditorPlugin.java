@@ -2,15 +2,10 @@ package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.ToolBar;
 import javafx.stage.Window;
 import javafx.util.Callback;
-import org.controlsfx.control.action.Action;
-
-import java.util.UUID;
 
 public interface EditorPlugin {
 

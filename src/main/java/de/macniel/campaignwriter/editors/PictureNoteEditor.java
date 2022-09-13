@@ -4,8 +4,6 @@ import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
-import javafx.scene.ParallelCamera;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
@@ -22,9 +20,6 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import com.google.gson.*;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 
 public class PictureNoteEditor implements EditorPlugin {
     private ImageView viewer;

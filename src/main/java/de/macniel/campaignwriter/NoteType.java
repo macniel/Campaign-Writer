@@ -1,6 +1,7 @@
 package de.macniel.campaignwriter;
 
 public enum NoteType {
+    // FIXME: refactor into plugin system
     TEXT_NOTE("Notiz"),
     ACTOR_NOTE("Akteur"),
     LOCATION_NOTE("Ort"),
