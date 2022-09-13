@@ -2,9 +2,13 @@ package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.ParallelCamera;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.Image;
@@ -12,8 +16,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
-import javafx.stage.FileChooser;
-import javafx.stage.Window;
+import javafx.stage.*;
 import javafx.util.Callback;
 import org.kordamp.ikonli.javafx.FontIcon;
 import com.google.gson.*;
@@ -76,6 +79,40 @@ public class PictureNoteEditor implements EditorPlugin {
             }
         });
 
+        popoutButton.onActionProperty().set(e -> {
+            if (noteStructure != null) {
+                Rectangle2D rect = Screen.getPrimary().getBounds();
+                Stage s = new Stage();
+                ScrollPane parentNode = new ScrollPane();
+
+                ImageView popoutViewer = new ImageView();
+
+                popoutViewer.imageProperty().set(new Image(noteStructure.fileName));
+                double width = popoutViewer.imageProperty().get().getWidth() > rect.getWidth() ? rect.getWidth() : popoutViewer.imageProperty().get().getWidth();
+                double height = popoutViewer.imageProperty().get().getHeight() > rect.getHeight() ? rect.getHeight() : popoutViewer.imageProperty().get().getHeight();
+
+                if (width > height) {
+                    popoutViewer.setFitHeight(height);
+                } else {
+                    popoutViewer.setFitWidth(width);
+                }
+
+                parentNode.setFitToHeight(true);
+                parentNode.setFitToWidth(true);
+                popoutViewer.preserveRatioProperty().set(true);
+
+                parentNode.setContent(popoutViewer);
+
+                parentNode.setMaxHeight(rect.getHeight());
+                parentNode.setMaxWidth(rect.getWidth());
+
+                Scene popout = new Scene(parentNode);
+                s.setScene(popout);
+
+                s.show();
+            }
+        });
+
         t.setVisible(true);
     }
 
@@ -86,7 +123,11 @@ public class PictureNoteEditor implements EditorPlugin {
         this.gsonParser = new Gson();
         this.noteStructure = new PictureNoteDefinition();
         this.noteStructure.zoomFactor = 1;
-        return this.viewer;
+        ScrollPane p = new ScrollPane(this.viewer);
+        p.setPannable(true);
+        p.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        p.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        return p;
     }
 
     @Override

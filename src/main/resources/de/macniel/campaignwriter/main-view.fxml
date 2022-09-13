@@ -78,9 +78,9 @@
 
         <VBox>
             <ToolBar visible="false" fx:id="editorToolbar"></ToolBar>
-            <ScrollPane fx:id="editorWindow" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+            <BorderPane fx:id="editorWindow" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
                 <!-- Contains the editor view -->
-            </ScrollPane>
+            </BorderPane>
         </VBox>
     </SplitPane>
 </VBox>

@@ -11,6 +11,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -169,7 +171,7 @@ public class MainController {
         if (newEditor != null) {
             Node editor = newEditor.defineEditor();
             newEditor.prepareToolbar(editorToolbar, stage);
-            editorWindow.setContent(editor);
+            editorWindow.setCenter(editor);
 
             Callback<Note, Boolean> loadEditor = newEditor.defineLoadCallback();
             loadOkay = loadEditor.call(newNote);
@@ -177,7 +179,7 @@ public class MainController {
     }
 
     @FXML
-    private ScrollPane editorWindow;
+    private BorderPane editorWindow;
 
 
     @FXML
