@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.text.Text?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.VBox?>
+<?import impl.org.controlsfx.skin.PropertySheetSkin.PropertyPane?>
+<?import org.controlsfx.control.PropertySheet?>
+<HBox fx:id="view" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      prefWidth="200" spacing="5">
+    <PropertySheet HBox.hgrow="ALWAYS">
+
+    </PropertySheet>
+</HBox>
