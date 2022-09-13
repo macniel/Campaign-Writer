@@ -56,16 +56,10 @@
         <VBox>
             <ListView fx:id="notesLister" VBox.vgrow="ALWAYS"></ListView>
             <HBox>
-                <ComboBox fx:id="sortlistSelector" promptText="Sortieren" HBox.hgrow="ALWAYS">
-
-                </ComboBox>
-                <Pane minWidth="10" minHeight="1" HBox.hgrow="ALWAYS">
-                </Pane>
                 <ButtonBar>
                     <buttons>
                         <SplitMenuButton text="Neu" fx:id="creationMenuButton" onAction="#createNewNote">
                         </SplitMenuButton>
-
                         <Button onMouseClicked="#deleteCurrentNote">
                             <graphic>
                                 <FontIcon iconLiteral="icm-bin"/>

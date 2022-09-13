@@ -1,6 +1,7 @@
 package de.macniel.campaignwriter;
 
 import de.macniel.campaignwriter.editors.EditorPlugin;
+import de.macniel.campaignwriter.editors.MapNoteEditor;
 import de.macniel.campaignwriter.editors.PictureNoteEditor;
 import de.macniel.campaignwriter.editors.TextNoteEditor;
 import javafx.beans.value.ChangeListener;
@@ -35,9 +36,6 @@ public class MainController {
     private ArrayList<FileChooser.ExtensionFilter> supportedFileExtensions;
 
     @FXML
-    public ComboBox sortlistSelector;
-
-    @FXML
     public Button createPageButton;
 
     @FXML
@@ -54,16 +52,13 @@ public class MainController {
 
     @FXML
     public void initialize() {
-        sortingOptions = FXCollections.observableArrayList(
-                "By Typ","By Name", "By Creation Date", "By Modification Date"
-        );
-        sortlistSelector.setItems(sortingOptions);
 
         notes = FXCollections.observableArrayList();
 
         plugins = new ArrayList<>();
         plugins.add(new TextNoteEditor());
         plugins.add(new PictureNoteEditor());
+        plugins.add(new MapNoteEditor());
 
         notesLister.setItems(notes);
         notesLister.setCellFactory(listView -> {
