@@ -2,6 +2,8 @@ package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
@@ -16,6 +18,8 @@ public class TextNoteEditor implements EditorPlugin {
     private boolean contentHasChanged = false;
 
     private TextArea editor;
+    private Callback<String, Note> onNoteRequest;
+    private Callback<String, Boolean> onNoteLoadRequest;
 
     @Override
     public NoteType defineHandler() {
@@ -37,12 +41,20 @@ public class TextNoteEditor implements EditorPlugin {
         t.getItems().add(underlinedButton);
         t.getItems().add(strikethroughButton);
         t.getItems().add(highlightButton);
+
+        highlightButton.onActionProperty().set(e -> {
+            // example code to request loading a note referenced by uuid/string
+            int size = Note.getAll().size();
+            int randomed = (int) Math.floor(Math.random() * size);
+            String uuid = Note.getAll().get(randomed).getReference().toString();
+            onNoteLoadRequest.call(uuid);
+        });
+
         t.setVisible(true);
     }
 
     public void onEditorKeyTyped(KeyEvent key) {
         contentHasChanged = true;
-        System.out.println("content has changed");
     }
 
     @Override
@@ -79,6 +91,16 @@ public class TextNoteEditor implements EditorPlugin {
                 return false;
             }
         };
+    }
+
+    @Override
+    public void setOnNoteRequest(Callback<String, Note> stringNoteCallback) {
+        this.onNoteRequest = stringNoteCallback;
+    }
+
+    @Override
+    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
+        this.onNoteLoadRequest = stringBooleanCallback;
     }
 
 }

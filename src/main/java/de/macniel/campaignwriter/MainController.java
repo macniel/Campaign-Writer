@@ -143,6 +143,7 @@ public class MainController {
         Note newNote = new Note(type.label, type, UUID.randomUUID(), new Date(), new Date(), "");
         newNote.setPosition(Note.getAll().size());
         notesLister.getItems().add(newNote);
+        notesLister.getSelectionModel().select(newNote);
         saveAndLoad(activeNote, newNote);
         lastCreationAction = type;
         creationMenuButton.setText(type.label);
@@ -175,6 +176,27 @@ public class MainController {
 
             Callback<Note, Boolean> loadEditor = newEditor.defineLoadCallback();
             loadOkay = loadEditor.call(newNote);
+
+            newEditor.setOnNoteRequest(new Callback<String, Note>() {
+                @Override
+                public Note call(String param) {
+                    return Note.findByReference(UUID.fromString(param));
+                }
+            });
+
+            newEditor.setOnNoteLoadRequest(new Callback<String, Boolean>() {
+                @Override
+                public Boolean call(String param) {
+                    Note found = Note.findByReference(UUID.fromString(param));
+                    if (found != null) {
+                        notesLister.getSelectionModel().select(found);
+                        saveAndLoad(newNote, found);
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
         }
     }
 

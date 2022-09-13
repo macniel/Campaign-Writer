@@ -32,6 +32,8 @@ public class PictureNoteEditor implements EditorPlugin {
     private Gson gsonParser;
 
     private PictureNoteDefinition noteStructure;
+    private Callback<String, Note> onNoteRequest;
+    private Callback<String, Boolean> onNoteLoadRequest;
 
     @Override
     public NoteType defineHandler() {
@@ -160,5 +162,16 @@ public class PictureNoteEditor implements EditorPlugin {
                 return true;
             }
         };
+    }
+
+
+    @Override
+    public void setOnNoteRequest(Callback<String, Note> stringNoteCallback) {
+        this.onNoteRequest = stringNoteCallback;
+    }
+
+    @Override
+    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
+        this.onNoteLoadRequest = stringBooleanCallback;
     }
 }
