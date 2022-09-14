@@ -1,8 +1,10 @@
 package de.macniel.campaignwriter.editors;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
+import de.macniel.campaignwriter.adapters.ColorAdapter;
 import javafx.beans.property.Property;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -15,6 +17,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import javafx.util.Callback;
@@ -147,6 +150,13 @@ public class MapNoteEditor implements EditorPlugin {
         mapPropertiesPane.getChildren().add(new Label("Farbe"));
         mapPropertiesPane.getChildren().add(colorProp);
 
+        colorProp.onActionProperty().set(e -> {
+            if (selectedPin != null) {
+                selectedPin.color = colorProp.getValue();
+                refreshView();
+            }
+        });
+
         mapPropertiesPane.getChildren().add(new Label("Verknüpfte Notiz"));
         mapPropertiesPane.getChildren().add(noteReferenceProp);
 
@@ -220,7 +230,10 @@ public class MapNoteEditor implements EditorPlugin {
 
     void renderPin(MapPin pin) {
         double pinSize = 32 * noteStructure.zoomFactor;
-        Button pinButton = new Button("", new FontIcon("icm-location:32:RED"));
+        if (pin.color == null) {
+            pin.color = Color.RED;
+        }
+        Button pinButton = new Button("", new FontIcon("icm-location:32:" + pin.color.toString()));
         pinButton.setBackground(Background.EMPTY);
         pinButton.setBorder(Border.EMPTY);
         pinButton.setLayoutX(pin.x - (pinSize/2));
@@ -255,7 +268,7 @@ public class MapNoteEditor implements EditorPlugin {
             @Override
             public Boolean call(Note note) {
                 if (gsonParser == null) {
-                    gsonParser = new Gson();
+                    gsonParser = new GsonBuilder().registerTypeAdapter(Color.class, new ColorAdapter()).create();
                 }
                 note.setContent(gsonParser.toJson(noteStructure, MapNoteDefinition.class));
                 return true;
@@ -269,7 +282,7 @@ public class MapNoteEditor implements EditorPlugin {
             @Override
             public Boolean call(Note param) {
                 if (gsonParser == null) {
-                    gsonParser = new Gson();
+                    gsonParser = new GsonBuilder().registerTypeAdapter(Color.class, new ColorAdapter()).create();
                 }
                 noteStructure = gsonParser.fromJson(param.getContent(), MapNoteDefinition.class);
                 refreshView();
