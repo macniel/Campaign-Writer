@@ -5,19 +5,17 @@ import com.google.gson.GsonBuilder;
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
 import de.macniel.campaignwriter.adapters.ColorAdapter;
-import javafx.beans.property.Property;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.effect.ColorInput;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.StrokeLineCap;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import javafx.util.Callback;
@@ -49,6 +47,22 @@ public class MapNoteEditor implements EditorPlugin {
 
     private Button deletePinButton;
     private VBox mapPropertiesPane;
+    private Mode mode;
+    private Line rulerLine;
+
+    private double rulerStartX;
+    private double rulerStartY;
+
+    private boolean dragging;
+    private double rulerEndX;
+
+    private double rulerEndY;
+
+    private enum Mode {
+        POINTER,
+        MEASURE,
+        SCALE
+    }
 
     @Override
     public NoteType defineHandler() {
@@ -60,6 +74,11 @@ public class MapNoteEditor implements EditorPlugin {
         t.getItems().clear();
         Button zoomButton = new Button("", new FontIcon("icm-zoom-in"));
         Button zoomOutButton = new Button("", new FontIcon("icm-zoom-out"));
+
+        ToggleGroup modeGroup = new ToggleGroup();
+
+        ToggleButton scaleModeButton = new ToggleButton("S");
+        ToggleButton pointerModeButton = new ToggleButton("P");
 
         Button loadButton = new Button("", new FontIcon("icm-image"));
         loadButton.onActionProperty().set(e -> {
@@ -76,8 +95,24 @@ public class MapNoteEditor implements EditorPlugin {
                 throw new RuntimeException(ex);
             }
         });
+
+        pointerModeButton.setToggleGroup(modeGroup);
+
+        scaleModeButton.setToggleGroup(modeGroup);
+
+        modeGroup.selectedToggleProperty().addListener( (observable, oldValue, newValue) -> {
+            if (pointerModeButton.equals(newValue)) {
+                this.mode = Mode.POINTER;
+            } else if (scaleModeButton.equals(newValue)) {
+                this.mode = Mode.SCALE;
+            }
+        });
+
         t.getItems().add(zoomButton);
         t.getItems().add(zoomOutButton);
+        t.getItems().add(new Separator());
+        t.getItems().add(pointerModeButton);
+        t.getItems().add(scaleModeButton);
         t.getItems().add(new Separator());
         t.getItems().add(loadButton);
 
@@ -99,6 +134,13 @@ public class MapNoteEditor implements EditorPlugin {
         }
     }
 
+    double getDistance(double sX, double sY, double eX, double eY) {
+        return Math.sqrt(
+                Math.pow(( Math.max(sX, eX) - Math.min(eX, sX) ), 2) +
+                        Math.pow(( Math.max(sY, eY) - Math.min(eY, sY) ), 2));
+
+    }
+
     @Override
     public Node defineEditor() {
         BorderPane bp = new BorderPane();
@@ -110,21 +152,82 @@ public class MapNoteEditor implements EditorPlugin {
         backgroundLayer.setY(0);
         viewer.setContent(root);
 
+        root.setOnMouseMoved(e -> {
+            if (dragging) {
+                dragging = false;
+
+                TextInputDialog measuredLength = new TextInputDialog();
+                measuredLength.setTitle("Längen Bemessung");
+
+                double distance = getDistance(rulerStartX, rulerStartY, rulerEndX, rulerEndY);
+
+                measuredLength.setHeaderText("Gemessen wurden " + distance + " Pixel" + " und entsprechen wieviel Meter?");
+                Optional<String> result = measuredLength.showAndWait();
+                if (result.isPresent()) {
+
+                    // Skalierungsfaktor = 1 zu X
+                    double uniformedFactor = Double.valueOf(result.get());
+
+                    noteStructure.scale = uniformedFactor / distance;
+                }
+
+            }
+        });
+
+        root.setOnMouseDragged(e -> {
+            switch (mode) {
+                case SCALE -> {
+                    System.out.println(dragging + " from " + rulerStartX + "by" + rulerStartY);
+                    if (!dragging) {
+                        rulerStartX = e.getX();
+                        rulerStartY = e.getY();
+                        if (rulerLine != null) {
+                            root.getChildren().remove(rulerLine);
+                        }
+                        rulerLine = new Line();
+                        root.getChildren().add(rulerLine);
+                        rulerLine.setStartX(rulerStartX);
+                        rulerLine.setStartY(rulerStartY);
+                        rulerLine.setStrokeLineCap(StrokeLineCap.ROUND);
+                        rulerLine.setStrokeWidth(2);
+                        rulerLine.setStroke(Color.RED);
+
+                        dragging = true;
+                    } else {
+                        if (rulerLine != null) {
+                            rulerEndX = e.getX();
+                            rulerEndY = e.getY();
+                            rulerLine.setEndX(e.getX());
+                            rulerLine.setEndY(e.getY());
+                            if (noteStructure.scale != 0) {
+                                double pixelDistance = getDistance(rulerStartX, rulerStartY, rulerEndX, rulerEndY);
+                                System.out.println("Distanz " + pixelDistance * noteStructure.scale + " p");
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
         root.setOnMouseClicked(e -> {
-            if (e.getButton() == MouseButton.SECONDARY) {
-                MapPin n = new MapPin();
-                n.x = e.getX();
-                n.y = e.getY();
-                n.label = "Neuer Pin";
-                n.noteReference = null;
-                noteStructure.pins.add(n);
-                selectedPin = n;
-                renderPin(n);
-                updateEditor();
-            } else {
-                System.out.println("Root clicked");
-                selectedPin = null;
-                mapPropertiesPane.setVisible(false);
+            switch (mode) {
+                case POINTER -> {
+                    if (e.getButton() == MouseButton.SECONDARY) {
+                        MapPin n = new MapPin();
+                        n.x = e.getX();
+                        n.y = e.getY();
+                        n.label = "Neuer Pin";
+                        n.noteReference = null;
+                        noteStructure.pins.add(n);
+                        selectedPin = n;
+                        renderPin(n);
+                        updateEditor();
+                    } else {
+                        selectedPin = null;
+                        mapPropertiesPane.setVisible(false);
+                    }
+                }
+                case SCALE -> {}
             }
         });
 
