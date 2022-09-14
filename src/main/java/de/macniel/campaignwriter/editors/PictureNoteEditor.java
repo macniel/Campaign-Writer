@@ -20,6 +20,8 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import com.google.gson.*;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 
 public class PictureNoteEditor implements EditorPlugin {
     private ImageView viewer;
@@ -83,8 +85,13 @@ public class PictureNoteEditor implements EditorPlugin {
                 ScrollPane parentNode = new ScrollPane();
 
                 ImageView popoutViewer = new ImageView();
+                File f = new File(noteStructure.fileName);
 
-                popoutViewer.imageProperty().set(new Image(noteStructure.fileName));
+                try {
+                    popoutViewer.imageProperty().set(new Image(new FileInputStream(f)));
+                } catch (FileNotFoundException ex) {
+                    throw new RuntimeException(ex);
+                }
                 double width = popoutViewer.imageProperty().get().getWidth() > rect.getWidth() ? rect.getWidth() : popoutViewer.imageProperty().get().getWidth();
                 double height = popoutViewer.imageProperty().get().getHeight() > rect.getHeight() ? rect.getHeight() : popoutViewer.imageProperty().get().getHeight();
 
