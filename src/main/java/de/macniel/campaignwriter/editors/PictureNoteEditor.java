@@ -39,6 +39,7 @@ public class PictureNoteEditor implements EditorPlugin {
 
     @Override
     public void prepareToolbar(ToolBar t, Window w) {
+
         t.getItems().clear();
         Button zoomButton = new Button("", new FontIcon("icm-zoom-in"));
         Button zoomOutButton = new Button("", new FontIcon("icm-zoom-out"));
