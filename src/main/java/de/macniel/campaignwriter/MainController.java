@@ -12,6 +12,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -61,9 +62,11 @@ public class MainController {
         plugins.add(new MapNoteEditor());
 
         notesLister.setItems(notes);
+
         notesLister.setCellFactory(listView -> {
             return new NotesRenderer();
         });
+
 
         ContextMenu notesListerMenu = new ContextMenu();
         MenuItem deleteNoteMenuItem = new MenuItem("Löschen");

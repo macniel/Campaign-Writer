@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
@@ -119,13 +120,49 @@ public class MapNoteEditor implements EditorPlugin {
         t.setVisible(true);
     }
 
+    void refreshDragAndDropHandler() {
+
+        viewer.setOnDragDetected(e -> {
+            viewer.startDragAndDrop(TransferMode.LINK);
+            e.consume();
+        });
+
+        viewer.setOnDragDropped(e -> {
+            if (e.getDragboard().hasFiles()) {
+                if (noteStructure == null) {
+                    noteStructure = new MapNoteDefinition();
+                }
+                noteStructure.backgroundPath = e.getDragboard().getFiles().get(0).getAbsolutePath();
+                refreshView();
+            }
+        });
+
+        viewer.setOnDragOver(e -> {
+            if (e.getDragboard().hasFiles()) {
+                /* allow for moving */
+                e.acceptTransferModes(TransferMode.LINK);
+            }
+            e.consume();
+        });
+
+    }
+
     void refreshView() {
         if (noteStructure != null) {
             root.getChildren().clear();
             root.getChildren().add(backgroundLayer);
-            backgroundLayer.imageProperty().set(new Image(noteStructure.backgroundPath));
+            backgroundLayer.imageProperty().set(new Image("file://" + noteStructure.backgroundPath));
             viewer.setScaleZ(noteStructure.zoomFactor);
+            noteStructure.scrollPositionX = viewer.getHvalue();
+            noteStructure.scrollPositionY = viewer.getVvalue();
 
+            BorderPane bp = (BorderPane) viewer.getParent();
+            viewer.setContent(null);
+            bp.setCenter(null);
+            viewer = new ScrollPane();
+            viewer.setContent(root);
+            bp.setCenter(viewer);
+            refreshDragAndDropHandler();
 
             if (noteStructure.pins == null) {
                 noteStructure.pins = new ArrayList<>();
@@ -289,6 +326,8 @@ public class MapNoteEditor implements EditorPlugin {
         bp.setCenter(viewer);
 
         populateNoteReferenceProp();
+        refreshDragAndDropHandler();
+        this.mode = Mode.POINTER;
 
         return bp;
     }

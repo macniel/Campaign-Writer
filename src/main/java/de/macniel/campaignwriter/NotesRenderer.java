@@ -1,7 +1,13 @@
 package de.macniel.campaignwriter;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
+import javafx.util.Callback;
 
 public final class NotesRenderer extends ListCell<Note> {
 
@@ -18,5 +24,7 @@ public final class NotesRenderer extends ListCell<Note> {
             setGraphic(view);
         }
 
+
     }
+
 }

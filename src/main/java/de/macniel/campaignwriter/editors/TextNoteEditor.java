@@ -7,10 +7,13 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.ToolBar;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.TransferMode;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
 import org.kordamp.ikonli.javafx.FontIcon;
+
+import java.io.*;
 
 public class TextNoteEditor implements EditorPlugin {
 
@@ -60,6 +63,36 @@ public class TextNoteEditor implements EditorPlugin {
     public Node defineEditor() {
         editor = new TextArea();
         editor.onKeyTypedProperty().set(this::onEditorKeyTyped);
+
+        editor.setOnDragDetected(e -> {
+            editor.startDragAndDrop(TransferMode.ANY);
+            e.consume();
+        });
+
+        editor.setOnDragOver(e -> {
+            if (e.getDragboard().hasFiles()) {
+                e.acceptTransferModes(TransferMode.LINK);
+            }
+            e.consume();
+        });
+
+        editor.setOnDragDropped(e -> {
+            if (e.getDragboard().hasFiles()) {
+                File f = e.getDragboard().getFiles().get(0);
+                try {
+                    StringBuffer content = new StringBuffer();
+                    BufferedReader fis = new BufferedReader(new FileReader(f));
+                    String line;
+                    while ((line = fis.readLine()) != null) {
+                        content.append(line +"\n");
+                    }
+                    editor.setText(content.toString());
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+
         return editor;
     }
 
