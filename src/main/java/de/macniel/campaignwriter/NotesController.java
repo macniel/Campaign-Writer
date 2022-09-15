@@ -6,7 +6,9 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -46,10 +48,10 @@ public class NotesController {
     }
 
     public void setItem(Note note) {
-
-        view.setPadding(new Insets(0, 0, 0, note.getLevel()*8));
+        view.setPadding(new Insets(0, 0, 0, note.getLevel() * 8));
         this.note = note;
         this.label.setText(note.getLabel());
+        view.backgroundProperty().set(Background.EMPTY);
         switch (note.getType()) {
             case LOCATION_NOTE -> icon.setIconLiteral("icm-location");
             case TEXT_NOTE -> icon.setIconLiteral("icm-file-text");
@@ -65,4 +67,7 @@ public class NotesController {
         return view;
     }
 
+    public Note getItem() {
+        return note;
+    }
 }
