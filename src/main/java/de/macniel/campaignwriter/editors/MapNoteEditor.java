@@ -24,6 +24,8 @@ import org.controlsfx.control.PropertySheet;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -151,7 +153,13 @@ public class MapNoteEditor implements EditorPlugin {
         if (noteStructure != null) {
             root.getChildren().clear();
             root.getChildren().add(backgroundLayer);
-            backgroundLayer.imageProperty().set(new Image("file://" + noteStructure.backgroundPath));
+            File f = new File(noteStructure.backgroundPath);
+
+            try {
+                backgroundLayer.imageProperty().set(new Image(new FileInputStream(f)));
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
             viewer.setScaleZ(noteStructure.zoomFactor);
             noteStructure.scrollPositionX = viewer.getHvalue();
             noteStructure.scrollPositionY = viewer.getVvalue();
@@ -206,6 +214,8 @@ public class MapNoteEditor implements EditorPlugin {
                     double uniformedFactor = Double.valueOf(result.get());
 
                     noteStructure.scale = uniformedFactor / distance;
+                    root.getChildren().remove(rulerLine);
+                    rulerLine = null;
                 }
 
             }

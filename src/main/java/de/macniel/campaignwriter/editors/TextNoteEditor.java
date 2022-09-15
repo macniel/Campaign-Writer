@@ -2,16 +2,20 @@ package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.ToolBar;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
+import org.fxmisc.flowless.VirtualizedScrollPane;
+import org.fxmisc.richtext.event.MouseOverTextEvent;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.fxmisc.richtext.StyleClassedTextArea;
+
 
 import java.io.*;
 
@@ -19,7 +23,7 @@ public class TextNoteEditor implements EditorPlugin {
 
     private boolean contentHasChanged = false;
 
-    private TextArea editor;
+    private StyleClassedTextArea editor;
     private Callback<String, Note> onNoteRequest;
     private Callback<String, Boolean> onNoteLoadRequest;
 
@@ -44,12 +48,34 @@ public class TextNoteEditor implements EditorPlugin {
         t.getItems().add(strikethroughButton);
         t.getItems().add(highlightButton);
 
+        boldButton.onActionProperty().set(e -> {
+            IndexRange range = editor.getSelection();
+            editor.setStyleClass(range.getStart(), range.getEnd(), "bold");
+            editor.requestFocus();
+        });
+
+        italicButton.onActionProperty().set(e -> {
+            IndexRange range = editor.getSelection();
+            editor.setStyleClass(range.getStart(), range.getEnd(), "italic");
+            editor.requestFocus();
+        });
+
+        underlinedButton.onActionProperty().set(e -> {
+            IndexRange range = editor.getSelection();
+            editor.setStyleClass(range.getStart(), range.getEnd(), "underlined");
+            editor.requestFocus();
+        });
+
+        strikethroughButton.onActionProperty().set(e -> {
+            IndexRange range = editor.getSelection();
+            editor.setStyleClass(range.getStart(), range.getEnd(), "strikethrough");
+            editor.requestFocus();
+        });
+
         highlightButton.onActionProperty().set(e -> {
-            // example code to request loading a note referenced by uuid/string
-            int size = Note.getAll().size();
-            int randomed = (int) Math.floor(Math.random() * size);
-            String uuid = Note.getAll().get(randomed).getReference().toString();
-            onNoteLoadRequest.call(uuid);
+            IndexRange range = editor.getSelection();
+            editor.setStyleClass(range.getStart(), range.getEnd(), "highlighted");
+            editor.requestFocus();
         });
 
         t.setVisible(true);
@@ -59,9 +85,12 @@ public class TextNoteEditor implements EditorPlugin {
         contentHasChanged = true;
     }
 
+
     @Override
     public Node defineEditor() {
-        editor = new TextArea();
+
+        editor = new StyleClassedTextArea();
+
         editor.onKeyTypedProperty().set(this::onEditorKeyTyped);
 
         editor.setOnDragDetected(e -> {
@@ -86,14 +115,17 @@ public class TextNoteEditor implements EditorPlugin {
                     while ((line = fis.readLine()) != null) {
                         content.append(line +"\n");
                     }
-                    editor.setText(content.toString());
+                    editor.clear();
+                    editor.appendText(content.toString());
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
             }
         });
 
-        return editor;
+        VirtualizedScrollPane<StyleClassedTextArea> vsPane = new VirtualizedScrollPane<>(editor);
+
+        return vsPane;
     }
 
     @Override
@@ -102,6 +134,8 @@ public class TextNoteEditor implements EditorPlugin {
             @Override
             public Boolean call(Note note) {
                 if (contentHasChanged) {
+
+                    // TODO: save with style
                     note.setContent(editor.getText());
                 }
                 return true;
@@ -115,7 +149,9 @@ public class TextNoteEditor implements EditorPlugin {
             @Override
             public Boolean call(Note note) {
                 if (note.getType() == NoteType.TEXT_NOTE) {
-                    editor.setText(note.getContent());
+                    editor.clear();
+                    // TODO: load with style
+                    editor.appendText(note.getContent());
                     contentHasChanged = false;
                     editor.requestFocus();
                     return true;
