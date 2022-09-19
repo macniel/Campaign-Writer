@@ -1,9 +1,6 @@
 package de.macniel.campaignwriter;
 
-import de.macniel.campaignwriter.editors.EditorPlugin;
-import de.macniel.campaignwriter.editors.MapNoteEditor;
-import de.macniel.campaignwriter.editors.PictureNoteEditor;
-import de.macniel.campaignwriter.editors.TextNoteEditor;
+import de.macniel.campaignwriter.editors.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -60,6 +57,7 @@ public class MainController {
         plugins.add(new TextNoteEditor());
         plugins.add(new PictureNoteEditor());
         plugins.add(new MapNoteEditor());
+        plugins.add(new ActorEditor());
 
         notesLister.setItems(notes);
 

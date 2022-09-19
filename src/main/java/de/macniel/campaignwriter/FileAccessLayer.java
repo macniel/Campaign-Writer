@@ -3,6 +3,7 @@ package de.macniel.campaignwriter;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import javafx.scene.image.Image;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -28,6 +29,15 @@ public class FileAccessLayer {
         } finally {
             assert reader != null;
             reader.close();
+        }
+    }
+
+    public static Image getImageFromString(String s) {
+        try {
+            File f = new File(s);
+            return new Image(new FileInputStream(f));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
