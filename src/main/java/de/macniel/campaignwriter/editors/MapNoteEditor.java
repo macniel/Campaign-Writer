@@ -161,14 +161,24 @@ public class MapNoteEditor implements EditorPlugin {
                 throw new RuntimeException(e);
             }
             viewer.setScaleZ(noteStructure.zoomFactor);
-            noteStructure.scrollPositionX = viewer.getHvalue();
-            noteStructure.scrollPositionY = viewer.getVvalue();
 
             BorderPane bp = (BorderPane) viewer.getParent();
             viewer.setContent(null);
             bp.setCenter(null);
             viewer = new ScrollPane();
             viewer.setContent(root);
+
+            viewer.onScrollProperty().set(scrollEvent -> {
+
+                noteStructure.scrollPositionX += scrollEvent.getDeltaX();
+                noteStructure.scrollPositionY += scrollEvent.getDeltaY();
+                System.out.print(viewer.getHvalue());
+                System.out.println(viewer.getVvalue());
+            });
+
+            viewer.setHvalue(noteStructure.scrollPositionX);
+            viewer.setVvalue(noteStructure.scrollPositionY);
+
             bp.setCenter(viewer);
             refreshDragAndDropHandler();
 

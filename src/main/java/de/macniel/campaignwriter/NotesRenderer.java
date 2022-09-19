@@ -23,8 +23,6 @@ public final class NotesRenderer extends ListCell<Note> {
             notesController.setItem(note);
             setGraphic(view);
         }
-
-
     }
 
 }

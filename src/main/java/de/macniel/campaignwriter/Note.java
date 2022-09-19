@@ -36,10 +36,11 @@ public class Note implements Serializable {
     }
 
     public static ArrayList<Note> getAll() {
-        dataset.sort( (Note a, Note b) -> {
-            return a.getPosition() - b.getPosition();
-        });
         return dataset;
+    }
+
+    public static void add(int dragPosition, Note dragElement) {
+        dataset.add(dragPosition, dragElement);
     }
 
     public UUID getReference() {

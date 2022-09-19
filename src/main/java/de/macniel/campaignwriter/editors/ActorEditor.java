@@ -242,7 +242,6 @@ public class ActorEditor implements EditorPlugin {
                     e.consume();
                 });
 
-                line.getChildren().add(0, dragButton);
 
                 dragButton.onDragDetectedProperty().set(e -> {
 
@@ -256,6 +255,8 @@ public class ActorEditor implements EditorPlugin {
 
                     e.consume();
                 });
+
+                line.getChildren().add(0, dragButton);
                 editor.getChildren().add(line);
             });
         }

@@ -9,8 +9,11 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -18,6 +21,7 @@ import javafx.util.Callback;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainController {
 
@@ -48,6 +52,9 @@ public class MainController {
     private ArrayList<EditorPlugin> plugins;
     private Stage stage;
 
+    int dragPosition;
+    Note dragElement;
+
     @FXML
     public void initialize() {
 
@@ -62,7 +69,54 @@ public class MainController {
         notesLister.setItems(notes);
 
         notesLister.setCellFactory(listView -> {
-            return new NotesRenderer();
+            ListCell<Note> t = new NotesRenderer();
+
+            Note draggedElement;
+
+            t.onDragOverProperty().set(e -> {
+                System.out.println("Drag over " + t.getIndex());
+                dragPosition = t.getIndex();
+                e.acceptTransferModes(TransferMode.MOVE);
+                e.consume();
+            });
+
+            t.onDragExitedProperty().set(e -> {
+
+            });
+
+            t.onDragEnteredProperty().set(e -> {
+                dragPosition = t.getIndex();
+                System.out.println("Drag over " + t.getIndex());
+                e.acceptTransferModes(TransferMode.MOVE);
+                e.consume();
+            });
+
+            t.onDragDroppedProperty().set(e -> {
+                if (dragElement != null) {
+                    Note.remove(dragElement);
+                    Note.add(dragPosition, dragElement);
+                    notesLister.setItems(FXCollections.observableArrayList(Note.getAll()));
+                }
+                e.setDropCompleted(true);
+                e.consume();
+            });
+
+
+            t.onDragDetectedProperty().set(e -> {
+
+                System.out.println("Drag detected");
+                dragElement = t.getItem();
+                dragPosition = t.getIndex();
+                Dragboard db = t.startDragAndDrop(TransferMode.ANY);
+                ClipboardContent c = new ClipboardContent();
+                c.putString("accepted");
+                db.setContent(c);
+
+                e.consume();
+            });
+
+
+            return t;
         });
 
 
