@@ -10,6 +10,8 @@ module de.macniel.campaignwriter {
     requires org.fxmisc.flowless;
 
     opens de.macniel.campaignwriter to javafx.fxml;
+    opens de.macniel.campaignwriter.views to javafx.fxml;
+
     exports de.macniel.campaignwriter;
     exports de.macniel.campaignwriter.editors;
 

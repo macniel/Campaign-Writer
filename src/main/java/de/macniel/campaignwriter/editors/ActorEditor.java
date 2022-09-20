@@ -6,34 +6,31 @@ import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
+import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import javafx.util.Callback;
-import org.fxmisc.richtext.InlineCssTextArea;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.File;
 import java.util.ArrayList;
 
-public class ActorEditor implements EditorPlugin {
+public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
     Gson gsonParser;
 
     ActorNoteDefinition notesStructure;
-    private VBox editor;
+    private ScrollPane editor;
 
 
     @Override
@@ -44,14 +41,37 @@ public class ActorEditor implements EditorPlugin {
     @Override
     public void prepareToolbar(ToolBar t, Window w) {
 
+        t.getItems().clear();
+
+        ToggleGroup viewMode = new ToggleGroup();
+
+        ToggleButton previewMode = new ToggleButton("Preview");
+        ToggleButton editMode = new ToggleButton("edit");
+        previewMode.setToggleGroup(viewMode);
+        editMode.setToggleGroup(viewMode);
+
+        viewMode.selectedToggleProperty().addListener( (observableValue, toggle, newValue) -> {
+            if (previewMode.equals(newValue)) {
+                editor.setContent(getPreviewVersionOf(notesStructure));
+            } else {
+                editor.setContent(getEditableVersion());
+            }
+        });
+
+        viewMode.selectToggle(editMode);
+
+        t.getItems().add(previewMode);
+        t.getItems().add(editMode);
+        t.setVisible(true);
+
     }
 
     @Override
     public Node defineEditor() {
 
-        editor = new VBox();
+        editor = new ScrollPane();
 
-        refreshEditor();
+        editor.setContent(getEditableVersion());
 
         return editor;
     }
@@ -60,134 +80,223 @@ public class ActorEditor implements EditorPlugin {
     ActorNoteItem dragelement;
 
     private HBox renderItem(ActorNoteItem item) {
+        return renderItem(item, true);
+    }
+
+    private HBox renderItem(ActorNoteItem item, boolean editable) {
         HBox line = new HBox();
         Button removeLine = new Button("", new FontIcon("icm-bin"));
         removeLine.onActionProperty().set(e -> {
             notesStructure.items.remove(item);
-            refreshEditor();
+            getEditableVersion();
         });
 
         switch(item.type) {
             case TEXT -> {
-                TextField label = new TextField();
-                label.setPrefWidth(120);
-                label.setText(item.label);
-                TextArea texteditor = new TextArea(item.content);
-                texteditor.setWrapText(true);
-                texteditor.setPrefRowCount(3);
+                if (editable) {
+                    TextField label = new TextField();
+                    label.setPrefWidth(120);
+                    label.setText(item.label);
+                    TextArea texteditor = new TextArea(item.content);
+                    texteditor.setWrapText(true);
+                    texteditor.setPrefRowCount(3);
 
-                label.textProperty().addListener( (editor, oldText, newText) -> {
-                    item.label = newText;
-                });
+                    label.textProperty().addListener( (editor, oldText, newText) -> {
+                        item.label = newText;
+                    });
 
-                texteditor.textProperty().addListener( (editor, oldText, newText) -> {
+                    texteditor.textProperty().addListener( (editor, oldText, newText) -> {
 
-                    item.content = newText;
-                });
-                line.getChildren().add(label);
-                line.getChildren().add(texteditor);
-                line.getChildren().add(removeLine);
-            }
-            case STRING -> {
-                TextField label = new TextField();
-                label.setPrefWidth(120);
-                label.setText(item.label);
-                TextField texteditor = new TextField(item.content);
+                        item.content = newText;
+                    });
+                    line.getChildren().add(label);
+                    line.getChildren().add(texteditor);
+                    line.getChildren().add(removeLine);
+                } else {
+                    Label label = new Label();
+                    label.setPrefWidth(120);
+                    label.setText(item.label);
+                    TextFlow texteditor = new TextFlow();
 
-                label.textProperty().addListener( (editor, oldText, newText) -> {
-                    item.label = newText;
-                });
-
-                texteditor.textProperty().addListener( (editor, oldText, newText) -> {
-
-                    item.content = newText;
-                });
-
-                line.getChildren().add(label);
-                line.getChildren().add(texteditor);
-                line.getChildren().add(removeLine);
-            }
-            case IMAGE -> {
-                TextField label = new TextField();
-                label.setPrefWidth(120);
-                label.setText(item.label);
-                ImageView v = new ImageView();
-                v.setPreserveRatio(true);
-                v.setFitWidth(250);
-                v.setFitHeight(250);
-
-                if (item.content != null) {
-                    v.setImage(FileAccessLayer.getImageFromString(item.content));
+                    texteditor.getChildren().add(new Text(item.content));
+                    line.getChildren().add(label);
+                    line.getChildren().add(texteditor);
                 }
 
-                Button selectFileButton = new Button("", new FontIcon("icm-link"));
+            }
+            case STRING -> {
+                if (editable) {
+                    TextField label = new TextField();
+                    label.setPrefWidth(120);
+                    label.setText(item.label);
+                    TextField texteditor = new TextField(item.content);
 
-                label.textProperty().addListener( (editor, oldText, newText) -> {
-                    item.label = newText;
-                });
+                    label.textProperty().addListener((editor, oldText, newText) -> {
+                        item.label = newText;
+                    });
 
-                selectFileButton.onActionProperty().set(e -> {
-                    FileChooser chooser = new FileChooser();
-                    File selectedFile = chooser.showOpenDialog(null);
-                    if (selectedFile != null) {
-                        item.content = selectedFile.getAbsolutePath();
+                    texteditor.textProperty().addListener((editor, oldText, newText) -> {
+
+                        item.content = newText;
+                    });
+
+                    line.getChildren().add(label);
+                    line.getChildren().add(texteditor);
+                    line.getChildren().add(removeLine);
+                } else {
+                    Label label = new Label();
+                    label.setPrefWidth(120);
+                    label.setText(item.label);
+                    TextFlow texteditor = new TextFlow();
+                    texteditor.getChildren().add(new Text(item.content));
+                    line.getChildren().add(label);
+                    line.getChildren().add(texteditor);
+                }
+            }
+            case IMAGE -> {
+                if (editable) {
+                    TextField label = new TextField();
+                    label.setPrefWidth(120);
+                    label.setText(item.label);
+                    ImageView v = new ImageView();
+                    v.setPreserveRatio(true);
+                    v.setFitWidth(250);
+                    v.setFitHeight(250);
+
+                    if (item.content != null) {
                         v.setImage(FileAccessLayer.getImageFromString(item.content));
                     }
-                });
+
+                    Button selectFileButton = new Button("", new FontIcon("icm-link"));
+
+                    label.textProperty().addListener((editor, oldText, newText) -> {
+                        item.label = newText;
+                    });
+
+                    selectFileButton.onActionProperty().set(e -> {
+                        FileChooser chooser = new FileChooser();
+                        File selectedFile = chooser.showOpenDialog(null);
+                        if (selectedFile != null) {
+                            item.content = selectedFile.getAbsolutePath();
+                            v.setImage(FileAccessLayer.getImageFromString(item.content));
+                        }
+                    });
 
 
-                line.getChildren().add(label);
-                line.getChildren().add(v);
-                line.getChildren().add(selectFileButton);
-                line.getChildren().add(removeLine);
+                    line.getChildren().add(label);
+                    line.getChildren().add(v);
+                    line.getChildren().add(selectFileButton);
+                    line.getChildren().add(removeLine);
+                } else {
+                    Label label = new Label();
+                    label.setPrefWidth(120);
+                    label.setText(item.label);
+                    ImageView v = new ImageView();
+                    v.setPreserveRatio(true);
+                    v.setFitWidth(250);
+                    v.setFitHeight(250);
+
+                    if (item.content != null) {
+                        v.setImage(FileAccessLayer.getImageFromString(item.content));
+                    }
+
+                    line.getChildren().add(label);
+                    line.getChildren().add(v);
+                }
             }
             case HEADER -> {
-                VBox label = new VBox();
-                label.setPrefWidth(120);
+                if (editable) {
+                    VBox label = new VBox();
+                    label.setPrefWidth(120);
 
-                TextField content = new TextField();
-                content.setAlignment(Pos.TOP_CENTER);
-                content.setText(item.content);
+                    TextField content = new TextField();
+                    content.setAlignment(Pos.TOP_CENTER);
+                    content.setText(item.content);
 
-                content.textProperty().addListener( (editor, oldText, newText) -> {
-                    item.content = newText;
-                });
+                    content.textProperty().addListener((editor, oldText, newText) -> {
+                        item.content = newText;
+                    });
 
 
-                line.getChildren().add(label);
-                line.getChildren().add(content);
-                line.getChildren().add(removeLine);
+                    line.getChildren().add(label);
+                    line.getChildren().add(content);
+                    line.getChildren().add(removeLine);
+                } else {
+                    VBox label = new VBox();
+                    label.setPrefWidth(120);
+
+                    TextFlow content = new TextFlow();
+                    Text t = new Text(item.content);
+                    t.setStyle("-fx-font-weight: bold;");
+                    content.setTextAlignment(TextAlignment.CENTER);
+                    content.getChildren().add(t);
+                    line.getChildren().add(label);
+                    line.getChildren().add(content);
+                }
             }
             case RESOURCE -> {
-                System.out.println("RESOURCE");
-                TextField label = new TextField();
-                label.setPrefWidth(120);
-                label.setText(item.label);
-                TextField value = new TextField(String.valueOf(item.value));
-                TextField maxValue = new TextField(String.valueOf(item.max));
+                if (editable) {
+                    TextField label = new TextField();
+                    label.setPrefWidth(120);
+                    label.setText(item.label);
+                    TextField value = new TextField(String.valueOf(item.value));
+                    TextField maxValue = new TextField(String.valueOf(item.max));
 
-                label.textProperty().addListener( (editor, oldText, newText) -> {
-                    item.label = newText;
-                });
+                    label.textProperty().addListener((editor, oldText, newText) -> {
+                        item.label = newText;
+                    });
 
-                value.textProperty().addListener( (editor, oldText, newText) -> {
-                    item.value = Integer.valueOf(newText);
-                });
-                maxValue.textProperty().addListener( (editor, oldText, newText) -> {
-                    item.max = Integer.valueOf(newText);
-                });
+                    value.textProperty().addListener((editor, oldText, newText) -> {
+                        item.value = Integer.valueOf(newText);
+                    });
+                    maxValue.textProperty().addListener((editor, oldText, newText) -> {
+                        item.max = Integer.valueOf(newText);
+                    });
 
-                line.getChildren().add(label);
-                line.getChildren().add(value);
-                line.getChildren().add(new Label(" / "));
-                line.getChildren().add(maxValue);
-                line.getChildren().add(removeLine);
+                    line.getChildren().add(label);
+                    line.getChildren().add(value);
+                    line.getChildren().add(new Label(" / "));
+                    line.getChildren().add(maxValue);
+                    line.getChildren().add(removeLine);
+                } else {
+                    Label label = new Label();
+                    label.setPrefWidth(120);
+                    label.setText(item.label);
+                    TextField value = new TextField(String.valueOf(item.value));
+                    Label maxValue = new Label(String.valueOf(item.max));
+
+                    value.textProperty().addListener((editor, oldText, newText) -> {
+                        item.value = Integer.valueOf(newText);
+                    });
+
+                    line.getChildren().add(label);
+                    line.getChildren().add(value);
+                    line.getChildren().add(new Label(" / "));
+                    line.getChildren().add(maxValue);
+                }
             }
         }
         return line;
     }
 
-    private void refreshEditor() {
+    @Override
+    public Node getPreviewVersionOf(ActorNoteDefinition t) {
+
+        ScrollPane p = new ScrollPane();
+        VBox lines = new VBox();
+        if (t != null) {
+            System.out.println("Rendering " + notesStructure.items.size() + " elements");
+
+
+            t.items.forEach(item -> {
+                HBox line = renderItem(item, false);
+                lines.getChildren().add(line);
+            });
+        }
+        return lines;
+    }
+
+    private Node getEditableVersion() {
 
         ObservableList<ActorNoteItem.ActorNoteItemType> types = FXCollections.observableArrayList();
         types.add(ActorNoteItem.ActorNoteItemType.HEADER);
@@ -195,14 +304,11 @@ public class ActorEditor implements EditorPlugin {
         types.add(ActorNoteItem.ActorNoteItemType.TEXT);
         types.add(ActorNoteItem.ActorNoteItemType.IMAGE);
         types.add(ActorNoteItem.ActorNoteItemType.RESOURCE);
-        editor.getChildren().clear();
+        VBox lines = new VBox();
 
         if (notesStructure != null) {
-            System.out.println("Rendering " + notesStructure.items.size() + " elements");
-
 
             notesStructure.items.forEach(item -> {
-                System.out.println("rendering item with label " + item.label);
                 HBox line = renderItem(item);
                 FontIcon fi = new FontIcon("icm-page-break");
                 fi.setIconSize(20);
@@ -214,8 +320,7 @@ public class ActorEditor implements EditorPlugin {
 
                 dragButton.onDragOverProperty().set(e -> {
                     fi.setIconColor(Color.BLUE);
-                    System.out.println("New Dragposition " + dragposition);
-                    dragposition = editor.getChildren().indexOf(line);
+                    dragposition = lines.getChildren().indexOf(line);
                     e.acceptTransferModes(TransferMode.MOVE);
                     e.consume();
                 });
@@ -226,8 +331,7 @@ public class ActorEditor implements EditorPlugin {
 
                 dragButton.onDragEnteredProperty().set(e -> {
                     fi.setIconColor(Color.BLUE);
-                    System.out.println("New Dragposition " + dragposition);
-                    dragposition = editor.getChildren().indexOf(line);
+                    dragposition = lines.getChildren().indexOf(line);
                     e.acceptTransferModes(TransferMode.MOVE);
                     e.consume();
                 });
@@ -236,7 +340,7 @@ public class ActorEditor implements EditorPlugin {
                     if (dragelement != null) {
                         notesStructure.items.remove(dragelement);
                         notesStructure.items.add(dragposition, dragelement);
-                        refreshEditor();
+                        getEditableVersion();
                     }
                     e.setDropCompleted(true);
                     e.consume();
@@ -244,10 +348,8 @@ public class ActorEditor implements EditorPlugin {
 
 
                 dragButton.onDragDetectedProperty().set(e -> {
-
-                    System.out.println("Drag detected");
                     dragelement = item;
-                    dragposition = editor.getChildren().indexOf(line);
+                    dragposition = lines.getChildren().indexOf(line);
                     Dragboard db = dragButton.startDragAndDrop(TransferMode.ANY);
                     ClipboardContent c = new ClipboardContent();
                     c.putString("accepted");
@@ -257,7 +359,7 @@ public class ActorEditor implements EditorPlugin {
                 });
 
                 line.getChildren().add(0, dragButton);
-                editor.getChildren().add(line);
+                lines.getChildren().add(line);
             });
         }
         HBox newLine = new HBox();
@@ -276,14 +378,15 @@ public class ActorEditor implements EditorPlugin {
                 ActorNoteItem added = new ActorNoteItem();
                 added.type = newType.getValue();
                 notesStructure.items.add(added);
-                refreshEditor();
+                editor.setContent(getEditableVersion());
 
         });
         VBox v = new VBox();
         v.fillWidthProperty().set(true);
         newLine.getChildren().add(newType);
         newLine.getChildren().add(v);
-        editor.getChildren().add(newLine);
+        lines.getChildren().add(newLine);
+        return lines;
     }
 
     @Override
@@ -309,7 +412,7 @@ public class ActorEditor implements EditorPlugin {
                     gsonParser = new Gson();
                 }
                 notesStructure = gsonParser.fromJson(note.content, ActorNoteDefinition.class);
-                refreshEditor();
+                editor.setContent(getEditableVersion());
                 return true;
             }
         };

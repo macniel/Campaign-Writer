@@ -30,12 +30,7 @@
                     <MenuItem text="Einstellungen..." accelerator="Ctrl+."/>
                 </items>
             </Menu>
-            <Menu text="Ansicht" accelerator="V">
-                <items>
-                    <MenuItem text="Worldbuilding" accelerator="1"/>
-                    <MenuItem text="Sitzung" accelerator="2"/>
-                    <MenuItem text="Begegnung" accelerator="3"/>
-                </items>
+            <Menu text="Ansicht" fx:id="views" accelerator="V">
             </Menu>
             <Menu text="Daten" accelerator="D">
                 <items>
@@ -52,29 +47,5 @@
 
         </menus>
     </MenuBar>
-    <SplitPane VBox.vgrow="ALWAYS">
-        <VBox>
-            <ListView fx:id="notesLister" VBox.vgrow="ALWAYS"></ListView>
-            <HBox>
-                <ButtonBar>
-                    <buttons>
-                        <SplitMenuButton text="Neu" fx:id="creationMenuButton" onAction="#createNewNote">
-                        </SplitMenuButton>
-                        <Button onMouseClicked="#deleteCurrentNote">
-                            <graphic>
-                                <FontIcon iconLiteral="icm-bin"/>
-                            </graphic>
-                        </Button>
-                    </buttons>
-                </ButtonBar>
-            </HBox>
-        </VBox>
-
-        <VBox>
-            <ToolBar visible="false" fx:id="editorToolbar"></ToolBar>
-            <BorderPane fx:id="editorWindow" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-                <!-- Contains the editor view -->
-            </BorderPane>
-        </VBox>
-    </SplitPane>
+    <BorderPane fx:id="inset" VBox.vgrow="ALWAYS"></BorderPane>
 </VBox>

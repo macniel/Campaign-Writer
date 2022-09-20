@@ -29,7 +29,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Optional;
 
-public class MapNoteEditor implements EditorPlugin {
+public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
     private Callback<String, Note> onNoteRequest;
     private Callback<String, Boolean> onNoteLoadRequest;
 
@@ -461,5 +461,10 @@ public class MapNoteEditor implements EditorPlugin {
     @Override
     public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
         this.onNoteLoadRequest = stringBooleanCallback;
+    }
+
+    @Override
+    public Node getPreviewVersionOf(MapNoteDefinition t) {
+        return new VBox();
     }
 }

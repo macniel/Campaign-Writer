@@ -1,13 +1,18 @@
 package de.macniel.campaignwriter;
 
 import de.macniel.campaignwriter.editors.*;
+import de.macniel.campaignwriter.views.BuildingView;
+import de.macniel.campaignwriter.views.SessionView;
+import de.macniel.campaignwriter.views.ViewInterface;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
@@ -25,262 +30,86 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainController {
 
-    private ObservableList<String> sortingOptions;
-
-    private ObservableList<Note> notes;
-
-    private boolean contentHasChanged = false;
-
-    private Note activeNote;
-
-    private File currentFile;
 
     private ArrayList<FileChooser.ExtensionFilter> supportedFileExtensions;
 
-    @FXML
-    public Button createPageButton;
-
-    @FXML
-    public ListView notesLister;
-
-    @FXML
-    public TextArea editor;
-    private NoteType lastCreationAction;
-
-    @FXML
-    private SplitMenuButton creationMenuButton;
     private ArrayList<EditorPlugin> plugins;
+
+    private File currentFile;
+
+    @FXML
+    private RadioMenuItem viewBuilding;
+    @FXML
+    private RadioMenuItem viewSession;
+    @FXML
+    private RadioMenuItem viewEncounter;
+
+    @FXML
+    private BorderPane inset;
+
     private Stage stage;
 
-    int dragPosition;
-    Note dragElement;
+    private ViewInterface activeInterface;
 
     @FXML
-    public void initialize() {
-
-        notes = FXCollections.observableArrayList();
-
-        plugins = new ArrayList<>();
-        plugins.add(new TextNoteEditor());
-        plugins.add(new PictureNoteEditor());
-        plugins.add(new MapNoteEditor());
-        plugins.add(new ActorEditor());
-
-        notesLister.setItems(notes);
-
-        notesLister.setCellFactory(listView -> {
-            ListCell<Note> t = new NotesRenderer();
-
-            Note draggedElement;
-
-            t.onDragOverProperty().set(e -> {
-                System.out.println("Drag over " + t.getIndex());
-                dragPosition = t.getIndex();
-                e.acceptTransferModes(TransferMode.MOVE);
-                e.consume();
-            });
-
-            t.onDragExitedProperty().set(e -> {
-
-            });
-
-            t.onDragEnteredProperty().set(e -> {
-                dragPosition = t.getIndex();
-                System.out.println("Drag over " + t.getIndex());
-                e.acceptTransferModes(TransferMode.MOVE);
-                e.consume();
-            });
-
-            t.onDragDroppedProperty().set(e -> {
-                if (dragElement != null) {
-                    Note.remove(dragElement);
-                    Note.add(dragPosition, dragElement);
-                    notesLister.setItems(FXCollections.observableArrayList(Note.getAll()));
-                }
-                e.setDropCompleted(true);
-                e.consume();
-            });
+    private Menu views;
 
 
-            t.onDragDetectedProperty().set(e -> {
+    @FXML
+    public void initialize() throws IOException {
+        supportedFileExtensions = new ArrayList<>();
+        supportedFileExtensions.add(new FileChooser.ExtensionFilter("campaign file", "*.campaign"));
 
-                System.out.println("Drag detected");
-                dragElement = t.getItem();
-                dragPosition = t.getIndex();
-                Dragboard db = t.startDragAndDrop(TransferMode.ANY);
-                ClipboardContent c = new ClipboardContent();
-                c.putString("accepted");
-                db.setContent(c);
+        ArrayList<ViewInterface> views = new ArrayList<>();
+        HashMap<Toggle, Map.Entry<ViewInterface, Scene>> mapping = new HashMap<>();
 
-                e.consume();
-            });
+        views.add(new BuildingView());
+        views.add(new SessionView());
 
+        ToggleGroup viewMode = new ToggleGroup();
 
-            return t;
-        });
+        views.forEach( view -> {
+            try {
 
+                String path = view.getPathToFxmlDefinition();
+                String menuItemLabel = view.getMenuItemLabel();
 
-        ContextMenu notesListerMenu = new ContextMenu();
-        MenuItem deleteNoteMenuItem = new MenuItem("Löschen");
-        deleteNoteMenuItem.onActionProperty().set( event -> {
-            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
-            Note.remove(contextedNote);
-            notesLister.getItems().remove(contextedNote);
-            notesLister.refresh();
-        });
-        MenuItem renameNoteMenuItem = new MenuItem("Umbenenen");
-        renameNoteMenuItem.onActionProperty().set( event -> {
-            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+                FXMLLoader fxmlLoader = new FXMLLoader(view.getClass().getResource(path));
+                Scene scene = new Scene(fxmlLoader.load(), 480, 240);
+                ViewInterface v = fxmlLoader.getController();
 
-            TextInputDialog input = new TextInputDialog();
-            input.setTitle("Neuer Name der Notiz " + contextedNote.getLabel());
-            Optional<String> result = input.showAndWait();
-            contextedNote.setLabel(result.get());
-            notesLister.refresh();
-        });
-        MenuItem indentNoteMenuItem = new MenuItem("Einrücken");
-        indentNoteMenuItem.onActionProperty().set( event -> {
-            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
-            contextedNote.increaseLevel();
-            notesLister.refresh();
-        });
-        MenuItem deindentNoteMenuItem = new MenuItem("Ausrücken");
-        deindentNoteMenuItem.onActionProperty().set( event -> {
-            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
-            contextedNote.decreaseLevel();
-            notesLister.refresh();
-        });
-        notesListerMenu.getItems().add(renameNoteMenuItem);
-        notesListerMenu.getItems().add(indentNoteMenuItem);
-        notesListerMenu.getItems().add(deindentNoteMenuItem);
-        notesListerMenu.getItems().add(new SeparatorMenuItem());
-        notesListerMenu.getItems().add(deleteNoteMenuItem);
-        notesLister.setContextMenu(notesListerMenu);
-
-        notesLister.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Note>() {
-            @Override
-            public void changed(ObservableValue observableValue, Note old, Note selected) {
-                System.out.println("Changing View");
-                if (old != selected) {
-                    saveAndLoad(old, selected);
-                }
+                RadioMenuItem item = new RadioMenuItem();
+                item.setText(menuItemLabel);
+                item.setToggleGroup(viewMode);
+                AbstractMap.SimpleEntry<ViewInterface, Scene> set = new AbstractMap.SimpleEntry<>(v, scene);
+                mapping.put(item, set);
+                this.views.getItems().add(item);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         });
 
-        creationMenuButton.getItems().clear();
-        for (NoteType value : NoteType.values()) {
-            MenuItem tmp = new MenuItem();
-            tmp.setText(value.label);
-            tmp.onActionProperty().set( (ActionEvent e) -> {
-                createNote(value);
-            });
-            creationMenuButton.getItems().add(tmp);
-        }
-        supportedFileExtensions = new ArrayList<>();
-        supportedFileExtensions.add(new FileChooser.ExtensionFilter("campaign file", "*.campaign"));
+        viewMode.selectedToggleProperty().addListener((observableValue, toggle, t1) -> {
+           Scene editor = mapping.get(t1).getValue();
+           if (editor != null) {
+               activeInterface = mapping.get(t1).getKey();
+
+               inset.setCenter(editor.getRoot());
+               activeInterface.requestLoad(Note.getAll());
+           }
+        });
+        Map.Entry<Toggle, Map.Entry<ViewInterface, Scene>> first = mapping.entrySet().stream().findFirst().get();
+        viewMode.selectToggle(first.getKey());
+        // activeInterface = first.getValue().getKey();
     }
 
-    private EditorPlugin getByType (NoteType type) {
-        try {
-            return plugins.stream().filter( editorPlugin -> editorPlugin.defineHandler() == type).findFirst().get();
-        } catch (NoSuchElementException e) {
-            return null;
-        }
-    }
-
-    public void createNote(NoteType type) {
-        Note newNote = new Note(type.label, type, UUID.randomUUID(), new Date(), new Date(), "");
-        newNote.setPosition(Note.getAll().size());
-        notesLister.getItems().add(newNote);
-        notesLister.getSelectionModel().select(newNote);
-        saveAndLoad(activeNote, newNote);
-        lastCreationAction = type;
-        creationMenuButton.setText(type.label);
-    }
-
-    public void saveAndLoad(Note oldNote, Note newNote) {
-        boolean saveOkay = false;
-        boolean loadOkay = false;
-
-
-        EditorPlugin oldEditor = null;
-        EditorPlugin newEditor = null;
-        if (oldNote != null) {
-            oldEditor = getByType(oldNote.getType());
-        }
-        if (newNote != null) {
-            newEditor = getByType(newNote.getType());
-        }
-
-
-        if (oldEditor != null) {
-            Callback<Note, Boolean> saveEditor = oldEditor.defineSaveCallback();
-            saveOkay = saveEditor.call(oldNote);
-        }
-
-        if (newEditor != null) {
-            Node editor = newEditor.defineEditor();
-            newEditor.prepareToolbar(editorToolbar, stage);
-            editorWindow.setCenter(editor);
-
-            Callback<Note, Boolean> loadEditor = newEditor.defineLoadCallback();
-            loadOkay = loadEditor.call(newNote);
-
-            newEditor.setOnNoteRequest(new Callback<String, Note>() {
-                @Override
-                public Note call(String param) {
-                    return Note.findByReference(UUID.fromString(param));
-                }
-            });
-
-            newEditor.setOnNoteLoadRequest(new Callback<String, Boolean>() {
-                @Override
-                public Boolean call(String param) {
-                    Note found = Note.findByReference(UUID.fromString(param));
-                    if (found != null) {
-                        notesLister.getSelectionModel().select(found);
-                        saveAndLoad(newNote, found);
-                        return true;
-                    }
-                    return false;
-                }
-            });
-
-        }
-    }
-
-    @FXML
-    private BorderPane editorWindow;
-
-
-    @FXML
-    private ToolBar editorToolbar;
-
-    @FXML public void createNewNote(ActionEvent event) {
-       if (lastCreationAction != null) {
-           createNote(lastCreationAction);
-       }
-    }
-
-    @FXML public void deleteCurrentNote() {
-        Note selectedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
-        if (selectedNote != null) {
-            Note.remove(selectedNote);
-            notesLister.getItems().remove(selectedNote);
-        }
-    }
-
-    void setStage(Stage stage) {
-        this.stage = stage;
-    }
 
     @FXML public void createNewCampaign() throws IOException {
         // unsaved data check
         this.currentFile = null;
 
         Note.removeAll();
-        notesLister.setItems(FXCollections.observableArrayList(Note.getAll()));
-
+        activeInterface.requestLoad(Note.getAll());
     }
 
     @FXML public void openCampaign() throws IOException {
@@ -292,15 +121,18 @@ public class MainController {
         this.currentFile = newFile;
         if (newFile != null) {
             FileAccessLayer.loadFromFile(this.currentFile);
-            notesLister.setItems(FXCollections.observableArrayList(Note.getAll()));
+            if(activeInterface != null) {
+                activeInterface.requestLoad(Note.getAll());
+            }
         }
     }
 
     @FXML public void saveCampaign() throws IOException {
         // save current note just in case
-        if (activeNote != null) {
-            getByType(activeNote.getType()).defineSaveCallback().call(activeNote);
+        if (activeInterface != null) {
+            activeInterface.requestSave();
         }
+
         if (this.currentFile == null) {
             FileChooser dialog = new FileChooser();
             dialog.setTitle("Kampagne zum Speichern auswählen");

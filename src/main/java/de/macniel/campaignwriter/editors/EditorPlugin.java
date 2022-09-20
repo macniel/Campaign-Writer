@@ -7,7 +7,7 @@ import javafx.scene.control.ToolBar;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
-public interface EditorPlugin {
+public interface EditorPlugin<NOTE_DEFINITION> {
 
     NoteType defineHandler();
 
@@ -23,4 +23,6 @@ public interface EditorPlugin {
 
 
     void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback);
+
+    Node getPreviewVersionOf(NOTE_DEFINITION t);
 }

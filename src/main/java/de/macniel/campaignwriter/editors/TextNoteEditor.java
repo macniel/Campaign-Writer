@@ -19,7 +19,7 @@ import org.fxmisc.richtext.StyleClassedTextArea;
 
 import java.io.*;
 
-public class TextNoteEditor implements EditorPlugin {
+public class TextNoteEditor implements EditorPlugin<TextNoteDefinition> {
 
     private boolean contentHasChanged = false;
 
@@ -169,6 +169,11 @@ public class TextNoteEditor implements EditorPlugin {
     @Override
     public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
         this.onNoteLoadRequest = stringBooleanCallback;
+    }
+
+    @Override
+    public Node getPreviewVersionOf(TextNoteDefinition t) {
+        return null;
     }
 
 }

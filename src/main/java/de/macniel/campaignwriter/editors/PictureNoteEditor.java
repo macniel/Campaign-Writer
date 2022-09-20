@@ -14,6 +14,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.*;
 import javafx.util.Callback;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -23,7 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
-public class PictureNoteEditor implements EditorPlugin {
+public class PictureNoteEditor implements EditorPlugin<PictureNoteDefinition> {
     private ImageView viewer;
 
     private Gson gsonParser;
@@ -176,5 +177,10 @@ public class PictureNoteEditor implements EditorPlugin {
     @Override
     public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
         this.onNoteLoadRequest = stringBooleanCallback;
+    }
+
+    @Override
+    public Node getPreviewVersionOf(PictureNoteDefinition t) {
+        return new VBox();
     }
 }

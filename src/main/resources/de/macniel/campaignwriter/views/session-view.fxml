@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<SplitPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="de.macniel.campaignwriter.views.SessionView"
+           prefHeight="400.0" prefWidth="600.0" orientation="HORIZONTAL">
+
+    <BorderPane>
+        <center>
+            <ListView></ListView>
+        </center>
+        <bottom>
+            <ButtonBar>
+                <buttons>
+            <Button text="Sitzung"><graphic><FontIcon iconLiteral="icm-plus"></FontIcon></graphic></Button>
+            <Button><graphic><FontIcon iconLiteral="icm-bin"></FontIcon></graphic></Button>
+            <Button><graphic><FontIcon iconLiteral="icm-play3"></FontIcon> </graphic></Button>
+                </buttons>
+            </ButtonBar>
+        </bottom>
+    </BorderPane>
+    <ScrollPane>
+        <VBox>
+            <ComboBox promptText="Element Hinzufügen"></ComboBox>
+        </VBox>
+
+    </ScrollPane>
+
+</SplitPane>
