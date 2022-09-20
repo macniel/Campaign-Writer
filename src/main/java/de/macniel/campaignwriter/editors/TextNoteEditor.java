@@ -7,14 +7,10 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
-import org.fxmisc.flowless.VirtualizedScrollPane;
-import org.fxmisc.richtext.event.MouseOverTextEvent;
 import org.kordamp.ikonli.javafx.FontIcon;
-import org.fxmisc.richtext.StyleClassedTextArea;
 
 
 import java.io.*;
@@ -23,7 +19,7 @@ public class TextNoteEditor implements EditorPlugin<TextNoteDefinition> {
 
     private boolean contentHasChanged = false;
 
-    private StyleClassedTextArea editor;
+    private TextArea editor;
     private Callback<String, Note> onNoteRequest;
     private Callback<String, Boolean> onNoteLoadRequest;
 
@@ -49,32 +45,22 @@ public class TextNoteEditor implements EditorPlugin<TextNoteDefinition> {
         t.getItems().add(highlightButton);
 
         boldButton.onActionProperty().set(e -> {
-            IndexRange range = editor.getSelection();
-            editor.setStyleClass(range.getStart(), range.getEnd(), "bold");
             editor.requestFocus();
         });
 
         italicButton.onActionProperty().set(e -> {
-            IndexRange range = editor.getSelection();
-            editor.setStyleClass(range.getStart(), range.getEnd(), "italic");
             editor.requestFocus();
         });
 
         underlinedButton.onActionProperty().set(e -> {
-            IndexRange range = editor.getSelection();
-            editor.setStyleClass(range.getStart(), range.getEnd(), "underlined");
             editor.requestFocus();
         });
 
         strikethroughButton.onActionProperty().set(e -> {
-            IndexRange range = editor.getSelection();
-            editor.setStyleClass(range.getStart(), range.getEnd(), "strikethrough");
             editor.requestFocus();
         });
 
         highlightButton.onActionProperty().set(e -> {
-            IndexRange range = editor.getSelection();
-            editor.setStyleClass(range.getStart(), range.getEnd(), "highlighted");
             editor.requestFocus();
         });
 
@@ -89,7 +75,7 @@ public class TextNoteEditor implements EditorPlugin<TextNoteDefinition> {
     @Override
     public Node defineEditor() {
 
-        editor = new StyleClassedTextArea();
+        editor = new TextArea();
 
         editor.onKeyTypedProperty().set(this::onEditorKeyTyped);
 
@@ -123,9 +109,7 @@ public class TextNoteEditor implements EditorPlugin<TextNoteDefinition> {
             }
         });
 
-        VirtualizedScrollPane<StyleClassedTextArea> vsPane = new VirtualizedScrollPane<>(editor);
-
-        return vsPane;
+        return editor;
     }
 
     @Override

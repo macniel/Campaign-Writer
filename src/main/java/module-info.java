@@ -6,8 +6,6 @@ module de.macniel.campaignwriter {
     requires com.dlsc.formsfx;
     requires org.kordamp.ikonli.javafx;
     requires com.google.gson;
-    requires org.fxmisc.richtext;
-    requires org.fxmisc.flowless;
     requires org.apache.commons.imaging;
 
     opens de.macniel.campaignwriter to javafx.fxml;
