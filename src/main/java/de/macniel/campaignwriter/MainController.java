@@ -4,7 +4,13 @@ import de.macniel.campaignwriter.editors.*;
 import de.macniel.campaignwriter.views.BuildingView;
 import de.macniel.campaignwriter.views.SessionView;
 import de.macniel.campaignwriter.views.ViewInterface;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableObjectValue;
+import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -35,6 +41,12 @@ public class MainController {
 
     private ArrayList<EditorPlugin> plugins;
 
+    private ObjectProperty<String> title;
+
+    public ObjectProperty<String> getTitle() {
+        return title;
+    }
+
     private File currentFile;
 
     @FXML
@@ -57,6 +69,9 @@ public class MainController {
 
     @FXML
     public void initialize() throws IOException {
+
+        title = new SimpleObjectProperty<>();
+
         supportedFileExtensions = new ArrayList<>();
         supportedFileExtensions.add(new FileChooser.ExtensionFilter("campaign file", "*.campaign"));
 
@@ -124,6 +139,7 @@ public class MainController {
             if(activeInterface != null) {
                 activeInterface.requestLoad(Note.getAll());
             }
+            title.set(this.currentFile.getName());
         }
     }
 
@@ -141,6 +157,7 @@ public class MainController {
         }
         if (this.currentFile != null) {
             FileAccessLayer.saveToFile(this.currentFile, Note.getAll());
+            title.set(this.currentFile.getName());
         }
     }
 

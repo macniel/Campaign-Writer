@@ -16,6 +16,15 @@ public class CampaignWriterApplication extends Application {
 
         MainController controller = fxmlLoader.getController();
         scene.getStylesheets().add(CampaignWriterApplication.class.getResource("note-editor.css").toExternalForm());
+
+        controller.getTitle().addListener( (change, oldValue, newValue) -> {
+            if (newValue != null || newValue.isEmpty()) {
+                stage.setTitle("Campaign Writer - " + newValue);
+            } else {
+                stage.setTitle("Campaign Writer");
+            }
+        });
+
         stage.setTitle("Campaign Writer");
         stage.setScene(scene);
         stage.show();
