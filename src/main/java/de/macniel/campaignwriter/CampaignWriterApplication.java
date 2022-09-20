@@ -3,6 +3,7 @@ package de.macniel.campaignwriter;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -24,6 +25,12 @@ public class CampaignWriterApplication extends Application {
                 stage.setTitle("Campaign Writer");
             }
         });
+
+        stage.getIcons().add(new Image(CampaignWriterApplication.class.getResourceAsStream("paint_the_world_512.png")));
+        stage.getIcons().add(new Image(CampaignWriterApplication.class.getResourceAsStream("paint_the_world_256.png")));
+        stage.getIcons().add(new Image(CampaignWriterApplication.class.getResourceAsStream("paint_the_world_128.png")));
+        stage.getIcons().add(new Image(CampaignWriterApplication.class.getResourceAsStream("paint_the_world_32.png")));
+
 
         stage.setTitle("Campaign Writer");
         stage.setScene(scene);
