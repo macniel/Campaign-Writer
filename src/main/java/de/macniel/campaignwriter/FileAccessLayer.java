@@ -54,8 +54,6 @@ public class FileAccessLayer {
 
     public Map.Entry<String, Image> getImageFromString(String s) {
         try {
-            // TODO: lookup filename S campaign, else load it from file referenced by absolutePath s, make a base64 copy and store it in campaign and return image alongside new internal filename
-            File f = new File(s);
             String uuid = UUID.randomUUID().toString();
             byte[] input = Files.readAllBytes(Paths.get(s));
             String base64Asset = new String(Base64.getEncoder().encode(input));
