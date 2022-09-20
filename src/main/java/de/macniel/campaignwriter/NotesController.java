@@ -42,24 +42,23 @@ public class NotesController {
 
 
         this.note = note;
-        if (note != null) {
-            this.label.setText(note.getLabel());
-        }
     }
 
     public void setItem(Note note) {
-        view.setPadding(new Insets(0, 0, 0, note.getLevel() * 8));
-        this.note = note;
-        this.label.setText(note.getLabel());
-        view.backgroundProperty().set(Background.EMPTY);
-        switch (note.getType()) {
-            case LOCATION_NOTE -> icon.setIconLiteral("icm-location");
-            case TEXT_NOTE -> icon.setIconLiteral("icm-file-text");
-            case ACTOR_NOTE -> icon.setIconLiteral("icm-user");
-            case MAP_NOTE -> icon.setIconLiteral("icm-map");
-            case PICTURE_NOTE -> icon.setIconLiteral("icm-image");
-            case SCENE_NOTE -> icon.setIconLiteral("icm-clock");
-            case RELATIONSHIP_NOTE -> icon.setIconLiteral("icm-share2");
+        if (note != null) {
+            view.setPadding(new Insets(0, 0, 0, note.getLevel() * 8));
+            this.note = note;
+            this.label.setText(note.getLabel());
+            view.backgroundProperty().set(Background.EMPTY);
+            switch (note.getType()) {
+                case LOCATION_NOTE -> icon.setIconLiteral("icm-location");
+                case TEXT_NOTE -> icon.setIconLiteral("icm-file-text");
+                case ACTOR_NOTE -> icon.setIconLiteral("icm-user");
+                case MAP_NOTE -> icon.setIconLiteral("icm-map");
+                case PICTURE_NOTE -> icon.setIconLiteral("icm-image");
+                case SCENE_NOTE -> icon.setIconLiteral("icm-clock");
+                case RELATIONSHIP_NOTE -> icon.setIconLiteral("icm-share2");
+            }
         }
     }
 

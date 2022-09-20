@@ -85,6 +85,7 @@ public class BuildingView implements ViewInterface {
         plugins.add(new PictureNoteEditor());
         plugins.add(new MapNoteEditor());
         plugins.add(new ActorEditor());
+        plugins.add(new SceneEditor());
 
         notes = FXCollections.observableArrayList();
 

@@ -33,10 +33,14 @@ public class MapViewer implements ViewerPlugin {
     @Override
     public Node renderNote(Note note, ObservableDoubleValue width) {
 
+        VBox child = new VBox();
+
+        Label labelOfNote = new Label(note.label);
 
         ScrollPane p = new ScrollPane();
         p.setPannable(true);
         System.out.println(note.type);
+        p.setMaxWidth(width.get());
 
         MapNoteDefinition noteStructure = gsonParser.fromJson(note.content, MapNoteDefinition.class);
         if (noteStructure != null) {
@@ -44,8 +48,21 @@ public class MapViewer implements ViewerPlugin {
             Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(noteStructure.backgroundPath);
             ImageView view = new ImageView(entry.getValue());
 
+            view.setPreserveRatio(true);
+            view.setFitHeight(view.getImage().getHeight() /2);
+            System.out.println(view.getFitHeight());
+
             width.addListener( (observable, oldValue, newValue) -> {
                 p.setMaxWidth(newValue.doubleValue());
+                view.setFitHeight(view.getImage().getHeight() /2);
+            });
+
+
+            view.onMouseClickedProperty().set(e -> {
+                if (e.getClickCount() == 2) {
+                    System.out.println("double click");
+                    e.consume();
+                }
             });
 
             p.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -55,6 +72,9 @@ public class MapViewer implements ViewerPlugin {
             p.setPrefHeight(400);
         }
 
-        return p;
+        child.getChildren().add(labelOfNote);
+        child.getChildren().add(p);
+
+        return child;
     }
 }

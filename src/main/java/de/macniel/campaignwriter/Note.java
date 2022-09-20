@@ -111,4 +111,13 @@ public class Note implements Serializable {
     public void setPosition(int position) {
         this.position = position;
     }
+
+    @Override
+    public String toString() {
+        if (label != null) {
+            return label;
+        } else {
+            return "UNKNOWN";
+        }
+    }
 }

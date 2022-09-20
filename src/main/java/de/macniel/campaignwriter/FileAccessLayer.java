@@ -82,6 +82,7 @@ public class FileAccessLayer {
             if (gsonParser == null) {
                 gsonParser = new Gson();
             }
+            // TODO: Count Base64 Refs for Garbage Collecting
             gsonParser.toJson(file, CampaignFile.class, writer);
 
         } catch (Exception e) {
