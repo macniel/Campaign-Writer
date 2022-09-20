@@ -3,6 +3,7 @@ package de.macniel.campaignwriter;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import de.macniel.campaignwriter.editors.SessionNote;
 import javafx.scene.image.Image;
 
 import java.io.*;
@@ -101,7 +102,7 @@ public class FileAccessLayer {
     }
 
 
-    private Note findByReference(UUID ref) {
+    public Note findByReference(UUID ref) {
         System.out.println("searching for " + ref);
         return file.notes.stream().filter( note -> {
             System.out.println(note.reference);
@@ -122,5 +123,21 @@ public class FileAccessLayer {
 
     public List<Note> getAllNotes() {
         return file.notes;
+    }
+
+    public void removeSessionNote(SessionNote note) {
+        file.sessionNotes.remove(note);
+    }
+
+    public void addSessionNote(int position, SessionNote note) {
+        file.sessionNotes.add(position, note);
+    }
+
+    public void addNote(int position, Note note) {
+        file.notes.add(position, note);
+    }
+
+    public List<SessionNote> getAllSessionNotes() {
+        return file.sessionNotes;
     }
 }

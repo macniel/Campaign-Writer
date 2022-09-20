@@ -10,25 +10,28 @@
 <SplitPane xmlns="http://javafx.com/javafx"
            xmlns:fx="http://javafx.com/fxml"
            fx:controller="de.macniel.campaignwriter.views.SessionView"
-           prefHeight="400.0" prefWidth="600.0" orientation="HORIZONTAL">
+           prefHeight="400.0" prefWidth="600.0">
 
     <BorderPane>
         <center>
-            <ListView></ListView>
+            <ListView fx:id="notesLister"/>
         </center>
         <bottom>
             <ButtonBar>
                 <buttons>
-            <Button text="Sitzung"><graphic><FontIcon iconLiteral="icm-plus"></FontIcon></graphic></Button>
-            <Button><graphic><FontIcon iconLiteral="icm-bin"></FontIcon></graphic></Button>
-            <Button><graphic><FontIcon iconLiteral="icm-play3"></FontIcon> </graphic></Button>
+            <Button text="Sitzung" onAction="#newSession"><graphic>
+                <FontIcon iconLiteral="icm-plus"/></graphic></Button>
+            <Button onAction="#deleteSession"><graphic>
+                <FontIcon iconLiteral="icm-bin"/></graphic></Button>
+            <Button onAction="#startSession"><graphic>
+                <FontIcon iconLiteral="icm-play3"/> </graphic></Button>
                 </buttons>
             </ButtonBar>
         </bottom>
     </BorderPane>
     <ScrollPane>
-        <VBox>
-            <ComboBox promptText="Element Hinzufügen"></ComboBox>
+        <VBox fx:id="scriptBox">
+            <ComboBox promptText="Element Hinzufügen"/>
         </VBox>
 
     </ScrollPane>

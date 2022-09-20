@@ -86,7 +86,7 @@ public class MainController {
                activeInterface = mapping.get(t1).getKey();
 
                inset.setCenter(editor.getRoot());
-               activeInterface.requestLoad(FileAccessLayer.getInstance().getAllNotes());
+               activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
            }
         });
 
@@ -103,7 +103,7 @@ public class MainController {
         this.currentFile = null;
         FileAccessLayer.getInstance().newCampaign();
 
-        activeInterface.requestLoad(FileAccessLayer.getInstance().getAllNotes());
+        activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
     }
 
     @FXML public void openCampaign() throws IOException {
@@ -116,7 +116,7 @@ public class MainController {
         if (newFile != null) {
             FileAccessLayer.getInstance().loadFromFile(this.currentFile);
             if(activeInterface != null) {
-                activeInterface.requestLoad(FileAccessLayer.getInstance().getAllNotes());
+                activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
             }
             title.set(this.currentFile.getName());
         }

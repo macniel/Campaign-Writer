@@ -1,9 +1,6 @@
 package de.macniel.campaignwriter.views;
 
-import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.Note;
-import de.macniel.campaignwriter.NoteType;
-import de.macniel.campaignwriter.NotesRenderer;
+import de.macniel.campaignwriter.*;
 import de.macniel.campaignwriter.editors.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -24,14 +21,14 @@ import javafx.util.Callback;
 import java.io.File;
 import java.util.*;
 
-public class BuildingView implements ViewInterface<Note> {
+public class BuildingView implements ViewInterface {
 
     private ObservableList<Note> notes;
 
     private Note activeNote;
 
     @FXML
-    public ListView notesLister;
+    public ListView<Note> notesLister;
 
     @FXML
     public TextArea editor;
@@ -74,11 +71,10 @@ public class BuildingView implements ViewInterface<Note> {
         return "Worldbuilding";
     }
 
-    public void requestLoad(List<Note> notes) {
-        System.out.println(notesLister);
+    public void requestLoad(CampaignFile file) {
         if (notesLister != null) {
-            System.out.println("Loading " + notes.size() + " notes");
-            notesLister.setItems(FXCollections.observableArrayList(notes));
+            System.out.println("Loading " + file.notes.size() + " notes");
+            notesLister.setItems(FXCollections.observableArrayList(file.notes));
         }
     }
     @FXML
@@ -118,7 +114,7 @@ public class BuildingView implements ViewInterface<Note> {
             t.onDragDroppedProperty().set(e -> {
                 if (dragElement != null) {
                     FileAccessLayer.getInstance().removeNote(dragElement);
-                    Note.add(dragPosition, dragElement);
+                    FileAccessLayer.getInstance().addNote(dragPosition, dragElement);
                     notesLister.setItems(FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes()));
                 }
                 e.setDropCompleted(true);
