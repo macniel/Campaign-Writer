@@ -2,6 +2,8 @@ package de.macniel.campaignwriter.views;
 
 import de.macniel.campaignwriter.*;
 import de.macniel.campaignwriter.editors.SessionNote;
+import de.macniel.campaignwriter.viewers.MapViewer;
+import de.macniel.campaignwriter.viewers.SceneViewer;
 import de.macniel.campaignwriter.viewers.TextViewer;
 import de.macniel.campaignwriter.viewers.ViewerPlugin;
 import javafx.beans.value.ChangeListener;
@@ -9,13 +11,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
+import javafx.scene.Node;
+import javafx.scene.control.*;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
@@ -38,6 +39,9 @@ public class SessionView implements ViewInterface {
 
     @FXML
     private VBox scriptBox;
+
+    @FXML
+    private ScrollPane scroller;
 
     int dragPosition;
 
@@ -79,6 +83,8 @@ public class SessionView implements ViewInterface {
         notesLister.setItems(notes);
         scrollInterpreter = new ArrayList<ViewerPlugin>();
         scrollInterpreter.add(new TextViewer());
+        scrollInterpreter.add(new MapViewer());
+        scrollInterpreter.add(new SceneViewer());
 
         notesLister.setCellFactory(listView -> {
             ListCell<SessionNote> t = new SessionNotesRenderer();
@@ -131,7 +137,8 @@ public class SessionView implements ViewInterface {
             activeNote = newNote;
             updateScroll();
         });
-
+        scroller.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scroller.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
     }
 
     public void updateScroll() {
@@ -141,6 +148,7 @@ public class SessionView implements ViewInterface {
             activeNote.getNotes().forEach(noteUUID -> {
                 Note note = FileAccessLayer.getInstance().findByReference(noteUUID);
                 HBox line = new HBox();
+                AnchorPane p = new AnchorPane();
 
                 scrollInterpreter
                         .stream()
@@ -148,10 +156,18 @@ public class SessionView implements ViewInterface {
                         .findFirst()
                         .ifPresent(viewerPlugin -> {
                             System.out.println("viewer plugin found " + viewerPlugin);
-                            line.getChildren().add(viewerPlugin.renderNote(note));
+                            Node viewNode = viewerPlugin.renderNote(note, scroller.widthProperty());
+                            p.getChildren().add(viewNode);
+                            AnchorPane.setBottomAnchor(viewNode, 0.0);
+                            AnchorPane.setTopAnchor(viewNode, 0.0);
+                            AnchorPane.setLeftAnchor(viewNode, 0.0);
+                            AnchorPane.setRightAnchor(viewNode, 0.0);
+
+
                         });
 
 
+                line.getChildren().add(p);
                 scriptBox.getChildren().add(line);
             });
 

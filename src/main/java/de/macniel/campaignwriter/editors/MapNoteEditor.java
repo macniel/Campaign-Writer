@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
+import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.adapters.ColorAdapter;
 import javafx.collections.FXCollections;
 import javafx.scene.Cursor;
@@ -175,6 +176,7 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
                 System.out.print(viewer.getHvalue());
                 System.out.println(viewer.getVvalue());
             });
+            viewer.setPannable(true);
 
             viewer.setHvalue(noteStructure.scrollPositionX);
             viewer.setVvalue(noteStructure.scrollPositionY);
@@ -356,26 +358,12 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
         List<Note> notes = FileAccessLayer.getInstance().getAllNotes(); // TODO: this should not be possible, request maincontroller instead
         noteReferenceProp.setItems(FXCollections.observableArrayList(notes));
 
-        Callback<ListView<Note>, ListCell<Note>> itemCellFactory = new Callback<ListView<Note>, ListCell<Note>>() {
+        noteReferenceProp.setCellFactory(new Callback<ListView<Note>, ListCell<Note>>() {
             @Override
-            public ListCell<Note> call(ListView<Note> param) {
-                return new ListCell<Note>() {
-
-                    @Override
-                    protected void updateItem(Note item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (item == null || empty) {
-                            setGraphic(null);
-                        } else {
-                            setText(item.getLabel());
-                        }
-                    }
-                } ;
+            public ListCell<Note> call(ListView<Note> noteListView) {
+                return new NotesRenderer();
             }
-        };
-
-        noteReferenceProp.setButtonCell(itemCellFactory.call(null));
-        noteReferenceProp.setCellFactory(itemCellFactory);
+        });
 
     }
 

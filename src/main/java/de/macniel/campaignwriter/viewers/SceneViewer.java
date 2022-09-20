@@ -4,22 +4,16 @@ import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
 import javafx.beans.value.ObservableDoubleValue;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
+import javafx.scene.layout.VBox;
 
-public class TextViewer implements ViewerPlugin {
-
-
+public class SceneViewer implements ViewerPlugin {
     @Override
     public NoteType defineNoteType() {
-        return NoteType.TEXT_NOTE;
+        return NoteType.SCENE_NOTE;
     }
 
     @Override
     public Node renderNote(Note note, ObservableDoubleValue parentWidth) {
-        Label l = new Label(note.content);
-
-        return l;
+        return new VBox();
     }
 }

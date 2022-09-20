@@ -10,7 +10,7 @@ public class MapNoteDefinition {
     public double scale;
     ArrayList<MapPin> pins;
 
-    String backgroundPath;
+    public String backgroundPath;
 
     double scrollPositionX;
 
