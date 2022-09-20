@@ -25,20 +25,6 @@ public class Note implements Serializable {
         this(label, type, UUID.randomUUID());
     }
 
-    public static void remove(Note selectedNote) {
-        if (findByReference(selectedNote.getReference()) != null) {
-            dataset.remove(selectedNote);
-        }
-    }
-
-    public static void removeAll() {
-        dataset.clear();
-    }
-
-    public static ArrayList<Note> getAll() {
-        return dataset;
-    }
-
     public static void add(int dragPosition, Note dragElement) {
         dataset.add(dragPosition, dragElement);
     }
@@ -48,10 +34,6 @@ public class Note implements Serializable {
     }
 
     static ArrayList<Note> dataset = new ArrayList<>();
-
-    static Note findByReference(UUID ref) {
-        return dataset.stream().filter( note -> note.getReference().equals(ref) ).findFirst().get();
-    }
 
     public Note(String label, NoteType type, UUID reference, Date createdDate, Date lastModifiedDate, String content) {
         this.label = label;

@@ -110,7 +110,7 @@ public class MainController {
                activeInterface = mapping.get(t1).getKey();
 
                inset.setCenter(editor.getRoot());
-               activeInterface.requestLoad(Note.getAll());
+               activeInterface.requestLoad(FileAccessLayer.getInstance().getAllNotes());
            }
         });
         Map.Entry<Toggle, Map.Entry<ViewInterface, Scene>> first = mapping.entrySet().stream().findFirst().get();
@@ -122,9 +122,9 @@ public class MainController {
     @FXML public void createNewCampaign() throws IOException {
         // unsaved data check
         this.currentFile = null;
+        FileAccessLayer.getInstance().newCampaign();
 
-        Note.removeAll();
-        activeInterface.requestLoad(Note.getAll());
+        activeInterface.requestLoad(FileAccessLayer.getInstance().getAllNotes());
     }
 
     @FXML public void openCampaign() throws IOException {
@@ -135,9 +135,9 @@ public class MainController {
         File newFile = dialog.showOpenDialog(stage);
         this.currentFile = newFile;
         if (newFile != null) {
-            FileAccessLayer.loadFromFile(this.currentFile);
+            FileAccessLayer.getInstance().loadFromFile(this.currentFile);
             if(activeInterface != null) {
-                activeInterface.requestLoad(Note.getAll());
+                activeInterface.requestLoad(FileAccessLayer.getInstance().getAllNotes());
             }
             title.set(this.currentFile.getName());
         }
@@ -156,7 +156,7 @@ public class MainController {
             this.currentFile = dialog.showSaveDialog(stage);
         }
         if (this.currentFile != null) {
-            FileAccessLayer.saveToFile(this.currentFile, Note.getAll());
+            FileAccessLayer.getInstance().saveToFile(this.currentFile);
             title.set(this.currentFile.getName());
         }
     }

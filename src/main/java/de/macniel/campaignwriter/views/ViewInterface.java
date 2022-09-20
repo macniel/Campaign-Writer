@@ -5,6 +5,7 @@ import javafx.scene.Node;
 import javafx.util.Callback;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public interface ViewInterface<T> {
@@ -13,7 +14,7 @@ public interface ViewInterface<T> {
 
     public String getMenuItemLabel();
 
-    public abstract void requestLoad(ArrayList<T> items);
+    public abstract void requestLoad(List<T> items);
 
     public abstract void requestSave();
 

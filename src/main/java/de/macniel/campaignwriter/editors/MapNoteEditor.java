@@ -2,6 +2,7 @@ package de.macniel.campaignwriter.editors;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
 import de.macniel.campaignwriter.adapters.ColorAdapter;
@@ -27,6 +28,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
@@ -91,7 +94,9 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
                 if (noteStructure == null) {
                     noteStructure = new MapNoteDefinition();
                 }
-                noteStructure.backgroundPath = actualFile.getAbsolutePath();
+                Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(actualFile.getAbsolutePath());
+                noteStructure.backgroundPath = entry.getKey();
+                System.out.println("storing image as " + entry.getKey());
                 noteStructure.zoomFactor = 1;
                 refreshView();
             } catch (Exception ex) {
@@ -153,13 +158,8 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
         if (noteStructure != null) {
             root.getChildren().clear();
             root.getChildren().add(backgroundLayer);
-            File f = new File(noteStructure.backgroundPath);
-
-            try {
-                backgroundLayer.imageProperty().set(new Image(new FileInputStream(f)));
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+            Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(noteStructure.backgroundPath);
+            backgroundLayer.imageProperty().set(entry.getValue());
             viewer.setScaleZ(noteStructure.zoomFactor);
 
             BorderPane bp = (BorderPane) viewer.getParent();
@@ -353,7 +353,7 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
     }
 
     void populateNoteReferenceProp() {
-        ArrayList<Note> notes = Note.getAll(); // TODO: this should not be possible, request maincontroller instead
+        List<Note> notes = FileAccessLayer.getInstance().getAllNotes(); // TODO: this should not be possible, request maincontroller instead
         noteReferenceProp.setItems(FXCollections.observableArrayList(notes));
 
         Callback<ListView<Note>, ListCell<Note>> itemCellFactory = new Callback<ListView<Note>, ListCell<Note>>() {

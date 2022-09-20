@@ -8,6 +8,7 @@ module de.macniel.campaignwriter {
     requires com.google.gson;
     requires org.fxmisc.richtext;
     requires org.fxmisc.flowless;
+    requires org.apache.commons.imaging;
 
     opens de.macniel.campaignwriter to javafx.fxml;
     opens de.macniel.campaignwriter.views to javafx.fxml;

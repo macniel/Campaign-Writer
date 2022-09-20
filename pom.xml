@@ -94,6 +94,11 @@
             <artifactId>flowless</artifactId>
             <version>0.6.10</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-imaging</artifactId>
+            <version>1.0-alpha2</version>
+        </dependency>
     </dependencies>
 
     <build>

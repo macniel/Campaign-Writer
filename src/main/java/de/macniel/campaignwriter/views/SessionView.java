@@ -4,6 +4,7 @@ import de.macniel.campaignwriter.Note;
 import javafx.util.Callback;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class SessionView implements ViewInterface<Note> {
@@ -20,7 +21,7 @@ public class SessionView implements ViewInterface<Note> {
     }
 
     @Override
-    public void requestLoad(ArrayList<Note> items) {
+    public void requestLoad(List<Note> items) {
 
     }
 

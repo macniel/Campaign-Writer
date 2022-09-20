@@ -1,5 +1,6 @@
 package de.macniel.campaignwriter.views;
 
+import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
 import de.macniel.campaignwriter.NotesRenderer;
@@ -25,18 +26,9 @@ import java.util.*;
 
 public class BuildingView implements ViewInterface<Note> {
 
-    private ObservableList<String> sortingOptions;
-
     private ObservableList<Note> notes;
 
-    private boolean contentHasChanged = false;
-
     private Note activeNote;
-
-    private File currentFile;
-
-    @FXML
-    public Button createPageButton;
 
     @FXML
     public ListView notesLister;
@@ -82,9 +74,10 @@ public class BuildingView implements ViewInterface<Note> {
         return "Worldbuilding";
     }
 
-    public void requestLoad(ArrayList<Note> notes) {
+    public void requestLoad(List<Note> notes) {
         System.out.println(notesLister);
         if (notesLister != null) {
+            System.out.println("Loading " + notes.size() + " notes");
             notesLister.setItems(FXCollections.observableArrayList(notes));
         }
     }
@@ -124,9 +117,9 @@ public class BuildingView implements ViewInterface<Note> {
 
             t.onDragDroppedProperty().set(e -> {
                 if (dragElement != null) {
-                    Note.remove(dragElement);
+                    FileAccessLayer.getInstance().removeNote(dragElement);
                     Note.add(dragPosition, dragElement);
-                    notesLister.setItems(FXCollections.observableArrayList(Note.getAll()));
+                    notesLister.setItems(FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes()));
                 }
                 e.setDropCompleted(true);
                 e.consume();
@@ -152,7 +145,7 @@ public class BuildingView implements ViewInterface<Note> {
         MenuItem deleteNoteMenuItem = new MenuItem("Löschen");
         deleteNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
-            Note.remove(contextedNote);
+            FileAccessLayer.getInstance().removeNote(contextedNote);
             notesLister.getItems().remove(contextedNote);
             notesLister.refresh();
         });
@@ -216,8 +209,9 @@ public class BuildingView implements ViewInterface<Note> {
     }
 
     public void createNote(NoteType type) {
+
         Note newNote = new Note(type.label, type, UUID.randomUUID(), new Date(), new Date(), "");
-        newNote.setPosition(Note.getAll().size());
+        FileAccessLayer.getInstance().getAllNotes().add(newNote);
         notesLister.getItems().add(newNote);
         notesLister.getSelectionModel().select(newNote);
         saveAndLoad(activeNote, newNote);
@@ -252,6 +246,7 @@ public class BuildingView implements ViewInterface<Note> {
 
             Callback<Note, Boolean> loadEditor = newEditor.defineLoadCallback();
             loadOkay = loadEditor.call(newNote);
+            activeNote = newNote;
 
             newEditor.setOnNoteRequest(new Callback<String, Note>() {
                 @Override
@@ -292,7 +287,7 @@ public class BuildingView implements ViewInterface<Note> {
     @FXML public void deleteCurrentNote() {
         Note selectedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
         if (selectedNote != null) {
-            Note.remove(selectedNote);
+            FileAccessLayer.getInstance().removeNote(selectedNote);
             notesLister.getItems().remove(selectedNote);
         }
     }

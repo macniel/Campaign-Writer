@@ -9,6 +9,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.HBox;
@@ -24,6 +25,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
@@ -164,7 +166,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     v.setFitHeight(250);
 
                     if (item.content != null) {
-                        v.setImage(FileAccessLayer.getImageFromString(item.content));
+                        v.setImage(FileAccessLayer.getInstance().getImageFromString(item.content).getValue());
                     }
 
                     Button selectFileButton = new Button("", new FontIcon("icm-link"));
@@ -178,7 +180,9 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                         File selectedFile = chooser.showOpenDialog(null);
                         if (selectedFile != null) {
                             item.content = selectedFile.getAbsolutePath();
-                            v.setImage(FileAccessLayer.getImageFromString(item.content));
+                            Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(selectedFile.getAbsolutePath());
+                            item.content = entry.getKey();
+                            v.setImage(entry.getValue());
                         }
                     });
 
@@ -197,7 +201,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     v.setFitHeight(250);
 
                     if (item.content != null) {
-                        v.setImage(FileAccessLayer.getImageFromString(item.content));
+                        v.setImage(FileAccessLayer.getInstance().getImageFromString(item.content).getValue());
                     }
 
                     line.getChildren().add(label);
