@@ -1,45 +1,29 @@
 package de.macniel.campaignwriter;
 
-import de.macniel.campaignwriter.editors.*;
 import de.macniel.campaignwriter.views.BuildingView;
 import de.macniel.campaignwriter.views.SessionView;
 import de.macniel.campaignwriter.views.ViewInterface;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableObjectValue;
-import javafx.beans.value.ObservableStringValue;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.TransferMode;
+import javafx.scene.control.Menu;
+import javafx.scene.control.RadioMenuItem;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-import javafx.util.Callback;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class MainController {
 
 
     private ArrayList<FileChooser.ExtensionFilter> supportedFileExtensions;
-
-    private ArrayList<EditorPlugin> plugins;
 
     private ObjectProperty<String> title;
 
@@ -50,17 +34,9 @@ public class MainController {
     private File currentFile;
 
     @FXML
-    private RadioMenuItem viewBuilding;
-    @FXML
-    private RadioMenuItem viewSession;
-    @FXML
-    private RadioMenuItem viewEncounter;
-
-    @FXML
     private BorderPane inset;
 
-    private Stage stage;
-
+    @SuppressWarnings("rawtypes")
     private ViewInterface activeInterface;
 
     @FXML
@@ -68,7 +44,7 @@ public class MainController {
 
 
     @FXML
-    public void initialize() throws IOException {
+    public void initialize() {
 
         title = new SimpleObjectProperty<>();
 
@@ -113,13 +89,16 @@ public class MainController {
                activeInterface.requestLoad(FileAccessLayer.getInstance().getAllNotes());
            }
         });
-        Map.Entry<Toggle, Map.Entry<ViewInterface, Scene>> first = mapping.entrySet().stream().findFirst().get();
-        viewMode.selectToggle(first.getKey());
-        // activeInterface = first.getValue().getKey();
+
+        Optional<Map.Entry<Toggle, Map.Entry<ViewInterface, Scene>>> first = mapping.entrySet().stream().findFirst();
+        if (first.isPresent()) {
+            viewMode.selectToggle(first.get().getKey());
+            activeInterface = first.get().getValue().getKey();
+        }
     }
 
 
-    @FXML public void createNewCampaign() throws IOException {
+    @FXML public void createNewCampaign() {
         // unsaved data check
         this.currentFile = null;
         FileAccessLayer.getInstance().newCampaign();
@@ -132,7 +111,7 @@ public class MainController {
         dialog.setTitle("Kampagne zum Öffnen auswählen");
 
         dialog.getExtensionFilters().setAll(supportedFileExtensions);
-        File newFile = dialog.showOpenDialog(stage);
+        File newFile = dialog.showOpenDialog(null);
         this.currentFile = newFile;
         if (newFile != null) {
             FileAccessLayer.getInstance().loadFromFile(this.currentFile);
@@ -153,7 +132,7 @@ public class MainController {
             FileChooser dialog = new FileChooser();
             dialog.setTitle("Kampagne zum Speichern auswählen");
             dialog.getExtensionFilters().setAll(supportedFileExtensions);
-            this.currentFile = dialog.showSaveDialog(stage);
+            this.currentFile = dialog.showSaveDialog(null);
         }
         if (this.currentFile != null) {
             FileAccessLayer.getInstance().saveToFile(this.currentFile);
