@@ -143,6 +143,7 @@ public class SessionView implements ViewInterface {
 
     public void updateScroll() {
         if (activeNote != null) {
+            scroller.setVisible(true);
             scriptBox.getChildren().clear();
 
             activeNote.getNotes().forEach(noteUUID -> {
@@ -192,6 +193,8 @@ public class SessionView implements ViewInterface {
             });
 
             scriptBox.getChildren().add(adder);
+        } else {
+            scroller.setVisible(false);
         }
     }
 
@@ -204,7 +207,12 @@ public class SessionView implements ViewInterface {
     }
 
     public void deleteSession(ActionEvent actionEvent) {
-        //TODO: do not delete a session that was already played to prevent information loss
+        if (activeNote != null && !activeNote.getPlayed() && notes.contains(activeNote)) {
+            notes.remove(activeNote);
+            activeNote = null;
+            notesLister.getSelectionModel().clearSelection();
+            updateScroll();
+        }
     }
 
     public void startSession(ActionEvent actionEvent) {

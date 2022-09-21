@@ -4,7 +4,7 @@ import de.macniel.campaignwriter.NoteType;
 
 public class ActorNoteItem {
 
-    enum ActorNoteItemType {
+    public enum ActorNoteItemType {
         HEADER("Überschrift"),
         TEXT("Text"),
         RESOURCE("Resource"),
@@ -37,4 +37,43 @@ public class ActorNoteItem {
 
     Integer value;
 
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public void setMax(Integer max) {
+        this.max = max;
+    }
+
+    public void setType(ActorNoteItemType type) {
+        this.type = type;
+    }
+
+    public void setValue(Integer value) {
+        this.value = value;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public ActorNoteItemType getType() {
+        return type;
+    }
+
+    public Integer getMax() {
+        return max;
+    }
+
+    public Integer getValue() {
+        return value;
+    }
+
+    public String getContent() {
+        return content;
+    }
 }

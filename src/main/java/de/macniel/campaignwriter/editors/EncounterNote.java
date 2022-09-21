@@ -4,12 +4,13 @@ import de.macniel.campaignwriter.Note;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class EncounterNote {
 
-    List<Note> combatants;
+    List<Combatant> combatants;
 
-    Note encounterLocation;
+    UUID encounterLocation;
 
     String circumstances;
 
@@ -21,4 +22,48 @@ public class EncounterNote {
         combatants = new ArrayList<>();
     }
 
+    public void setCircumstances(String circumstances) {
+        this.circumstances = circumstances;
+    }
+
+    public void setCombatants(List<Combatant> combatants) {
+        this.combatants = combatants;
+    }
+
+    public void setEncounterDifficulty(String encounterDifficulty) {
+        this.encounterDifficulty = encounterDifficulty;
+    }
+
+    public void setEncounterLocation(UUID encounterLocation) {
+        this.encounterLocation = encounterLocation;
+    }
+
+    public void setEncounterName(String encounterName) {
+        this.encounterName = encounterName;
+    }
+
+    public List<Combatant> getCombatants() {
+        return combatants;
+    }
+
+    public String getCircumstances() {
+        return circumstances;
+    }
+
+    public String getEncounterDifficulty() {
+        return encounterDifficulty;
+    }
+
+    public String getEncounterName() {
+        return encounterName;
+    }
+
+    public UUID getEncounterLocation() {
+        return encounterLocation;
+    }
+
+    @Override
+    public String toString() {
+        return encounterName;
+    }
 }
