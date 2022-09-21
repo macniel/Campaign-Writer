@@ -103,19 +103,19 @@ public class FileAccessLayer {
     }
 
 
-    public Note findByReference(UUID ref) {
+    public Optional<Note> findByReference(UUID ref) {
         System.out.println("searching for " + ref);
         return file.notes.stream().filter( note -> {
             System.out.println(note.reference);
             return note.getReference().equals(ref);
 
-        } ).findFirst().get();
+        } ).findFirst();
     }
 
     public void removeNote(Note selectedNote) {
-        if (findByReference(selectedNote.getReference()) != null) {
+        findByReference(selectedNote.getReference()).ifPresent( note -> {
             file.notes.remove(selectedNote);
-        }
+        });
     }
 
     public void removeAll() {
@@ -135,7 +135,11 @@ public class FileAccessLayer {
     }
 
     public void addNote(int position, Note note) {
+        if (position > file.notes.size()) {
+            position = file.notes.size();
+        }
         file.notes.add(position, note);
+
     }
 
     public List<SessionNote> getAllSessionNotes() {

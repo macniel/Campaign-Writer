@@ -77,4 +77,9 @@ public class MapViewer implements ViewerPlugin {
 
         return child;
     }
+
+    @Override
+    public Node renderNoteStandalone(Note note) {
+        return null;
+    }
 }

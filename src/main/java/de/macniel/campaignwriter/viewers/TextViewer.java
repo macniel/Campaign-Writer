@@ -22,4 +22,9 @@ public class TextViewer implements ViewerPlugin {
 
         return l;
     }
+
+    @Override
+    public Node renderNoteStandalone(Note note) {
+        return null;
+    }
 }

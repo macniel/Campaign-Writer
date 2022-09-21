@@ -146,29 +146,30 @@ public class SessionView implements ViewInterface {
             scriptBox.getChildren().clear();
 
             activeNote.getNotes().forEach(noteUUID -> {
-                Note note = FileAccessLayer.getInstance().findByReference(noteUUID);
-                HBox line = new HBox();
-                AnchorPane p = new AnchorPane();
+                FileAccessLayer.getInstance().findByReference(noteUUID).ifPresent(note -> {
+                    HBox line = new HBox();
+                    AnchorPane p = new AnchorPane();
 
-                scrollInterpreter
-                        .stream()
-                        .filter(vp -> vp.defineNoteType() == note.type)
-                        .findFirst()
-                        .ifPresent(viewerPlugin -> {
-                            System.out.println("viewer plugin found " + viewerPlugin);
-                            Node viewNode = viewerPlugin.renderNote(note, scroller.widthProperty());
-                            p.getChildren().add(viewNode);
-                            AnchorPane.setBottomAnchor(viewNode, 0.0);
-                            AnchorPane.setTopAnchor(viewNode, 0.0);
-                            AnchorPane.setLeftAnchor(viewNode, 0.0);
-                            AnchorPane.setRightAnchor(viewNode, 0.0);
-
-
-                        });
+                    scrollInterpreter
+                            .stream()
+                            .filter(vp -> vp.defineNoteType() == note.type)
+                            .findFirst()
+                            .ifPresent(viewerPlugin -> {
+                                System.out.println("viewer plugin found " + viewerPlugin);
+                                Node viewNode = viewerPlugin.renderNote(note, scroller.widthProperty());
+                                p.getChildren().add(viewNode);
+                                AnchorPane.setBottomAnchor(viewNode, 0.0);
+                                AnchorPane.setTopAnchor(viewNode, 0.0);
+                                AnchorPane.setLeftAnchor(viewNode, 0.0);
+                                AnchorPane.setRightAnchor(viewNode, 0.0);
 
 
-                line.getChildren().add(p);
-                scriptBox.getChildren().add(line);
+                            });
+
+
+                    line.getChildren().add(p);
+                    scriptBox.getChildren().add(line);
+                });
             });
 
             ComboBox<Note> adder = new ComboBox<>();

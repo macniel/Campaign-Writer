@@ -11,4 +11,6 @@ public interface ViewerPlugin {
 
     Node renderNote(Note note, ObservableDoubleValue parentWidth);
 
+    Node renderNoteStandalone(Note note);
+
 }

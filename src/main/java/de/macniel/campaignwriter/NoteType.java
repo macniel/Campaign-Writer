@@ -8,6 +8,7 @@ public enum NoteType {
     SCENE_NOTE("Szene"),
     PICTURE_NOTE("Bild"),
     MAP_NOTE("Landkarte"),
+    ENCOUNTER_NOTE("Begegnung"),
     RELATIONSHIP_NOTE("Beziehung");
 
     public final String label;

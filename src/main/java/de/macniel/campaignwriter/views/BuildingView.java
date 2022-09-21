@@ -86,6 +86,7 @@ public class BuildingView implements ViewInterface {
         plugins.add(new MapNoteEditor());
         plugins.add(new ActorEditor());
         plugins.add(new SceneEditor());
+        plugins.add(new LocationEditor());
 
         notes = FXCollections.observableArrayList();
 
@@ -186,14 +187,15 @@ public class BuildingView implements ViewInterface {
         });
 
         creationMenuButton.getItems().clear();
-        for (NoteType value : NoteType.values()) {
+        plugins.forEach(plugin -> {
             MenuItem tmp = new MenuItem();
-            tmp.setText(value.label);
+            tmp.setText(plugin.defineHandler().label);
             tmp.onActionProperty().set( (ActionEvent e) -> {
-                createNote(value);
+                createNote(plugin.defineHandler());
             });
             creationMenuButton.getItems().add(tmp);
-        }
+        });
+
     }
 
 

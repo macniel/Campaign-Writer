@@ -174,8 +174,9 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
             }
             MultipleSelectionModel<Note> selectionModel = actorListProp.getSelectionModel();
             for (UUID actorReference : notesStructure.actors) {
-                Note actor = FileAccessLayer.getInstance().findByReference(actorReference);
-                selectionModel.select(actorListProp.getItems().indexOf(actor));
+                FileAccessLayer.getInstance().findByReference(actorReference).ifPresent(actor -> {
+                    selectionModel.select(actorListProp.getItems().indexOf(actor));
+                });
             };
 
             longDescriptionProp.setText(notesStructure.longDescription);

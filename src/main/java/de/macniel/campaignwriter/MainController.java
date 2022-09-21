@@ -1,6 +1,7 @@
 package de.macniel.campaignwriter;
 
 import de.macniel.campaignwriter.views.BuildingView;
+import de.macniel.campaignwriter.views.EncounterView;
 import de.macniel.campaignwriter.views.SessionView;
 import de.macniel.campaignwriter.views.ViewInterface;
 import javafx.beans.property.ObjectProperty;
@@ -18,6 +19,7 @@ import javafx.stage.FileChooser;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class MainController {
@@ -54,8 +56,12 @@ public class MainController {
         ArrayList<ViewInterface> views = new ArrayList<>();
         HashMap<Toggle, Map.Entry<ViewInterface, Scene>> mapping = new HashMap<>();
 
-        views.add(new BuildingView());
+        ViewInterface bv = new BuildingView();
+        AtomicReference<RadioMenuItem> br = new AtomicReference<>();
+
+        views.add(bv);
         views.add(new SessionView());
+        views.add(new EncounterView());
 
         ToggleGroup viewMode = new ToggleGroup();
 
@@ -70,8 +76,12 @@ public class MainController {
                 ViewInterface v = fxmlLoader.getController();
 
                 RadioMenuItem item = new RadioMenuItem();
+
                 item.setText(menuItemLabel);
                 item.setToggleGroup(viewMode);
+                if (view == bv) {
+                    br.set(item);
+                }
                 AbstractMap.SimpleEntry<ViewInterface, Scene> set = new AbstractMap.SimpleEntry<>(v, scene);
                 mapping.put(item, set);
                 this.views.getItems().add(item);
@@ -90,11 +100,7 @@ public class MainController {
            }
         });
 
-        Optional<Map.Entry<Toggle, Map.Entry<ViewInterface, Scene>>> first = mapping.entrySet().stream().findFirst();
-        if (first.isPresent()) {
-            viewMode.selectToggle(first.get().getKey());
-            activeInterface = first.get().getValue().getKey();
-        }
+        viewMode.selectToggle(br.get());
     }
 
 

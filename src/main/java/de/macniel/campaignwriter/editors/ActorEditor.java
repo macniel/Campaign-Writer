@@ -13,6 +13,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -102,6 +103,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     TextArea texteditor = new TextArea(item.content);
                     texteditor.setWrapText(true);
                     texteditor.setPrefRowCount(3);
+                    HBox.setHgrow(texteditor, Priority.ALWAYS);
 
                     label.textProperty().addListener( (editor, oldText, newText) -> {
                         item.label = newText;
@@ -132,7 +134,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     label.setPrefWidth(120);
                     label.setText(item.label);
                     TextField texteditor = new TextField(item.content);
-
+                    HBox.setHgrow(texteditor, Priority.ALWAYS);
                     label.textProperty().addListener((editor, oldText, newText) -> {
                         item.label = newText;
                     });
@@ -216,6 +218,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     TextField content = new TextField();
                     content.setAlignment(Pos.TOP_CENTER);
                     content.setText(item.content);
+                    HBox.setHgrow(content, Priority.ALWAYS);
 
                     content.textProperty().addListener((editor, oldText, newText) -> {
                         item.content = newText;
@@ -234,6 +237,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     t.setStyle("-fx-font-weight: bold;");
                     content.setTextAlignment(TextAlignment.CENTER);
                     content.getChildren().add(t);
+                    HBox.setHgrow(content, Priority.ALWAYS);
                     line.getChildren().add(label);
                     line.getChildren().add(content);
                 }
@@ -256,6 +260,9 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     maxValue.textProperty().addListener((editor, oldText, newText) -> {
                         item.max = Integer.valueOf(newText);
                     });
+
+                    HBox.setHgrow(value, Priority.ALWAYS);
+                    HBox.setHgrow(maxValue, Priority.ALWAYS);
 
                     line.getChildren().add(label);
                     line.getChildren().add(value);
@@ -344,8 +351,8 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     if (dragelement != null) {
                         notesStructure.items.remove(dragelement);
                         notesStructure.items.add(dragposition, dragelement);
-                        getEditableVersion();
                     }
+                    editor.setContent(getEditableVersion());
                     e.setDropCompleted(true);
                     e.consume();
                 });
