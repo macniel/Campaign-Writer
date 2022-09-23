@@ -102,6 +102,15 @@ public class FileAccessLayer {
         file = new CampaignFile();
     }
 
+    public Optional<Note> findByLabel(String label) {
+        System.out.println("searching for Note with Label " + label);
+        return file.notes.stream().filter( note -> {
+            System.out.println(note.label);
+            return note.getLabel().equals(label);
+
+        } ).findFirst();
+    }
+
 
     public Optional<Note> findByReference(UUID ref) {
         System.out.println("searching for " + ref);

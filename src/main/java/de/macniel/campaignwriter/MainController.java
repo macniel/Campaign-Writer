@@ -1,5 +1,6 @@
 package de.macniel.campaignwriter;
 
+import de.macniel.campaignwriter.viewers.ViewerPlugin;
 import de.macniel.campaignwriter.views.BuildingView;
 import de.macniel.campaignwriter.views.EncounterView;
 import de.macniel.campaignwriter.views.SessionView;
@@ -15,6 +16,7 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
+import javafx.util.Callback;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,9 +24,10 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
 public class MainController {
 
 
@@ -41,7 +44,6 @@ public class MainController {
     @FXML
     private BorderPane inset;
 
-    @SuppressWarnings("rawtypes")
     private ViewInterface activeInterface;
 
     @FXML
@@ -100,6 +102,19 @@ public class MainController {
 
                inset.setCenter(editor.getRoot());
                activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
+               activeInterface.requestNote(new Callback<UUID,Note>() {
+
+                @Override
+                public Note call(UUID param) {
+                    Optional<Note> foundNote = FileAccessLayer.getInstance().findByReference(param);
+                    if (foundNote.isPresent()) {
+                        return foundNote.get();
+                    } else {
+                        return null;
+                    }
+                }
+                 
+               });
            }
         });
 

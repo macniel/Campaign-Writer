@@ -2,16 +2,17 @@ package de.macniel.campaignwriter.views;
 
 import de.macniel.campaignwriter.*;
 import de.macniel.campaignwriter.editors.SessionNote;
+import de.macniel.campaignwriter.viewers.LocationViewer;
 import de.macniel.campaignwriter.viewers.MapViewer;
 import de.macniel.campaignwriter.viewers.SceneViewer;
 import de.macniel.campaignwriter.viewers.TextViewer;
 import de.macniel.campaignwriter.viewers.ViewerPlugin;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
@@ -19,12 +20,12 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public class SessionView implements ViewInterface {
@@ -73,8 +74,11 @@ public class SessionView implements ViewInterface {
 
     @Override
     public void requestNote(Callback<UUID, Note> cb) {
+        System.out.println("requester loaded");
         this.requester = cb;
     }
+
+    Callback<UUID, Note> noteRequestRenderer;
 
     @FXML
     public void initialize() {
@@ -85,6 +89,25 @@ public class SessionView implements ViewInterface {
         scrollInterpreter.add(new TextViewer());
         scrollInterpreter.add(new MapViewer());
         scrollInterpreter.add(new SceneViewer());
+        scrollInterpreter.add(new LocationViewer());
+
+        noteRequestRenderer = new Callback<UUID,Note>() {
+            @Override
+            public Note call(UUID param) {
+                FileAccessLayer.getInstance().findByReference(param).ifPresent(note -> {
+                    scrollInterpreter.stream().filter(si -> si.defineNoteType() == note.getType()).findFirst().ifPresent(viewer -> {
+                        final Stage wnd = new Stage();
+                        AnchorPane b = new AnchorPane();
+                        b.getChildren().add(viewer.renderNoteStandalone(note));
+                        Scene popoutContent = new Scene(b, 300, 300);
+                        wnd.setScene(popoutContent);
+                        wnd.show();
+                        System.out.println("showing popout");
+                    });
+                });
+                return null;
+            }
+        };
 
         notesLister.setCellFactory(listView -> {
             ListCell<SessionNote> t = new SessionNotesRenderer();
@@ -157,7 +180,7 @@ public class SessionView implements ViewInterface {
                             .findFirst()
                             .ifPresent(viewerPlugin -> {
                                 System.out.println("viewer plugin found " + viewerPlugin);
-                                Node viewNode = viewerPlugin.renderNote(note, scroller.widthProperty());
+                                Node viewNode = viewerPlugin.renderNote(note, scroller.widthProperty(), noteRequestRenderer);
                                 p.getChildren().add(viewNode);
                                 AnchorPane.setBottomAnchor(viewNode, 0.0);
                                 AnchorPane.setTopAnchor(viewNode, 0.0);

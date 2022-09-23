@@ -18,8 +18,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.util.Callback;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class MapViewer implements ViewerPlugin {
 
@@ -31,7 +33,7 @@ public class MapViewer implements ViewerPlugin {
     }
 
     @Override
-    public Node renderNote(Note note, ObservableDoubleValue width) {
+    public Node renderNote(Note note, ObservableDoubleValue width, Callback<UUID, Note> requester) {
 
         VBox child = new VBox();
 
