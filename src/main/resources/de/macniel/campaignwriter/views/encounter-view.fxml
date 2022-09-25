@@ -25,33 +25,47 @@
             </ButtonBar>
         </bottom>
     </BorderPane>
-    <AnchorPane>
-        <VBox fx:id="scroller" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="0" AnchorPane.topAnchor="0">
-            <HBox>
-                <Label text="Name" prefWidth="120"/>
-                <TextField VBox.vgrow="ALWAYS" fx:id="encounterNameProp"/>
-            </HBox>
-
-            <HBox>
-                <Label text="Austragungsort" prefWidth="120" />
-                <ComboBox VBox.vgrow="ALWAYS" fx:id="encounterLocationProp"/>
-            </HBox>
-
-            <HBox>
-                <Label text="Umstände" prefWidth="120" />
-                <TextArea VBox.vgrow="ALWAYS" fx:id="circumstancesProp" />
-            </HBox>
-
-            <HBox>
-                <Label text="Schwierigkeit" prefWidth="120"/>
-                <TextField VBox.vgrow="ALWAYS" fx:id="encounterDifficultyProp"/>
-            </HBox>
-
-            <VBox VBox.vgrow="ALWAYS">
-                <Label text="Gegner"/>
-                <HBox fx:id="combatantsPropLine" VBox.vgrow="ALWAYS" />
-                <ComboBox fx:id="addCombatant" HBox.hgrow="ALWAYS" />
-            </VBox>
-        </VBox>
-    </AnchorPane>
+    <BorderPane>
+        <top>
+            <ToolBar>
+                <items>
+                    <Label text="Teilnehmer hinzu"/>
+                    <ComboBox fx:id="addCombatant" HBox.hgrow="ALWAYS" />
+                </items>
+            </ToolBar>
+        </top>
+        <center>
+            <AnchorPane>
+                <VBox fx:id="scroller" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="0" AnchorPane.topAnchor="0">
+                    <HBox>
+                        <Label text="Name" prefWidth="120"/>
+                        <TextField VBox.vgrow="ALWAYS" fx:id="encounterNameProp"/>
+                    </HBox>
+        
+                    <HBox>
+                        <Label text="Austragungsort" prefWidth="120" />
+                        <ComboBox VBox.vgrow="ALWAYS" fx:id="encounterLocationProp"/>
+                    </HBox>
+        
+                    <HBox>
+                        <Label text="Umstände" prefWidth="120" />
+                        <TextArea VBox.vgrow="ALWAYS" fx:id="circumstancesProp" />
+                    </HBox>
+        
+                    <HBox>
+                        <Label text="Schwierigkeit" prefWidth="120"/>
+                        <TextField VBox.vgrow="ALWAYS" fx:id="encounterDifficultyProp"/>
+                    </HBox>
+        
+                    <Label text="Teilnehmer"/>
+                    
+                    <ScrollPane fx:id="scrollPane">
+                    <FlowPane hgap="5" vgap="5" fx:id="combatantsPropLine" HBox.hgrow="ALWAYS">
+                    </FlowPane>
+                </ScrollPane>
+                </VBox>
+            </AnchorPane>
+        </center>
+    </BorderPane>
+    
 </SplitPane>

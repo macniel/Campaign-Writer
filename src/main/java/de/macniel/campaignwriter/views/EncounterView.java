@@ -15,23 +15,30 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
@@ -45,11 +52,14 @@ public class EncounterView  implements ViewInterface {
     @FXML
     public TextField encounterDifficultyProp;
     @FXML
-    public HBox combatantsPropLine;
+    public FlowPane combatantsPropLine;
     @FXML
     public ComboBox<Note> addCombatant;
     @FXML
     private ListView<EncounterNote> notesLister;
+
+    @FXML
+    private ScrollPane scrollPane;
 
     @FXML
     private VBox scroller;
@@ -135,6 +145,16 @@ public class EncounterView  implements ViewInterface {
             }
         });
 
+        combatantsPropLine.getStyleClass().add("combatants");
+
+        scrollPane.widthProperty().addListener((observable, oldValue, newValue) -> {
+            combatantsPropLine.setMaxWidth(newValue.doubleValue());
+            combatantsPropLine.setPrefWidth(newValue.doubleValue());
+        });
+        scrollPane.setHbarPolicy(ScrollBarPolicy.NEVER);
+        combatantsPropLine.setMaxWidth(Double.POSITIVE_INFINITY);
+        combatantsPropLine.setPrefWidth(Double.POSITIVE_INFINITY);
+
     }
 
     void updateCombatantBox() {
@@ -143,19 +163,29 @@ public class EncounterView  implements ViewInterface {
         activeNote.getCombatants().forEach(combatant -> {
 
             VBox box = new VBox();
+            box.getStyleClass().add("combatant");
+            box.getStyleClass().add("combatant--" + combatant.teamColor.toString().toLowerCase());
             box.setPrefWidth(200);
-            box.setPrefHeight(200);
             box.setMinWidth(200);
             box.setMinHeight(200);
 
             Label combatantName = new Label();
+            combatantName.setMaxWidth(200);
+            combatantName.setMinWidth(200);
+            combatantName.setAlignment(Pos.CENTER);
+
+
             ImageView combatantPortrait = new ImageView();
+
             combatantPortrait.setFitHeight(200);
             combatantPortrait.setFitWidth(200);
-
+            
             combatantPortrait.setPreserveRatio(true);
-            HBox.setHgrow(combatantPortrait, Priority.ALWAYS);
-            VBox.setVgrow(combatantPortrait, Priority.ALWAYS);
+
+            HBox center = new HBox(combatantPortrait);
+            VBox.setVgrow(center, Priority.NEVER);
+            center.getStyleClass().add("combatant__image");
+            center.setAlignment(Pos.CENTER);
 
             combatantPortrait.onMouseClickedProperty().set(mouseEvent -> {
                 if (mouseEvent.getButton() == MouseButton.SECONDARY) {
@@ -200,6 +230,7 @@ public class EncounterView  implements ViewInterface {
             });
 
             HBox hitpoints = new HBox();
+            hitpoints.getStyleClass().add("combatant-resource");
 
             TextField currentHP = new TextField();
             Label sep = new Label("/");
@@ -245,7 +276,7 @@ public class EncounterView  implements ViewInterface {
             });
 
             enableDragandDrop(activeNote.getCombatants(), combatant, combatantPortrait);
-            box.getChildren().addAll(combatantName, combatantPortrait, hitpoints, cp);
+            box.getChildren().addAll(combatantName, center, hitpoints, cp);
 
             combatantsPropLine.getChildren().addAll(box);
         });
