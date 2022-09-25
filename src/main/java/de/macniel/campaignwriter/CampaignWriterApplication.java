@@ -62,6 +62,8 @@ public class CampaignWriterApplication extends Application {
             
         });
 
+        System.out.println(FileAccessLayer.getInstance().getTemplates().size() + " actor templates loaded");
+
 
         stage.getIcons().add(new Image(CampaignWriterApplication.class.getResourceAsStream("paint_the_world_512.png")));
         stage.getIcons().add(new Image(CampaignWriterApplication.class.getResourceAsStream("paint_the_world_256.png")));

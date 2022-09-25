@@ -156,6 +156,7 @@ public class EncounterView  implements ViewInterface {
                 mouseEvent.consume();
             });
 
+            // FIXME: dynamic field in encounterdef
             combatant.items.stream().filter(actorNoteItem ->
                     "Name".equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent( text -> {
@@ -163,12 +164,15 @@ public class EncounterView  implements ViewInterface {
                 combatantName.setText(text.getContent());
             });
 
+            // FIXME: dynamic field in encounterdef
             combatant.items.stream().filter(actorNoteItem ->
                     "Portrait".equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent( text -> {
-                Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(text.getContent());
-                System.out.println("Found portrait image " + entry.getKey());
-                combatantPortrait.setImage(entry.getValue());
+                FileAccessLayer.getInstance().getImageFromString(text.getContent()).ifPresent(entry -> {
+                    System.out.println("Found portrait image " + entry.getKey());
+                    combatantPortrait.setImage(entry.getValue());
+                });
+                
             });
 
             HBox hitpoints = new HBox();
@@ -180,6 +184,7 @@ public class EncounterView  implements ViewInterface {
             HBox.setHgrow(currentHP, Priority.SOMETIMES);
             HBox.setHgrow(maxHP, Priority.SOMETIMES);
 
+            // FIXME: dynamic field in encounterdef, also allow to display multiple resources
             combatant.items.stream().filter(actorNoteItem ->
                     "Hitpoints".equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent( resource -> {

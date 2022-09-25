@@ -1,20 +1,26 @@
 package de.macniel.campaignwriter;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import de.macniel.campaignwriter.editors.ActorNoteDefinition;
+import de.macniel.campaignwriter.editors.ActorNoteItem;
 import de.macniel.campaignwriter.editors.EncounterNote;
 import de.macniel.campaignwriter.editors.SessionNote;
 import javafx.scene.image.Image;
 
 import java.io.*;
 import java.io.ObjectInputFilter.Config;
+import java.lang.StackWalker.Option;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.stream.Stream;
 
 public class FileAccessLayer {
 
@@ -115,7 +121,39 @@ public class FileAccessLayer {
         return null;
     }
 
-    public Map.Entry<String, Image> getImageFromString(String s) {
+    public HashMap<String, ActorNoteDefinition> getTemplates() {
+    
+        File templateDir = Paths.get(System.getProperty("user.home"), "campaignwriter", "templates").toFile();
+        System.out.println("lookup folder " + templateDir.getAbsolutePath());
+        if (templateDir.exists() && templateDir.isDirectory()) {
+            HashMap<String, ActorNoteDefinition> templates = new HashMap<>();
+
+            for (File f : templateDir.listFiles()) {
+                
+                ActorNoteDefinition fromFile;
+                try {
+                    fromFile = gsonParser.fromJson(new JsonReader(new FileReader(f)), ActorNoteDefinition.class);
+                    templates.put(f.getName(), fromFile);
+                } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
+                    System.err.println("Failure to read template file \"" + f.getAbsolutePath() + "\"");
+                    e.printStackTrace();
+                } 
+            }
+            return templates;
+        } else {
+            try {
+                templateDir.createNewFile();
+            
+            templateDir.mkdir();
+            return null;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    public Optional<Map.Entry<String, Image>> getImageFromString(String s) {
 
         if (new File(s).exists()) {
             try {
@@ -126,7 +164,7 @@ public class FileAccessLayer {
             Image image = new Image(in);
             System.out.println("Storing Image from path " + s + " as UUID " + uuid);
             file.base64Assets.put(uuid, base64Asset);
-            return new AbstractMap.SimpleEntry<>(uuid, image);
+            return Optional.ofNullable(new AbstractMap.SimpleEntry<>(uuid, image));
             } catch (Exception e) {}
         }
         try {
@@ -135,9 +173,9 @@ public class FileAccessLayer {
             InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes("UTF-8")));
             Image image = new Image(in);
             System.out.println("found " + image);
-            return new AbstractMap.SimpleEntry<>(s, image);
+            return Optional.ofNullable(new AbstractMap.SimpleEntry<>(s, image));
         } catch (Exception e) {}
-        return null;
+        return Optional.empty();
     }
 
     public void saveToFile(File f) throws IOException {

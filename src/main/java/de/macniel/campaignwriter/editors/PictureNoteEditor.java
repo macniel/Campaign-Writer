@@ -73,9 +73,10 @@ public class PictureNoteEditor implements EditorPlugin<PictureNoteDefinition> {
                 if (noteStructure == null) {
                     noteStructure = new PictureNoteDefinition();
                 }
-                Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(actualFile.getAbsolutePath());
-                noteStructure.fileName = entry.getKey();
-                noteStructure.zoomFactor = 1;
+                FileAccessLayer.getInstance().getImageFromString(actualFile.getAbsolutePath()).ifPresent(entry -> {
+                    noteStructure.fileName = entry.getKey();
+                    noteStructure.zoomFactor = 1;
+                });
                 refreshImageView();
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -89,16 +90,18 @@ public class PictureNoteEditor implements EditorPlugin<PictureNoteDefinition> {
                 ScrollPane parentNode = new ScrollPane();
 
                 ImageView popoutViewer = new ImageView();
-                Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(noteStructure.fileName);
-                popoutViewer.imageProperty().set(entry.getValue());
-                double width = Math.min(rect.getWidth(), popoutViewer.imageProperty().get().getWidth());
-                double height = Math.min(rect.getHeight(), popoutViewer.imageProperty().get().getHeight());
-
-                if (width > height) {
-                    popoutViewer.setFitHeight(height);
-                } else {
-                    popoutViewer.setFitWidth(width);
-                }
+                FileAccessLayer.getInstance().getImageFromString(noteStructure.fileName).ifPresent(entry -> {
+                    popoutViewer.imageProperty().set(entry.getValue());
+                    double width = Math.min(rect.getWidth(), popoutViewer.imageProperty().get().getWidth());
+                    double height = Math.min(rect.getHeight(), popoutViewer.imageProperty().get().getHeight());
+    
+                    if (width > height) {
+                        popoutViewer.setFitHeight(height);
+                    } else {
+                        popoutViewer.setFitWidth(width);
+                    }
+                });
+                
 
                 parentNode.setFitToHeight(true);
                 parentNode.setFitToWidth(true);
@@ -143,10 +146,11 @@ public class PictureNoteEditor implements EditorPlugin<PictureNoteDefinition> {
 
     private void refreshImageView() {
         if (noteStructure != null) {
-            Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(noteStructure.fileName);
-            viewer.imageProperty().set(entry.getValue());
-            viewer.setFitHeight(noteStructure.zoomFactor * viewer.imageProperty().get().getHeight());
-            viewer.setFitWidth(noteStructure.zoomFactor * viewer.imageProperty().get().getWidth());
+            FileAccessLayer.getInstance().getImageFromString(noteStructure.fileName).ifPresent(entry -> {
+                viewer.imageProperty().set(entry.getValue());
+                viewer.setFitHeight(noteStructure.zoomFactor * viewer.imageProperty().get().getHeight());
+                viewer.setFitWidth(noteStructure.zoomFactor * viewer.imageProperty().get().getWidth());
+            });
         }
     }
 

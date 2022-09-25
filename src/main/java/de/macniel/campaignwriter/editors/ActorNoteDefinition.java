@@ -6,4 +6,8 @@ public class ActorNoteDefinition {
 
     ArrayList<ActorNoteItem> items;
 
+    public ActorNoteDefinition() {
+        items = new ArrayList<>();
+    }
+
 }

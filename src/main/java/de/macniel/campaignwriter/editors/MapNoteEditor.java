@@ -95,11 +95,13 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
                 if (noteStructure == null) {
                     noteStructure = new MapNoteDefinition();
                 }
-                Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(actualFile.getAbsolutePath());
-                noteStructure.backgroundPath = entry.getKey();
-                System.out.println("storing image as " + entry.getKey());
-                noteStructure.zoomFactor = 1;
-                refreshView();
+                FileAccessLayer.getInstance().getImageFromString(actualFile.getAbsolutePath()).ifPresent(entry -> {
+                    noteStructure.backgroundPath = entry.getKey();
+                    System.out.println("storing image as " + entry.getKey());
+                    noteStructure.zoomFactor = 1;
+                    refreshView();
+                });
+                
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
@@ -159,10 +161,11 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
         if (noteStructure != null) {
             root.getChildren().clear();
             root.getChildren().add(backgroundLayer);
-            Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(noteStructure.backgroundPath);
-            backgroundLayer.imageProperty().set(entry.getValue());
-            viewer.setScaleZ(noteStructure.zoomFactor);
-
+            FileAccessLayer.getInstance().getImageFromString(noteStructure.backgroundPath).ifPresent(entry -> {
+                backgroundLayer.imageProperty().set(entry.getValue());
+                viewer.setScaleZ(noteStructure.zoomFactor);    
+            });
+           
             BorderPane bp = (BorderPane) viewer.getParent();
             viewer.setContent(null);
             bp.setCenter(null);

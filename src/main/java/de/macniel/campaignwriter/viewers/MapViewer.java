@@ -47,31 +47,33 @@ public class MapViewer implements ViewerPlugin {
         MapNoteDefinition noteStructure = gsonParser.fromJson(note.content, MapNoteDefinition.class);
         if (noteStructure != null) {
 
-            Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(noteStructure.backgroundPath);
-            ImageView view = new ImageView(entry.getValue());
+            FileAccessLayer.getInstance().getImageFromString(noteStructure.backgroundPath).ifPresent(entry -> {
+                ImageView view = new ImageView(entry.getValue());
 
-            view.setPreserveRatio(true);
-            view.setFitHeight(view.getImage().getHeight() /2);
-            System.out.println(view.getFitHeight());
-
-            width.addListener( (observable, oldValue, newValue) -> {
-                p.setMaxWidth(newValue.doubleValue());
+                view.setPreserveRatio(true);
                 view.setFitHeight(view.getImage().getHeight() /2);
+                System.out.println(view.getFitHeight());
+    
+                width.addListener( (observable, oldValue, newValue) -> {
+                    p.setMaxWidth(newValue.doubleValue());
+                    view.setFitHeight(view.getImage().getHeight() /2);
+                });
+    
+    
+                view.onMouseClickedProperty().set(e -> {
+                    if (e.getClickCount() == 2) {
+                        System.out.println("double click");
+                        e.consume();
+                    }
+                });
+    
+                p.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                p.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+    
+                p.setContent(view);
+                p.setPrefHeight(400);
             });
-
-
-            view.onMouseClickedProperty().set(e -> {
-                if (e.getClickCount() == 2) {
-                    System.out.println("double click");
-                    e.consume();
-                }
-            });
-
-            p.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            p.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-
-            p.setContent(view);
-            p.setPrefHeight(400);
+            
         }
 
         child.getChildren().add(labelOfNote);

@@ -1,9 +1,12 @@
 package de.macniel.campaignwriter.editors;
 
 import com.google.gson.Gson;
+
+import de.macniel.campaignwriter.CampaignWriterApplication;
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
+import de.macniel.campaignwriter.editors.ActorNoteItem.ActorNoteItemType;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -26,7 +29,10 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Map.Entry;
 
 public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
@@ -34,6 +40,10 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
     ActorNoteDefinition notesStructure;
     private ScrollPane editor;
+
+    private ComboBox setTemplateProp;
+
+    private HashMap<String, ActorNoteDefinition> actorTemplates;
 
 
     @Override
@@ -50,14 +60,21 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
         ToggleButton previewMode = new ToggleButton("Preview");
         ToggleButton editMode = new ToggleButton("edit");
+        Button saveAsTemplateButton = new Button("");
+        setTemplateProp = new ComboBox<>();
+
         previewMode.setToggleGroup(viewMode);
         editMode.setToggleGroup(viewMode);
 
         viewMode.selectedToggleProperty().addListener( (observableValue, toggle, newValue) -> {
             if (previewMode.equals(newValue)) {
                 editor.setContent(getPreviewVersionOf(notesStructure));
+                setTemplateProp.setDisable(true);
+                saveAsTemplateButton.setDisable(true);
             } else {
                 editor.setContent(getEditableVersion());
+                setTemplateProp.setDisable(false);
+                saveAsTemplateButton.setDisable(false);
             }
         });
 
@@ -65,8 +82,55 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
         t.getItems().add(previewMode);
         t.getItems().add(editMode);
-        t.setVisible(true);
 
+        actorTemplates = FileAccessLayer.getInstance().getTemplates();
+        setTemplateProp.getItems().clear();
+        setTemplateProp.getItems().add("");
+        actorTemplates.keySet().forEach(actorTemplateName -> {
+            setTemplateProp.getItems().add(actorTemplateName);
+        });
+        setTemplateProp.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (actorTemplates != null && actorTemplates.get(newValue) != null) {
+                updateActorSheetToTemplate(actorTemplates.get(newValue));
+            }
+        });
+        
+        t.getItems().addAll(new Label("Template: "), setTemplateProp);
+
+        
+        t.getItems().add(saveAsTemplateButton);
+
+        t.setVisible(true);
+    }
+
+    void updateActorSheetToTemplate(ActorNoteDefinition template) {
+
+        ArrayList<ActorNoteItem> merged = new ArrayList<>();
+
+        template.items.forEach(templateItem -> {
+            notesStructure.items.stream().filter(item -> 
+            templateItem.label.equals(item.label)
+            ).findFirst().ifPresentOrElse(previousValue -> {
+                ActorNoteItem tmp = new ActorNoteItem();
+                tmp.content = previousValue.content;
+                tmp.max = previousValue.max;
+                tmp.value = previousValue.value;
+                tmp.type = previousValue.type;
+                merged.add(tmp);
+            }, () -> {
+                System.out.println("field " + templateItem.label + " was not previously set, build anew");
+                ActorNoteItem tmp = new ActorNoteItem();
+                tmp.content = "";
+                tmp.max = 0;
+                tmp.value = 0;
+                tmp.type = templateItem.type;
+                tmp.label = templateItem.label;
+                merged.add(tmp);
+            });
+        });
+        notesStructure.items = merged;
+        
+        editor.setContent(getEditableVersion());
     }
 
     @Override
@@ -91,7 +155,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         Button removeLine = new Button("", new FontIcon("icm-bin"));
         removeLine.onActionProperty().set(e -> {
             notesStructure.items.remove(item);
-            getEditableVersion();
+            editor.setContent(getEditableVersion());
         });
 
         switch(item.type) {
@@ -168,7 +232,9 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     v.setFitHeight(250);
 
                     if (item.content != null) {
-                        v.setImage(FileAccessLayer.getInstance().getImageFromString(item.content).getValue());
+                        FileAccessLayer.getInstance().getImageFromString(item.content).ifPresent(imgEntry -> {
+                                v.setImage(imgEntry.getValue());
+                        });
                     }
 
                     Button selectFileButton = new Button("", new FontIcon("icm-link"));
@@ -182,9 +248,10 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                         File selectedFile = chooser.showOpenDialog(null);
                         if (selectedFile != null) {
                             item.content = selectedFile.getAbsolutePath();
-                            Map.Entry<String, Image> entry = FileAccessLayer.getInstance().getImageFromString(selectedFile.getAbsolutePath());
-                            item.content = entry.getKey();
-                            v.setImage(entry.getValue());
+                            FileAccessLayer.getInstance().getImageFromString(selectedFile.getAbsolutePath()).ifPresent(entry -> {
+                                item.content = entry.getKey();
+                                v.setImage(entry.getValue());
+                            });
                         }
                     });
 
@@ -203,7 +270,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     v.setFitHeight(250);
 
                     if (item.content != null) {
-                        v.setImage(FileAccessLayer.getInstance().getImageFromString(item.content).getValue());
+                        FileAccessLayer.getInstance().getImageFromString(item.content).ifPresent(value -> v.setImage(value.getValue()));
                     }
 
                     line.getChildren().add(label);
@@ -423,7 +490,11 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                 if (gsonParser == null) {
                     gsonParser = new Gson();
                 }
+                System.out.println("loaded note" + note.reference);
                 notesStructure = gsonParser.fromJson(note.content, ActorNoteDefinition.class);
+                if (notesStructure == null) {
+                    notesStructure = new ActorNoteDefinition();
+                }
                 editor.setContent(getEditableVersion());
                 return true;
             }
