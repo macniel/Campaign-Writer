@@ -72,6 +72,13 @@ public class BuildingView implements ViewInterface {
         if (notesLister != null) {
             System.out.println("Loading " + file.notes.size() + " notes");
             notesLister.setItems(FXCollections.observableArrayList(file.notes));
+            String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
+            if (lastLoadedNote != null) {
+                FileAccessLayer.getInstance().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
+                    activeNote = note;
+                    notesLister.getSelectionModel().select(activeNote);
+                });
+            }
         }
     }
     @FXML
