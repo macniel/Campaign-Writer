@@ -11,7 +11,6 @@ import javafx.collections.FXCollections;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
@@ -26,11 +25,8 @@ import org.controlsfx.control.PropertySheet;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {

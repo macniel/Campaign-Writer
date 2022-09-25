@@ -1,7 +1,5 @@
 package de.macniel.campaignwriter.editors;
 
-import de.macniel.campaignwriter.Note;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

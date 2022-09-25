@@ -2,7 +2,6 @@ package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
-import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyEvent;
@@ -94,9 +93,8 @@ public class TextNoteEditor implements EditorPlugin<TextNoteDefinition> {
         editor.setOnDragDropped(e -> {
             if (e.getDragboard().hasFiles()) {
                 File f = e.getDragboard().getFiles().get(0);
-                try {
+                try (BufferedReader fis = new BufferedReader(new FileReader(f))) {
                     StringBuffer content = new StringBuffer();
-                    BufferedReader fis = new BufferedReader(new FileReader(f));
                     String line;
                     while ((line = fis.readLine()) != null) {
                         content.append(line +"\n");

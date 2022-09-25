@@ -7,20 +7,14 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import de.macniel.campaignwriter.editors.ActorNoteDefinition;
-import de.macniel.campaignwriter.editors.ActorNoteItem;
 import de.macniel.campaignwriter.editors.EncounterNote;
 import de.macniel.campaignwriter.editors.SessionNote;
 import javafx.scene.image.Image;
 
 import java.io.*;
-import java.io.ObjectInputFilter.Config;
-import java.lang.StackWalker.Option;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.stream.Stream;
 
 public class FileAccessLayer {
 
@@ -33,6 +27,8 @@ public class FileAccessLayer {
 
     private Properties config;
     private File confFile;
+
+    private File keepFile;
 
     private static FileAccessLayer instance = new FileAccessLayer();
     public static FileAccessLayer getInstance() {
@@ -111,6 +107,14 @@ public class FileAccessLayer {
     public void updateSetting(String key, String newValue) {
         if (file != null) {
             file.settings.setProperty(key, newValue);
+            if (keepFile != null) {
+                try {
+                    saveToFile(keepFile);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -180,6 +184,7 @@ public class FileAccessLayer {
 
     public void saveToFile(File f) throws IOException {
         JsonWriter writer = null;
+        keepFile = f;
         try {
             writer = new JsonWriter(new FileWriter(f));
             if (gsonParser == null) {

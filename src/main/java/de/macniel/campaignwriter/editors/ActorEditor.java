@@ -1,18 +1,16 @@
 package de.macniel.campaignwriter.editors;
 
 import com.google.gson.Gson;
+import com.google.gson.stream.JsonWriter;
 
-import de.macniel.campaignwriter.CampaignWriterApplication;
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
-import de.macniel.campaignwriter.editors.ActorNoteItem.ActorNoteItemType;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.HBox;
@@ -28,12 +26,11 @@ import javafx.util.Callback;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Map.Entry;
-
 public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
     Gson gsonParser;
@@ -60,7 +57,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
         ToggleButton previewMode = new ToggleButton("Preview");
         ToggleButton editMode = new ToggleButton("edit");
-        Button saveAsTemplateButton = new Button("");
+        Button saveAsTemplateButton = new Button("", new FontIcon("icm-floppy-disk"));
         setTemplateProp = new ComboBox<>();
 
         previewMode.setToggleGroup(viewMode);
@@ -97,10 +94,42 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         
         t.getItems().addAll(new Label("Template: "), setTemplateProp);
 
+        saveAsTemplateButton.onActionProperty().set(event -> {
+            saveTemplate(w);
+        });
         
         t.getItems().add(saveAsTemplateButton);
 
         t.setVisible(true);
+    }
+
+    void saveTemplate(Window owner) {
+        ArrayList<ActorNoteItem> sanitized = new ArrayList<>();
+        notesStructure.items.forEach(item -> {
+            ActorNoteItem tmp = new ActorNoteItem();
+            tmp.label = item.label;
+            tmp.type = item.type;
+            sanitized.add(tmp);
+        });
+        ActorNoteDefinition def = new ActorNoteDefinition();
+        def.items = sanitized;
+
+        FileChooser saveDialog = new FileChooser();
+        saveDialog.setTitle("Dateiname für Vorlage");
+        saveDialog.setInitialDirectory(Paths.get(System.getProperty("user.home"), "campaignwriter", "templates").toFile());
+        File f = saveDialog.showSaveDialog(owner);
+        try (JsonWriter writer = new JsonWriter(new FileWriter(f))) {
+            if (gsonParser == null) {
+                gsonParser = new Gson();
+            }
+            gsonParser.toJson(def, ActorNoteDefinition.class, writer);
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
     }
 
     void updateActorSheetToTemplate(ActorNoteDefinition template) {

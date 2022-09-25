@@ -6,15 +6,11 @@ import de.macniel.campaignwriter.NoteType;
 import javafx.beans.value.ObservableDoubleValue;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.*;
 import javafx.util.Callback;
 
-import java.util.ArrayList;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

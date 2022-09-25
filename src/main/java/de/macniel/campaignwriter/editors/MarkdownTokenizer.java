@@ -3,8 +3,6 @@ package de.macniel.campaignwriter.editors;
 import javafx.scene.text.Text;
 
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class MarkdownTokenizer {
 
