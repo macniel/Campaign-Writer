@@ -3,7 +3,6 @@ package de.macniel.campaignwriter;
 import de.macniel.campaignwriter.editors.SessionNote;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -33,7 +32,7 @@ public class SessionNotesController {
         try
         {
             Parent parent = fxmlLoader.load();
-            Scene scene = new Scene(parent, 400.0 ,500.0);
+            new Scene(parent, 400.0 ,500.0);
         }
         catch (IOException e)
         {

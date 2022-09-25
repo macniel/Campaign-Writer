@@ -30,6 +30,8 @@ public class LocationEditor implements EditorPlugin {
     private TextField locationCanonicalNameProp;
     private Note actualNote;
 
+    private Callback onNoteLoadRequest;
+
     @Override
     public NoteType defineHandler() {
         return NoteType.LOCATION_NOTE;
@@ -212,12 +214,15 @@ public class LocationEditor implements EditorPlugin {
     }
 
     @Override
-    public void setOnNoteLoadRequest(Callback callback) {
-
+    public void setOnNoteLoadRequest(Callback stringBooleanCallback) {
+        this.onNoteLoadRequest = stringBooleanCallback;
+        
     }
 
     @Override
-    public void setOnNoteRequest(Callback callback) {
-
+    public void setOnNoteRequest(Callback stringNoteCallback) {
+        // TODO Auto-generated method stub
+        
     }
+
 }

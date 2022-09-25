@@ -75,6 +75,7 @@ public class TextViewer implements ViewerPlugin {
             if (matches.find()) {
                 System.out.println("Groups found: "+ matches.groupCount());
                 if (matches.group("p") != null) {
+                    // TODO: rethink, this could contain other md elements
                     f.getChildren().add(new Text(matches.group("p")));
                     System.out.println("Rendering preceeding text with content: " + matches.group("p"));
                 } 
@@ -102,6 +103,7 @@ public class TextViewer implements ViewerPlugin {
                     link.setCursor(Cursor.DEFAULT);
                 }
                 if (matches.group("s") != null) {
+                    // TODO: rethink, this could contain ot her md elements
                     f.getChildren().add(new Text(matches.group("s")));
                 }
             } else { // line doesnt contain links, carry on

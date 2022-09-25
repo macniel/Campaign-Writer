@@ -8,7 +8,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -33,7 +32,7 @@ public class NotesController {
         try
         {
             Parent parent = fxmlLoader.load();
-            Scene scene = new Scene(parent, 400.0 ,500.0);
+            new Scene(parent, 400.0 ,500.0);
         }
         catch (IOException e)
         {
@@ -58,6 +57,7 @@ public class NotesController {
                 case PICTURE_NOTE -> icon.setIconLiteral("icm-image");
                 case SCENE_NOTE -> icon.setIconLiteral("icm-clock");
                 case RELATIONSHIP_NOTE -> icon.setIconLiteral("icm-share2");
+                default -> icon.setIconLiteral("icm-file-text");
             }
         }
     }

@@ -1,7 +1,5 @@
 package de.macniel.campaignwriter.editors;
 
-import de.macniel.campaignwriter.NoteType;
-
 public class ActorNoteItem {
 
     public enum ActorNoteItemType {

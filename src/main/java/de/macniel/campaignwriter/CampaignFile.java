@@ -14,11 +14,14 @@ public class CampaignFile {
     public Map<String, String> base64Assets;
     public List<EncounterNote> encounterNotes;
 
+    public Properties settings;
+
     public CampaignFile() {
         notes = new ArrayList<>();
         sessionNotes = new ArrayList<>();
         encounterNotes = new ArrayList<>();
         base64Assets = new HashMap<>();
+        settings = new Properties();
     }
 
 }

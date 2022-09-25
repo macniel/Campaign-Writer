@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import de.macniel.campaignwriter.FileAccessLayer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 

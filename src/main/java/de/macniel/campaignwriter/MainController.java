@@ -1,6 +1,5 @@
 package de.macniel.campaignwriter;
 
-import de.macniel.campaignwriter.viewers.ViewerPlugin;
 import de.macniel.campaignwriter.views.BuildingView;
 import de.macniel.campaignwriter.views.EncounterView;
 import de.macniel.campaignwriter.views.SessionView;
@@ -27,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 public class MainController {
 
@@ -49,6 +49,12 @@ public class MainController {
     @FXML
     private Menu views;
 
+    private ArrayList<ViewInterface> viewerPlugins = new ArrayList<>();
+
+    private ToggleGroup viewMode;
+
+    private HashMap<Toggle, Map.Entry<ViewInterface, Scene>>  mapping;
+
 
     @FXML
     public void initialize() {
@@ -58,19 +64,18 @@ public class MainController {
         supportedFileExtensions = new ArrayList<>();
         supportedFileExtensions.add(new FileChooser.ExtensionFilter("campaign file", "*.campaign"));
 
-        ArrayList<ViewInterface> views = new ArrayList<>();
-        HashMap<Toggle, Map.Entry<ViewInterface, Scene>> mapping = new HashMap<>();
+        mapping = new HashMap<>();
 
         ViewInterface bv = new BuildingView();
         AtomicReference<RadioMenuItem> br = new AtomicReference<>();
 
-        views.add(bv);
-        views.add(new SessionView());
-        views.add(new EncounterView());
+        viewerPlugins.add(bv);
+        viewerPlugins.add(new SessionView());
+        viewerPlugins.add(new EncounterView());
 
-        ToggleGroup viewMode = new ToggleGroup();
+        viewMode = new ToggleGroup();
 
-        views.forEach( view -> {
+        viewerPlugins.forEach( view -> {
             try {
 
                 String path = view.getPathToFxmlDefinition();
@@ -78,6 +83,7 @@ public class MainController {
 
                 FXMLLoader fxmlLoader = new FXMLLoader(view.getClass().getResource(path));
                 Scene scene = new Scene(fxmlLoader.load(), 480, 240);
+                
                 ViewInterface v = fxmlLoader.getController();
 
                 RadioMenuItem item = new RadioMenuItem();
@@ -96,29 +102,34 @@ public class MainController {
         });
 
         viewMode.selectedToggleProperty().addListener((observableValue, toggle, t1) -> {
-           Scene editor = mapping.get(t1).getValue();
-           if (editor != null) {
-               activeInterface = mapping.get(t1).getKey();
-
-               inset.setCenter(editor.getRoot());
-               activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
-               activeInterface.requestNote(new Callback<UUID,Note>() {
-
-                @Override
-                public Note call(UUID param) {
-                    Optional<Note> foundNote = FileAccessLayer.getInstance().findByReference(param);
-                    if (foundNote.isPresent()) {
-                        return foundNote.get();
-                    } else {
-                        return null;
-                    }
-                }
-                 
-               });
-           }
+           switchViewer(t1);
         });
+        viewMode.selectToggle(viewMode.getToggles().get(0));
+    }
 
-        viewMode.selectToggle(br.get());
+    void switchViewer(Toggle present) {
+        Scene editor = mapping.get(present).getValue();
+        System.out.println("Toggled to " + mapping.get(present).getKey().getMenuItemLabel());
+        if (editor != null) {
+            activeInterface = mapping.get(present).getKey();
+            FileAccessLayer.getInstance().updateSetting("lastModule", activeInterface.getMenuItemLabel());
+
+            inset.setCenter(editor.getRoot());
+            activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
+            activeInterface.requestNote(new Callback<UUID,Note>() {
+
+             @Override
+             public Note call(UUID param) {
+                 Optional<Note> foundNote = FileAccessLayer.getInstance().findByReference(param);
+                 if (foundNote.isPresent()) {
+                     return foundNote.get();
+                 } else {
+                     return null;
+                 }
+             }
+              
+            });
+        }
     }
 
 
@@ -128,6 +139,37 @@ public class MainController {
         FileAccessLayer.getInstance().newCampaign();
 
         activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
+    }
+
+    private void openLastViewer() {
+        String campaignSettingLastViewer = FileAccessLayer.getInstance().getSetting("lastModule");
+        System.out.println("loading campaign with last module " + campaignSettingLastViewer);
+        System.out.println("Module should load with " +FileAccessLayer.getInstance().getSetting("lastNote"));
+        if (campaignSettingLastViewer != null) {
+            viewMode.getToggles().stream().filter(t -> ((RadioMenuItem) t).getText().equals(campaignSettingLastViewer)).findFirst().ifPresent(toggle -> 
+            switchViewer(toggle));
+        } else {
+            viewMode.selectToggle(viewMode.getToggles().get(0));
+        }
+    }
+
+    public void openCampaign(File newFile) {
+        this.currentFile = newFile;
+        if (newFile != null && newFile.exists()) {
+            try {
+                FileAccessLayer.getInstance().loadFromFile(this.currentFile);
+            
+            if(activeInterface != null) {
+                activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
+            }
+            title.set(this.currentFile.getName());
+        
+            openLastViewer();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        }
     }
 
     @FXML public void openCampaign() throws IOException {
@@ -143,6 +185,8 @@ public class MainController {
                 activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
             }
             title.set(this.currentFile.getName());
+
+            openLastViewer();
         }
     }
 

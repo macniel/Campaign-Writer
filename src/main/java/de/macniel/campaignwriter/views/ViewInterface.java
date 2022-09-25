@@ -2,11 +2,8 @@ package de.macniel.campaignwriter.views;
 
 import de.macniel.campaignwriter.CampaignFile;
 import de.macniel.campaignwriter.Note;
-import javafx.scene.Node;
 import javafx.util.Callback;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 public interface ViewInterface {

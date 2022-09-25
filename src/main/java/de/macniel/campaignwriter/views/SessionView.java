@@ -21,7 +21,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.util.Callback;
 
 import java.util.ArrayList;
@@ -29,6 +28,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class SessionView implements ViewInterface {
+    
+    @SuppressWarnings("unused")
     private Callback<UUID, Note> requester;
 
     @FXML
@@ -64,6 +65,14 @@ public class SessionView implements ViewInterface {
         scriptBox.getChildren().clear();
 
         notesLister.setItems(FXCollections.observableArrayList(items.sessionNotes));
+
+        String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
+        if (lastLoadedNote != null) {
+            FileAccessLayer.getInstance().getAllSessionNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
+                activeNote = note;
+                notesLister.getSelectionModel().select(activeNote);
+            });
+        }
 
     }
 
@@ -112,8 +121,6 @@ public class SessionView implements ViewInterface {
         notesLister.setCellFactory(listView -> {
             ListCell<SessionNote> t = new SessionNotesRenderer();
 
-            Note draggedElement;
-
             t.onDragOverProperty().set(e -> {
                 dragPosition = t.getIndex();
                 e.acceptTransferModes(TransferMode.MOVE);
@@ -158,6 +165,7 @@ public class SessionView implements ViewInterface {
 
         notesLister.getSelectionModel().selectedItemProperty().addListener((observableValue, oldNote, newNote) -> {
             activeNote = newNote;
+            FileAccessLayer.getInstance().updateSetting("lastNote", newNote.getReference().toString());
             updateScroll();
         });
         scroller.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);

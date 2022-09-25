@@ -62,6 +62,15 @@ public class EncounterView  implements ViewInterface {
     public void requestLoad(CampaignFile items) {
         encounters = items.encounterNotes;
         notesLister.setItems(FXCollections.observableArrayList(encounters));
+
+        String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
+        if (lastLoadedNote != null) {
+            FileAccessLayer.getInstance().getAllEncounterNotes().stream().filter(n -> n.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
+                activeNote = note;
+                notesLister.getSelectionModel().select(activeNote);
+            });
+        }
+
     }
 
     @Override
@@ -79,6 +88,7 @@ public class EncounterView  implements ViewInterface {
 
         notesLister.getSelectionModel().selectedItemProperty().addListener( (observableValue, encounterNote, newNote) -> {
             activeNote = newNote;
+            FileAccessLayer.getInstance().updateSetting("lastNote", newNote.getReference().toString());
             updateScroller();
         });
 

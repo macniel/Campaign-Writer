@@ -14,11 +14,9 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
-import java.io.File;
 import java.util.*;
 
 public class BuildingView implements ViewInterface {
@@ -37,7 +35,7 @@ public class BuildingView implements ViewInterface {
     @FXML
     private SplitMenuButton creationMenuButton;
 
-    private ArrayList<EditorPlugin> plugins;
+    private ArrayList<EditorPlugin<?>> plugins;
 
 
     int dragPosition;
@@ -45,10 +43,9 @@ public class BuildingView implements ViewInterface {
 
     private Stage stage;
 
-    private ArrayList<FileChooser.ExtensionFilter> supportedFileExtensions;
     private Callback<UUID, Note> requester;
 
-    public void setPlugins(ArrayList<EditorPlugin> plugins) {
+    public void setPlugins(ArrayList<EditorPlugin<?>> plugins) {
         this.plugins = plugins;
     }
 
@@ -94,8 +91,6 @@ public class BuildingView implements ViewInterface {
 
         notesLister.setCellFactory(listView -> {
             ListCell<Note> t = new NotesRenderer();
-
-            Note draggedElement;
 
             t.onDragOverProperty().set(e -> {
                 dragPosition = t.getIndex();
@@ -177,10 +172,11 @@ public class BuildingView implements ViewInterface {
         notesLister.setContextMenu(notesListerMenu);
 
         notesLister.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Note>() {
+
             @Override
             public void changed(ObservableValue observableValue, Note old, Note selected) {
-                System.out.println("Changing View");
                 if (old != selected) {
+                    FileAccessLayer.getInstance().updateSetting("lastNote", selected.getReference().toString());
                     saveAndLoad(old, selected);
                 }
             }
@@ -199,7 +195,7 @@ public class BuildingView implements ViewInterface {
     }
 
 
-    private EditorPlugin getByType (NoteType type) {
+    private EditorPlugin<?> getByType (NoteType type) {
         try {
             return plugins.stream().filter( editorPlugin -> editorPlugin.defineHandler() == type).findFirst().get();
         } catch (NoSuchElementException e) {
@@ -219,12 +215,9 @@ public class BuildingView implements ViewInterface {
     }
 
     public void saveAndLoad(Note oldNote, Note newNote) {
-        boolean saveOkay = false;
-        boolean loadOkay = false;
-
-
-        EditorPlugin oldEditor = null;
-        EditorPlugin newEditor = null;
+       
+        EditorPlugin<?> oldEditor = null;
+        EditorPlugin<?> newEditor = null;
         if (oldNote != null) {
             oldEditor = getByType(oldNote.getType());
         }
@@ -235,7 +228,7 @@ public class BuildingView implements ViewInterface {
 
         if (oldEditor != null) {
             Callback<Note, Boolean> saveEditor = oldEditor.defineSaveCallback();
-            saveOkay = saveEditor.call(oldNote);
+            saveEditor.call(oldNote);
         }
 
         if (newEditor != null) {
@@ -244,7 +237,7 @@ public class BuildingView implements ViewInterface {
             editorWindow.setCenter(editor);
 
             Callback<Note, Boolean> loadEditor = newEditor.defineLoadCallback();
-            loadOkay = loadEditor.call(newNote);
+            loadEditor.call(newNote);
             activeNote = newNote;
 
             newEditor.setOnNoteRequest(new Callback<String, Note>() {

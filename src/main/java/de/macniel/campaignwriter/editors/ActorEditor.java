@@ -304,7 +304,8 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                 lines.getChildren().add(line);
             });
         }
-        return lines;
+        p.setContent(lines);
+        return p;
     }
 
     private Node getEditableVersion() {

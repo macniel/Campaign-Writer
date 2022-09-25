@@ -1,7 +1,5 @@
 package de.macniel.campaignwriter.editors;
 
-import de.macniel.campaignwriter.Note;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -14,12 +12,15 @@ public class EncounterNote {
 
     String circumstances;
 
+    UUID reference;
+
     String encounterName;
 
     String encounterDifficulty;
 
     public EncounterNote() {
         combatants = new ArrayList<>();
+        reference = UUID.randomUUID();
     }
 
     public void setCircumstances(String circumstances) {
@@ -65,5 +66,9 @@ public class EncounterNote {
     @Override
     public String toString() {
         return encounterName;
+    }
+
+    public UUID getReference() {
+        return reference;
     }
 }

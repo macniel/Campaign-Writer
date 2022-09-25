@@ -13,6 +13,8 @@ public class SessionNote {
 
     List<UUID> notes;
 
+    UUID reference;
+
     String comment;
 
     Date playDate;
@@ -60,5 +62,10 @@ public class SessionNote {
         this.notes = new ArrayList<>();
         this.played = false;
         this.playDate = null;
+        this.reference = UUID.randomUUID();
+    }
+
+    public UUID getReference() {
+        return reference;
     }
 }
