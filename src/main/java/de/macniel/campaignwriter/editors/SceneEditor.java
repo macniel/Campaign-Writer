@@ -98,7 +98,6 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         actorListProp.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         actorListProp.getSelectionModel().selectedItemProperty().addListener( (observable, oldValue, newValue) -> {
             notesStructure.actors = actorListProp.getSelectionModel().getSelectedItems().stream().map(actor -> actor.reference).toList();
-            System.out.println("update to " + notesStructure.actors.size());
         });
 
         actorListProp.setOrientation(Orientation.HORIZONTAL);
@@ -133,7 +132,6 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         return new Callback<Note, Boolean>() {
             @Override
             public Boolean call(Note note) {
-                System.out.println("saving Scene");
                 note.content = FileAccessLayer.getInstance().getParser().toJson(notesStructure);
                 return true;
             }

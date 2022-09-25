@@ -143,7 +143,6 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                 tmp.type = previousValue.type;
                 merged.add(tmp);
             }, () -> {
-                System.out.println("field " + templateItem.label + " was not previously set, build anew");
                 ActorNoteItem tmp = new ActorNoteItem();
                 tmp.content = "";
                 tmp.max = 0;
@@ -472,7 +471,6 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         newType.setPromptText("Neue");
         newType.setPrefWidth(120);
         newType.onActionProperty().set(e -> {
-                System.out.println("adding a new line of type " + newType.getValue());
                 if (notesStructure == null) {
                     notesStructure = new ActorNoteDefinition();
                 }
@@ -509,7 +507,6 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         return new Callback<Note, Boolean>() {
             @Override
             public Boolean call(Note note) {
-                System.out.println("loaded note" + note.reference);
                 notesStructure = FileAccessLayer.getInstance().getParser().fromJson(note.content, ActorNoteDefinition.class);
                 if (notesStructure == null) {
                     notesStructure = new ActorNoteDefinition();

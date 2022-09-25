@@ -43,8 +43,7 @@ public class MapViewer implements ViewerPlugin<Note> {
 
                 view.setPreserveRatio(true);
                 view.setFitHeight(view.getImage().getHeight() /2);
-                System.out.println(view.getFitHeight());
-    
+                
                 width.addListener( (observable, oldValue, newValue) -> {
                     p.setMaxWidth(newValue.doubleValue());
                     view.setFitHeight(view.getImage().getHeight() /2);
@@ -53,7 +52,6 @@ public class MapViewer implements ViewerPlugin<Note> {
     
                 view.onMouseClickedProperty().set(e -> {
                     if (e.getClickCount() == 2) {
-                        System.out.println("double click");
                         e.consume();
                     }
                 });

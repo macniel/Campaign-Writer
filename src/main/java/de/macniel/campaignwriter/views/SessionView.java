@@ -83,7 +83,6 @@ public class SessionView implements ViewInterface {
 
     @Override
     public void requestNote(Callback<UUID, Note> cb) {
-        System.out.println("requester loaded");
         this.requester = cb;
     }
 
@@ -111,7 +110,6 @@ public class SessionView implements ViewInterface {
                         Scene popoutContent = new Scene(b, 300, 300);
                         wnd.setScene(popoutContent);
                         wnd.show();
-                        System.out.println("showing popout");
                     });
                 });
                 return null;
@@ -187,7 +185,6 @@ public class SessionView implements ViewInterface {
                             .filter(vp -> vp.defineNoteType() == note.type)
                             .findFirst()
                             .ifPresent(viewerPlugin -> {
-                                System.out.println("viewer plugin found " + viewerPlugin);
                                 Node viewNode = viewerPlugin.renderNote(note, scroller.widthProperty(), noteRequestRenderer);
                                 p.getChildren().add(viewNode);
                                 AnchorPane.setBottomAnchor(viewNode, 0.0);

@@ -47,7 +47,6 @@ public class Note implements Serializable {
     }
 
     public Note() {
-        System.out.println("Default constructor for rehydration");
         dataset.add(this);
     }
 

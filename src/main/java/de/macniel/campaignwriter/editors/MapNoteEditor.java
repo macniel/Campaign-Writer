@@ -91,7 +91,6 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
                 }
                 FileAccessLayer.getInstance().getImageFromString(actualFile.getAbsolutePath()).ifPresent(entry -> {
                     noteStructure.backgroundPath = entry.getKey();
-                    System.out.println("storing image as " + entry.getKey());
                     noteStructure.zoomFactor = 1;
                     refreshView();
                 });
@@ -170,8 +169,6 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
 
                 noteStructure.scrollPositionX += scrollEvent.getDeltaX();
                 noteStructure.scrollPositionY += scrollEvent.getDeltaY();
-                System.out.print(viewer.getHvalue());
-                System.out.println(viewer.getVvalue());
             });
             viewer.setPannable(true);
 
@@ -257,7 +254,6 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
                             rulerLine.setEndY(e.getY());
                             if (noteStructure.scale != 0) {
                                 double pixelDistance = getDistance(rulerStartX, rulerStartY, rulerEndX, rulerEndY);
-                                System.out.println("Distanz " + pixelDistance * noteStructure.scale + " p");
                             }
                         }
                     }
@@ -397,7 +393,6 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
             if (e.getButton() == MouseButton.SECONDARY) {
                 selectedPin = pin;
                 updateEditor();
-                System.out.println("Pin rightclicked");
             } else {
                 if (pin.noteReference != null) {
                     onNoteLoadRequest.call(pin.noteReference.toString());

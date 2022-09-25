@@ -70,7 +70,6 @@ public class BuildingView implements ViewInterface {
 
     public void requestLoad(CampaignFile file) {
         if (notesLister != null) {
-            System.out.println("Loading " + file.notes.size() + " notes");
             notesLister.setItems(FXCollections.observableArrayList(file.notes));
             String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
             if (lastLoadedNote != null) {

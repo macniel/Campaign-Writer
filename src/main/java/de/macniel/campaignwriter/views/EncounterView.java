@@ -25,6 +25,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
@@ -128,7 +129,6 @@ public class EncounterView  implements ViewInterface {
 
         addCombatant.getSelectionModel().selectedItemProperty().addListener( (observableValue, note, newValue) -> {
             if (newValue != null) {
-                System.out.println("add new Combatant from " + newValue.label);
                 activeNote.getCombatants().add(Combatant.fromActor(newValue.reference));
                 updateCombatantBox();
                 addCombatant.getSelectionModel().clearSelection();
@@ -174,11 +174,10 @@ public class EncounterView  implements ViewInterface {
                         }
                         
                     });
-                    b.getChildren().add(cv.renderNoteStandalone(combatant));
+                    b.getChildren().add(cv.renderNoteStandalone(combatant, wnd));
                     Scene popoutContent = new Scene(b, 300, 300);
                     wnd.setScene(popoutContent);
                     wnd.show();
-                    System.out.println("showing popout");
                 }
                 mouseEvent.consume();
             });
@@ -187,7 +186,6 @@ public class EncounterView  implements ViewInterface {
             combatant.items.stream().filter(actorNoteItem ->
                     "Name".equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent( text -> {
-                System.out.println("Found Name ");
                 combatantName.setText(text.getContent());
             });
 
@@ -196,7 +194,6 @@ public class EncounterView  implements ViewInterface {
                     "Portrait".equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent( text -> {
                 FileAccessLayer.getInstance().getImageFromString(text.getContent()).ifPresent(entry -> {
-                    System.out.println("Found portrait image " + entry.getKey());
                     combatantPortrait.setImage(entry.getValue());
                 });
                 
@@ -215,12 +212,25 @@ public class EncounterView  implements ViewInterface {
             combatant.items.stream().filter(actorNoteItem ->
                     "Hitpoints".equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent( resource -> {
-                System.out.println("Found Hitpoints ");
                 currentHP.setText(""+resource.getValue());
                 maxHP.setText(""+resource.getMax());
 
-                currentHP.textProperty().addListener((observableValue, s, t1) -> {
-                    resource.setValue(Integer.valueOf(t1));
+
+                currentHP.onKeyReleasedProperty().set( event -> {
+                    if (event.getCode() == KeyCode.ENTER) {
+                        if (currentHP.getText().indexOf("-") >= 1) {
+                            int opr1 = Integer.valueOf(currentHP.getText().split("-")[0]);
+                            int opr2 = Integer.valueOf(currentHP.getText().split("-")[1]);
+                            currentHP.setText(String.valueOf((opr1 - opr2)));
+                            
+                        } else if (currentHP.getText().indexOf("+") >= 1) {
+                            int opr1 = Integer.valueOf(currentHP.getText().split("+")[0]);
+                            int opr2 = Integer.valueOf(currentHP.getText().split("+")[1]);
+                            currentHP.setText(String.valueOf((opr1 + opr2)));
+                            
+                        }
+                        resource.setValue(Integer.valueOf(currentHP.getText()));
+                    }
                 });
             });
 

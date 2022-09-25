@@ -8,18 +8,26 @@ import de.macniel.campaignwriter.NoteType;
 import de.macniel.campaignwriter.editors.ActorNoteItem;
 import de.macniel.campaignwriter.editors.Combatant;
 import javafx.beans.value.ObservableDoubleValue;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 
 public class CombatantViewer {
@@ -39,8 +47,9 @@ public class CombatantViewer {
     }
 
 
-    public Node renderNoteStandalone(Combatant note) {
+    public Node renderNoteStandalone(Combatant note, Stage g) {
         VBox n = new VBox();
+
         note.getItems().forEach(item -> {
             HBox line = new HBox();
             switch(item.getType()) {
@@ -48,33 +57,10 @@ public class CombatantViewer {
                     Label label = new Label();
                     label.setPrefWidth(120);
                     label.setText(item.getLabel());
-                    TextFlow texteditor = new TextFlow() {
-                        @Override
-                        protected void layoutChildren() {
-                            super.layoutChildren();
-            
-                            double maxChildWidth = 0;
-            
-                            for (Node child : getManagedChildren()) {
-                                if (child instanceof Text textNode) {
-                                   if (textNode.getText().startsWith("#")) {
-                                        
-                                    }
-                                    
-                                }
-                                double childWidth = child.getLayoutBounds().getWidth();
-                                maxChildWidth = Math.max(maxChildWidth, childWidth);
-                            }
-                            double insetWidth = getInsets().getLeft() + getInsets().getRight();
-                            double adjustedWidth = maxChildWidth + insetWidth;
-            
-                            setMaxWidth(adjustedWidth);
-                        }
-                    };
-                    line.widthProperty().addListener((observableValue, number, newWidth) -> {
-                        texteditor.setMaxWidth(newWidth.doubleValue());
-                    });
+                    label.setMinWidth(120);
+                    TextFlow texteditor = new TextFlow();
                     
+                    HBox.setHgrow(texteditor, Priority.SOMETIMES);
                     texteditor.getChildren().add(new Text(item.getContent()));
                     line.getChildren().add(label);
                     line.getChildren().add(texteditor);
@@ -82,35 +68,13 @@ public class CombatantViewer {
                 case STRING -> {
                     Label label = new Label();
                     label.setPrefWidth(120);
+                    label.setMinWidth(120);
                     label.setText(item.getLabel());
-                    TextFlow texteditor = new TextFlow() {
-                        @Override
-                        protected void layoutChildren() {
-                            super.layoutChildren();
-            
-                            double maxChildWidth = 0;
-            
-                            for (Node child : getManagedChildren()) {
-                                if (child instanceof Text textNode) {
-                                   if (textNode.getText().startsWith("#")) {
-                                        
-                                    }
-                                    
-                                }
-                                double childWidth = child.getLayoutBounds().getWidth();
-                                maxChildWidth = Math.max(maxChildWidth, childWidth);
-                            }
-                            double insetWidth = getInsets().getLeft() + getInsets().getRight();
-                            double adjustedWidth = maxChildWidth + insetWidth;
-            
-                            setMaxWidth(adjustedWidth);
-                        }
-                    };
-                    line.widthProperty().addListener((observableValue, number, newWidth) -> {
-                        texteditor.setMaxWidth(newWidth.doubleValue());
-                    });
-                    
-                    texteditor.getChildren().add(new Text(item.getContent()));
+                    TextFlow texteditor = new TextFlow();
+
+                    HBox.setHgrow(texteditor, Priority.SOMETIMES);
+                    Text t = new Text(item.getContent());
+                    texteditor.getChildren().add(t);
                     line.getChildren().add(label);
                     line.getChildren().add(texteditor);
                 }
@@ -131,16 +95,12 @@ public class CombatantViewer {
                     line.getChildren().add(v);
                 }
                 case HEADER -> {
-                    VBox label = new VBox();
-                    label.setPrefWidth(120);
-
                     TextFlow content = new TextFlow();
                     Text t = new Text(item.getContent());
                     t.setStyle("-fx-font-weight: bold;");
                     content.setTextAlignment(TextAlignment.CENTER);
                     content.getChildren().add(t);
                     HBox.setHgrow(content, Priority.ALWAYS);
-                    line.getChildren().add(label);
                     line.getChildren().add(content);
                 }
                 case RESOURCE -> {
@@ -150,10 +110,23 @@ public class CombatantViewer {
                         TextField value = new TextField(String.valueOf(item.getValue()));
                         Label maxValue = new Label(String.valueOf(item.getMax()));
     
-                        value.textProperty().addListener((editor, oldText, newText) -> {
-                            item.setValue(Integer.valueOf(newText));
-                            if (changeCallback != null) {
-                                changeCallback.call(item);
+                        value.onKeyReleasedProperty().set( event -> {
+                            if (event.getCode() == KeyCode.ENTER) {
+                                if (value.getText().indexOf("-") >= 1) {
+                                    int opr1 = Integer.valueOf(value.getText().split("-")[0]);
+                                    int opr2 = Integer.valueOf(value.getText().split("-")[1]);
+                                    value.setText(String.valueOf((opr1 - opr2)));
+                                    
+                                } else if (value.getText().indexOf("+") >= 1) {
+                                    int opr1 = Integer.valueOf(value.getText().split("+")[0]);
+                                    int opr2 = Integer.valueOf(value.getText().split("+")[1]);
+                                    value.setText(String.valueOf((opr1 + opr2)));
+                                    
+                                }
+                                item.setValue(Integer.valueOf(value.getText()));
+                                if (changeCallback != null) {
+                                    changeCallback.call(item);
+                                }
                             }
                         });
     
@@ -163,6 +136,10 @@ public class CombatantViewer {
                         line.getChildren().add(maxValue);
                 }
             }
+            
+            g.widthProperty().addListener((observable, oldValue, newValue) -> {
+                line.setPrefWidth(newValue.doubleValue());
+            });
             n.getChildren().add(line);
         });
         return n;

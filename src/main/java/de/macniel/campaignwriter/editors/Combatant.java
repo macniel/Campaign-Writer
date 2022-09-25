@@ -19,7 +19,6 @@ public class Combatant {
     public static Combatant fromActor(UUID actorRef) {
         AtomicReference<Combatant> newCombatant = new AtomicReference<>();
         FileAccessLayer.getInstance().findByReference(actorRef).ifPresent(actor -> {
-            System.out.println("Cloning Actor " + actor.label);
             Combatant tmp = new Combatant();
             ActorNoteDefinition def = FileAccessLayer.getInstance().getParser().fromJson(actor.content, ActorNoteDefinition.class);
             tmp.teamColor = Color.GRAY;

@@ -70,7 +70,6 @@ public class FileAccessLayer {
         }
         try {
             config.setProperty(key, value);
-            System.out.println("_G[" + key + "] = " + value);
             config.store(new FileOutputStream(confFile), "update global " + key);
         } catch (IOException e) {
             e.printStackTrace();
@@ -132,7 +131,6 @@ public class FileAccessLayer {
     public HashMap<String, ActorNoteDefinition> getTemplates() {
     
         File templateDir = Paths.get(System.getProperty("user.home"), "campaignwriter", "templates").toFile();
-        System.out.println("lookup folder " + templateDir.getAbsolutePath());
         if (templateDir.exists() && templateDir.isDirectory()) {
             HashMap<String, ActorNoteDefinition> templates = new HashMap<>();
 
@@ -176,11 +174,9 @@ public class FileAccessLayer {
             } catch (Exception e) {}
         }
         try {
-            System.out.print("File not found, trying to lookup instead " + s + " ... ");
             String base64Asset = file.base64Assets.get(s);
             InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes("UTF-8")));
             Image image = new Image(in);
-            System.out.println("found " + image);
             return Optional.ofNullable(new AbstractMap.SimpleEntry<>(s, image));
         } catch (Exception e) {}
         return Optional.empty();

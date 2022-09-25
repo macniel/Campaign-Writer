@@ -189,7 +189,6 @@ public class LocationEditor implements EditorPlugin {
         return new Callback<Note, Boolean>() {
             @Override
             public Boolean call(Note note) {
-                System.out.println("loading note " + note + " with LocationEditor");
                 actualNote = note;
                 notesStructure = FileAccessLayer.getInstance().getParser().fromJson(actualNote.content, LocationNoteDefinition.class);
                 updateScroll();

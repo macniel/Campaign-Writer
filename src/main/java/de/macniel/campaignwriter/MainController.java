@@ -108,7 +108,6 @@ public class MainController {
 
     void switchViewer(Toggle present) {
         Scene editor = mapping.get(present).getValue();
-        System.out.println("Toggled to " + mapping.get(present).getKey().getMenuItemLabel());
         if (editor != null) {
             activeInterface = mapping.get(present).getKey();
             FileAccessLayer.getInstance().updateSetting("lastModule", activeInterface.getMenuItemLabel());
@@ -142,8 +141,6 @@ public class MainController {
 
     private void openLastViewer() {
         String campaignSettingLastViewer = FileAccessLayer.getInstance().getSetting("lastModule");
-        System.out.println("loading campaign with last module " + campaignSettingLastViewer);
-        System.out.println("Module should load with " +FileAccessLayer.getInstance().getSetting("lastNote"));
         if (campaignSettingLastViewer != null) {
             viewMode.getToggles().stream().filter(t -> ((RadioMenuItem) t).getText().equals(campaignSettingLastViewer)).findFirst().ifPresent(toggle -> {
                 switchViewer(toggle);
