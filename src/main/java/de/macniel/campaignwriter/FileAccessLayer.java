@@ -1,15 +1,18 @@
 package de.macniel.campaignwriter;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import de.macniel.campaignwriter.adapters.ColorAdapter;
 import de.macniel.campaignwriter.editors.ActorNoteDefinition;
 import de.macniel.campaignwriter.editors.EncounterNote;
 import de.macniel.campaignwriter.editors.SessionNote;
 import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -22,7 +25,7 @@ public class FileAccessLayer {
 
     private Gson gsonParser;
     {
-        gsonParser = new Gson();
+        gsonParser = new GsonBuilder().registerTypeAdapter(Color.class, new ColorAdapter()).create();
     }
 
     private Properties config;
@@ -42,6 +45,10 @@ public class FileAccessLayer {
 
   
         initConfFile();
+    }
+
+    public Gson getParser() {
+        return gsonParser;
     }
 
     private void initConfFile() {
@@ -84,9 +91,6 @@ public class FileAccessLayer {
         JsonReader reader = null;
         try {
             reader = new JsonReader(new FileReader(f));
-            if (gsonParser == null) {
-                gsonParser = new Gson();
-            }
             file = gsonParser.fromJson(reader, CampaignFile.class);
             updateGlobal("lastFilePath", f.getAbsolutePath());
         } catch (Exception e) {
@@ -187,9 +191,6 @@ public class FileAccessLayer {
         keepFile = f;
         try {
             writer = new JsonWriter(new FileWriter(f));
-            if (gsonParser == null) {
-                gsonParser = new Gson();
-            }
             // TODO: Count Base64 Refs for Garbage Collecting
             gsonParser.toJson(file, CampaignFile.class, writer);
 

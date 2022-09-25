@@ -5,13 +5,15 @@ import java.util.UUID;
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
-import de.macniel.campaignwriter.editors.ActorNoteDefinition;
+import de.macniel.campaignwriter.editors.ActorNoteItem;
 import de.macniel.campaignwriter.editors.Combatant;
 import javafx.beans.value.ObservableDoubleValue;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -20,19 +22,24 @@ import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 
-public class ActorViewer implements ViewerPlugin<ActorNoteDefinition> {
-    @Override
+public class CombatantViewer {
+
     public NoteType defineNoteType() {
-        return NoteType.ACTOR_NOTE;
+        return NoteType.COMBATANT_NOTE;
     }
 
-    @Override
-    public Node renderNote(ActorNoteDefinition note, ObservableDoubleValue parentWidth, Callback<UUID, Note> requester) {
-        return new HBox();
+    public Node renderNote(Note note, ObservableDoubleValue parentWidth, Callback<UUID, Note> requester) {
+        return new VBox();
     }
 
-    @Override
-    public Node renderNoteStandalone(ActorNoteDefinition note) {
+    private Callback<ActorNoteItem, Boolean> changeCallback;
+
+    public void setChangeCallback(Callback<ActorNoteItem, Boolean> changeCallback) {
+        this.changeCallback = changeCallback;
+    }
+
+
+    public Node renderNoteStandalone(Combatant note) {
         VBox n = new VBox();
         note.getItems().forEach(item -> {
             HBox line = new HBox();
@@ -41,8 +48,33 @@ public class ActorViewer implements ViewerPlugin<ActorNoteDefinition> {
                     Label label = new Label();
                     label.setPrefWidth(120);
                     label.setText(item.getLabel());
-                    TextFlow texteditor = new TextFlow();
-
+                    TextFlow texteditor = new TextFlow() {
+                        @Override
+                        protected void layoutChildren() {
+                            super.layoutChildren();
+            
+                            double maxChildWidth = 0;
+            
+                            for (Node child : getManagedChildren()) {
+                                if (child instanceof Text textNode) {
+                                   if (textNode.getText().startsWith("#")) {
+                                        
+                                    }
+                                    
+                                }
+                                double childWidth = child.getLayoutBounds().getWidth();
+                                maxChildWidth = Math.max(maxChildWidth, childWidth);
+                            }
+                            double insetWidth = getInsets().getLeft() + getInsets().getRight();
+                            double adjustedWidth = maxChildWidth + insetWidth;
+            
+                            setMaxWidth(adjustedWidth);
+                        }
+                    };
+                    line.widthProperty().addListener((observableValue, number, newWidth) -> {
+                        texteditor.setMaxWidth(newWidth.doubleValue());
+                    });
+                    
                     texteditor.getChildren().add(new Text(item.getContent()));
                     line.getChildren().add(label);
                     line.getChildren().add(texteditor);
@@ -51,7 +83,33 @@ public class ActorViewer implements ViewerPlugin<ActorNoteDefinition> {
                     Label label = new Label();
                     label.setPrefWidth(120);
                     label.setText(item.getLabel());
-                    TextFlow texteditor = new TextFlow();
+                    TextFlow texteditor = new TextFlow() {
+                        @Override
+                        protected void layoutChildren() {
+                            super.layoutChildren();
+            
+                            double maxChildWidth = 0;
+            
+                            for (Node child : getManagedChildren()) {
+                                if (child instanceof Text textNode) {
+                                   if (textNode.getText().startsWith("#")) {
+                                        
+                                    }
+                                    
+                                }
+                                double childWidth = child.getLayoutBounds().getWidth();
+                                maxChildWidth = Math.max(maxChildWidth, childWidth);
+                            }
+                            double insetWidth = getInsets().getLeft() + getInsets().getRight();
+                            double adjustedWidth = maxChildWidth + insetWidth;
+            
+                            setMaxWidth(adjustedWidth);
+                        }
+                    };
+                    line.widthProperty().addListener((observableValue, number, newWidth) -> {
+                        texteditor.setMaxWidth(newWidth.doubleValue());
+                    });
+                    
                     texteditor.getChildren().add(new Text(item.getContent()));
                     line.getChildren().add(label);
                     line.getChildren().add(texteditor);
@@ -94,6 +152,9 @@ public class ActorViewer implements ViewerPlugin<ActorNoteDefinition> {
     
                         value.textProperty().addListener((editor, oldText, newText) -> {
                             item.setValue(Integer.valueOf(newText));
+                            if (changeCallback != null) {
+                                changeCallback.call(item);
+                            }
                         });
     
                         line.getChildren().add(label);
@@ -106,4 +167,5 @@ public class ActorViewer implements ViewerPlugin<ActorNoteDefinition> {
         });
         return n;
     }
+    
 }

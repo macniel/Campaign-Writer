@@ -33,8 +33,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
-    Gson gsonParser;
-
     ActorNoteDefinition notesStructure;
     private ScrollPane editor;
 
@@ -119,10 +117,8 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         saveDialog.setInitialDirectory(Paths.get(System.getProperty("user.home"), "campaignwriter", "templates").toFile());
         File f = saveDialog.showSaveDialog(owner);
         try (JsonWriter writer = new JsonWriter(new FileWriter(f))) {
-            if (gsonParser == null) {
-                gsonParser = new Gson();
-            }
-            gsonParser.toJson(def, ActorNoteDefinition.class, writer);
+            
+            FileAccessLayer.getInstance().getParser().toJson(def, ActorNoteDefinition.class, writer);
             writer.flush();
             writer.close();
         } catch (IOException e) {
@@ -502,10 +498,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         return new Callback<Note, Boolean>() {
             @Override
             public Boolean call(Note note) {
-                if (gsonParser == null) {
-                    gsonParser = new Gson();
-                }
-                note.content = gsonParser.toJson(notesStructure);
+                note.content = FileAccessLayer.getInstance().getParser().toJson(notesStructure);
                 return true;
             }
         };
@@ -516,11 +509,8 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         return new Callback<Note, Boolean>() {
             @Override
             public Boolean call(Note note) {
-                if (gsonParser == null) {
-                    gsonParser = new Gson();
-                }
                 System.out.println("loaded note" + note.reference);
-                notesStructure = gsonParser.fromJson(note.content, ActorNoteDefinition.class);
+                notesStructure = FileAccessLayer.getInstance().getParser().fromJson(note.content, ActorNoteDefinition.class);
                 if (notesStructure == null) {
                     notesStructure = new ActorNoteDefinition();
                 }

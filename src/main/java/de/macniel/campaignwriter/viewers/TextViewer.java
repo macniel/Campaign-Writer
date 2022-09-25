@@ -3,6 +3,7 @@ package de.macniel.campaignwriter.viewers;
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
+import de.macniel.campaignwriter.editors.TextNoteDefinition;
 import javafx.beans.value.ObservableDoubleValue;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TextViewer implements ViewerPlugin {
+public class TextViewer implements ViewerPlugin<Note> {
 
 
     @Override

@@ -1,27 +1,38 @@
 package de.macniel.campaignwriter.views;
 
+import java.util.List;
+import java.util.UUID;
+
 import de.macniel.campaignwriter.CampaignFile;
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
+import de.macniel.campaignwriter.editors.ActorNoteItem;
 import de.macniel.campaignwriter.editors.Combatant;
 import de.macniel.campaignwriter.editors.EncounterNote;
+import de.macniel.campaignwriter.viewers.CombatantViewer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import javafx.scene.image.Image;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.ColorPicker;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.util.Callback;
-
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 public class EncounterView  implements ViewInterface {
     @FXML
@@ -151,7 +162,23 @@ public class EncounterView  implements ViewInterface {
                     activeNote.getCombatants().remove(combatant);
                     updateCombatantBox();
                 } else if (mouseEvent.getButton() == MouseButton.PRIMARY && mouseEvent.getClickCount() == 2) {
-                    System.out.println("requesting details of note " + combatantName);
+                    CombatantViewer cv = new CombatantViewer();
+                    final Stage wnd = new Stage();
+                    AnchorPane b = new AnchorPane();
+                    cv.setChangeCallback(new Callback<ActorNoteItem,Boolean>() {
+
+                        @Override
+                        public Boolean call(ActorNoteItem param) {
+                            updateCombatantBox();
+                            return true;
+                        }
+                        
+                    });
+                    b.getChildren().add(cv.renderNoteStandalone(combatant));
+                    Scene popoutContent = new Scene(b, 300, 300);
+                    wnd.setScene(popoutContent);
+                    wnd.show();
+                    System.out.println("showing popout");
                 }
                 mouseEvent.consume();
             });
@@ -198,8 +225,64 @@ public class EncounterView  implements ViewInterface {
             });
 
             hitpoints.getChildren().addAll(currentHP, sep, maxHP);
-            box.getChildren().addAll(combatantName, combatantPortrait, hitpoints);
+
+            ColorPicker cp = new ColorPicker();
+            cp.setValue(combatant.teamColor);
+            cp.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if (oldValue != newValue) {
+                    combatant.teamColor = newValue;
+                }
+            });
+
+            enableDragandDrop(activeNote.getCombatants(), combatant, combatantPortrait);
+            box.getChildren().addAll(combatantName, combatantPortrait, hitpoints, cp);
+
             combatantsPropLine.getChildren().addAll(box);
+        });
+    }
+
+    Combatant dragItem;
+    int dragPosition = 0;
+
+    void enableDragandDrop(List<Combatant> parentList, Combatant dragElement, Node dragHandler) {
+
+        
+        dragHandler.onDragOverProperty().set(e -> {
+            dragPosition = parentList.indexOf(dragElement);
+            e.acceptTransferModes(TransferMode.MOVE);
+            e.consume();
+        });
+
+        dragHandler.onDragExitedProperty().set(e -> {
+
+        });
+
+        dragHandler.onDragEnteredProperty().set(e -> {
+            dragPosition = parentList.indexOf(dragElement);
+            e.acceptTransferModes(TransferMode.MOVE);
+            e.consume();
+        });
+
+        dragHandler.onDragDroppedProperty().set(e -> {
+            if (dragItem != null) {
+                parentList.remove(dragItem);
+                parentList.add(dragPosition, dragItem);
+                updateCombatantBox();
+            }
+            e.setDropCompleted(true);
+            e.consume();
+        });
+
+
+        dragHandler.onDragDetectedProperty().set(e -> {
+            dragItem = dragElement;
+            dragPosition = parentList.indexOf(dragElement);
+            javafx.scene.input.Dragboard db = dragHandler.startDragAndDrop(TransferMode.ANY);
+            ClipboardContent c = new ClipboardContent();
+            c.putString("accepted");
+            db.setContent(c);
+
+            e.consume();
         });
     }
 

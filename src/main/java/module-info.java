@@ -17,5 +17,4 @@ module de.macniel.campaignwriter {
     opens de.macniel.campaignwriter.adapters to com.google.gson;
     opens de.macniel.campaignwriter.viewers to com.google.gson, javafx.fxml;
     opens de.macniel.campaignwriter.editors to com.google.gson, javafx.fxml;
-
 }

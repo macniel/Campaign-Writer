@@ -4,12 +4,13 @@ import java.util.UUID;
 
 import de.macniel.campaignwriter.Note;
 import de.macniel.campaignwriter.NoteType;
+import de.macniel.campaignwriter.editors.SceneNoteDefinition;
 import javafx.beans.value.ObservableDoubleValue;
 import javafx.scene.Node;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
-public class SceneViewer implements ViewerPlugin {
+public class SceneViewer implements ViewerPlugin<Note> {
     @Override
     public NoteType defineNoteType() {
         return NoteType.SCENE_NOTE;

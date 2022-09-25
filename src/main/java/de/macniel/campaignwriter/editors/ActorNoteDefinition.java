@@ -10,4 +10,8 @@ public class ActorNoteDefinition {
         items = new ArrayList<>();
     }
 
+    public ArrayList<ActorNoteItem> getItems() {
+        return items;
+    }
+
 }

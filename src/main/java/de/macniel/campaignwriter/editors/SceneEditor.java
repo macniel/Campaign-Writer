@@ -24,7 +24,6 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
 
     Note actualNote;
 
-    Gson gsonParser;
     private ComboBox<Note> locationProp;
     private TextField shortDescriptionProp;
     private ListView<Note> actorListProp;
@@ -135,10 +134,7 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
             @Override
             public Boolean call(Note note) {
                 System.out.println("saving Scene");
-                if (gsonParser == null) {
-                    gsonParser = new Gson();
-                }
-                note.content = gsonParser.toJson(notesStructure);
+                note.content = FileAccessLayer.getInstance().getParser().toJson(notesStructure);
                 return true;
             }
         };
@@ -149,11 +145,8 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         return new Callback<Note, Boolean>() {
             @Override
             public Boolean call(Note note) {
-                if (gsonParser == null) {
-                    gsonParser = new Gson();
-                }
                 actualNote = note;
-                notesStructure = gsonParser.fromJson(actualNote.content, SceneNoteDefinition.class);
+                notesStructure = FileAccessLayer.getInstance().getParser().fromJson(actualNote.content, SceneNoteDefinition.class);
                 updateFields();
                 return true;
             }

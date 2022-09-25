@@ -9,7 +9,8 @@ public enum NoteType {
     PICTURE_NOTE("Bild"),
     MAP_NOTE("Landkarte"),
     ENCOUNTER_NOTE("Begegnung"),
-    RELATIONSHIP_NOTE("Beziehung");
+    RELATIONSHIP_NOTE("Beziehung"), 
+    COMBATANT_NOTE("Gegner");
 
     public final String label;
     NoteType(String label) {

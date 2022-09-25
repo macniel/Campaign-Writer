@@ -37,8 +37,6 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
 
     private ImageView backgroundLayer;
 
-    private Gson gsonParser;
-
     private MapPin selectedPin;
 
     private MapNoteDefinition noteStructure;
@@ -416,10 +414,7 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
         return new Callback<Note, Boolean>() {
             @Override
             public Boolean call(Note note) {
-                if (gsonParser == null) {
-                    gsonParser = new GsonBuilder().registerTypeAdapter(Color.class, new ColorAdapter()).create();
-                }
-                note.setContent(gsonParser.toJson(noteStructure, MapNoteDefinition.class));
+                note.setContent(FileAccessLayer.getInstance().getParser().toJson(noteStructure, MapNoteDefinition.class));
                 return true;
             }
         };
@@ -430,10 +425,7 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
         return new Callback<Note, Boolean>() {
             @Override
             public Boolean call(Note param) {
-                if (gsonParser == null) {
-                    gsonParser = new GsonBuilder().registerTypeAdapter(Color.class, new ColorAdapter()).create();
-                }
-                noteStructure = gsonParser.fromJson(param.getContent(), MapNoteDefinition.class);
+                noteStructure = FileAccessLayer.getInstance().getParser().fromJson(param.getContent(), MapNoteDefinition.class);
                 refreshView();
                 return true;
             }

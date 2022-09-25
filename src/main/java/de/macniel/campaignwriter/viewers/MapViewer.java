@@ -11,21 +11,14 @@ import javafx.beans.value.ObservableDoubleValue;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
 
-import java.util.Map;
 import java.util.UUID;
 
-public class MapViewer implements ViewerPlugin {
-
-    Gson gsonParser = new GsonBuilder().registerTypeAdapter(Color.class, new ColorAdapter()).create();
+public class MapViewer implements ViewerPlugin<Note> {
 
     @Override
     public NoteType defineNoteType() {
@@ -37,14 +30,12 @@ public class MapViewer implements ViewerPlugin {
 
         VBox child = new VBox();
 
-        Label labelOfNote = new Label(note.label);
-
         ScrollPane p = new ScrollPane();
         p.setPannable(true);
-        System.out.println(note.type);
         p.setMaxWidth(width.get());
 
-        MapNoteDefinition noteStructure = gsonParser.fromJson(note.content, MapNoteDefinition.class);
+        MapNoteDefinition noteStructure = FileAccessLayer.getInstance().getParser().fromJson(note.content, MapNoteDefinition.class);
+
         if (noteStructure != null) {
 
             FileAccessLayer.getInstance().getImageFromString(noteStructure.backgroundPath).ifPresent(entry -> {
@@ -76,7 +67,6 @@ public class MapViewer implements ViewerPlugin {
             
         }
 
-        child.getChildren().add(labelOfNote);
         child.getChildren().add(p);
 
         return child;

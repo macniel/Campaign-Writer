@@ -8,12 +8,12 @@ import javafx.beans.value.ObservableDoubleValue;
 import javafx.scene.Node;
 import javafx.util.Callback;
 
-public interface ViewerPlugin {
+public interface ViewerPlugin<T> {
 
     NoteType defineNoteType();
 
-    Node renderNote(Note note, ObservableDoubleValue parentWidth, Callback<UUID, Note> requester);
+    Node renderNote(T note, ObservableDoubleValue parentWidth, Callback<UUID, Note> requester);
 
-    Node renderNoteStandalone(Note note);
+    Node renderNoteStandalone(T note);
 
 }

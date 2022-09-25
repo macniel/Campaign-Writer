@@ -18,8 +18,6 @@ import java.util.List;
 
 public class LocationEditor implements EditorPlugin {
 
-    Gson gsonParser;
-
     LocationNoteDefinition notesStructure;
     private TextField locationNameProp;
     private ComboBox<Note> pictureProp;
@@ -170,11 +168,7 @@ public class LocationEditor implements EditorPlugin {
     private void saveTo() {
 
         if (actualNote != null) {
-
-            if (gsonParser == null) {
-                gsonParser = new Gson();
-            }
-            actualNote.content = gsonParser.toJson(notesStructure);
+            actualNote.content = FileAccessLayer.getInstance().getParser().toJson(notesStructure);
         }
     }
 
@@ -196,11 +190,8 @@ public class LocationEditor implements EditorPlugin {
             @Override
             public Boolean call(Note note) {
                 System.out.println("loading note " + note + " with LocationEditor");
-                if (gsonParser == null) {
-                    gsonParser = new Gson();
-                }
                 actualNote = note;
-                notesStructure = gsonParser.fromJson(actualNote.content, LocationNoteDefinition.class);
+                notesStructure = FileAccessLayer.getInstance().getParser().fromJson(actualNote.content, LocationNoteDefinition.class);
                 updateScroll();
 
                 return true;

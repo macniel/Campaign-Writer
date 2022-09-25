@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
 
 public class MainController {
 
@@ -146,8 +145,10 @@ public class MainController {
         System.out.println("loading campaign with last module " + campaignSettingLastViewer);
         System.out.println("Module should load with " +FileAccessLayer.getInstance().getSetting("lastNote"));
         if (campaignSettingLastViewer != null) {
-            viewMode.getToggles().stream().filter(t -> ((RadioMenuItem) t).getText().equals(campaignSettingLastViewer)).findFirst().ifPresent(toggle -> 
-            switchViewer(toggle));
+            viewMode.getToggles().stream().filter(t -> ((RadioMenuItem) t).getText().equals(campaignSettingLastViewer)).findFirst().ifPresent(toggle -> {
+                switchViewer(toggle);
+                viewMode.selectToggle(toggle);
+        });
         } else {
             viewMode.selectToggle(viewMode.getToggles().get(0));
         }

@@ -30,8 +30,6 @@ import java.util.Map;
 public class PictureNoteEditor implements EditorPlugin<PictureNoteDefinition> {
     private ImageView viewer;
 
-    private Gson gsonParser;
-
     private PictureNoteDefinition noteStructure;
 
     @Override
@@ -126,7 +124,6 @@ public class PictureNoteEditor implements EditorPlugin<PictureNoteDefinition> {
     public Node defineEditor() {
         this.viewer = new ImageView();
         this.viewer.preserveRatioProperty().set(true);
-        this.gsonParser = new Gson();
         this.noteStructure = new PictureNoteDefinition();
         this.noteStructure.zoomFactor = 1;
         ScrollPane p = new ScrollPane(this.viewer);
@@ -139,7 +136,7 @@ public class PictureNoteEditor implements EditorPlugin<PictureNoteDefinition> {
     @Override
     public Callback<Note, Boolean> defineSaveCallback() {
         return note -> {
-            note.setContent(gsonParser.toJson(noteStructure));
+            note.setContent(FileAccessLayer.getInstance().getParser().toJson(noteStructure));
             return true;
         };
     }
@@ -157,7 +154,7 @@ public class PictureNoteEditor implements EditorPlugin<PictureNoteDefinition> {
     @Override
     public Callback<Note, Boolean> defineLoadCallback() {
         return note -> {
-            noteStructure = gsonParser.fromJson(note.getContent(), PictureNoteDefinition.class);
+            noteStructure = FileAccessLayer.getInstance().getParser().fromJson(note.getContent(), PictureNoteDefinition.class);
             refreshImageView();
             return true;
         };
