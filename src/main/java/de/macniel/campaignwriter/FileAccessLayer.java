@@ -160,6 +160,9 @@ public class FileAccessLayer {
     }
 
     public Optional<Map.Entry<String, Image>> getImageFromString(String s) {
+        if (s == null) {
+            return Optional.empty();
+        }
 
         if (new File(s).exists()) {
             try {
