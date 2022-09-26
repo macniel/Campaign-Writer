@@ -7,34 +7,42 @@
 <?import javafx.scene.layout.*?>
 
 <?import org.kordamp.ikonli.javafx.FontIcon?>
-<SplitPane xmlns="http://javafx.com/javafx"
-           xmlns:fx="http://javafx.com/fxml"
-           fx:controller="de.macniel.campaignwriter.views.SessionView"
-           prefHeight="400.0" prefWidth="600.0">
+<SplitPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="de.macniel.campaignwriter.views.SessionView" prefHeight="400.0" prefWidth="600.0">
 
     <BorderPane SplitPane.resizableWithParent="false">
         <center>
-            <ListView fx:id="notesLister"/>
+            <ListView fx:id="notesLister" />
         </center>
         <bottom>
-            <ButtonBar>
-                <buttons>
-            <Button text="Sitzung" onAction="#newSession"><graphic>
-                <FontIcon iconLiteral="icm-plus"/></graphic></Button>
-            <Button onAction="#deleteSession"><graphic>
-                <FontIcon iconLiteral="icm-bin"/></graphic></Button>
-            <Button onAction="#startSession"><graphic>
-                <FontIcon iconLiteral="icm-play3"/> </graphic></Button>
-                </buttons>
-            </ButtonBar>
+            <ToolBar>
+                <items>
+                    <Button text="%AddSession" onAction="#newSession">
+                        <graphic>
+                            <FontIcon iconLiteral="icm-plus" />
+                        </graphic>
+                    </Button>
+                    <Button onAction="#startSession">
+                        <graphic>
+                            <FontIcon iconLiteral="icm-play3" />
+                        </graphic>
+                    </Button>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button onAction="#deleteSession">
+                        <graphic>
+                            <FontIcon iconLiteral="icm-bin" />
+                        </graphic>
+                    </Button>
+
+                </items>
+            </ToolBar>
         </bottom>
     </BorderPane>
     <AnchorPane>
-    <ScrollPane fx:id="scroller" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="0" AnchorPane.topAnchor="0">
-        <VBox fx:id="scriptBox">
-            <ComboBox promptText="Element Hinzufügen"/>
-        </VBox>
+        <ScrollPane fx:id="scroller" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="0" AnchorPane.topAnchor="0">
+            <VBox fx:id="scriptBox">
+                <ComboBox promptText="Element Hinzufügen" />
+            </VBox>
 
-    </ScrollPane>
+        </ScrollPane>
     </AnchorPane>
 </SplitPane>

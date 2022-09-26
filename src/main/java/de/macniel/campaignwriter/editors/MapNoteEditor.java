@@ -28,6 +28,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.ResourceBundle;
 
 public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
     private Callback<String, Note> onNoteRequest;
@@ -58,11 +59,16 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
     private double rulerEndX;
 
     private double rulerEndY;
+    private ResourceBundle i18n;
 
     private enum Mode {
         POINTER,
         MEASURE,
         SCALE
+    }
+
+    public MapNoteEditor() {
+        this.i18n = ResourceBundle.getBundle("i18n.buildingview");
     }
 
     @Override
@@ -208,11 +214,11 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
                 dragging = false;
 
                 TextInputDialog measuredLength = new TextInputDialog();
-                measuredLength.setTitle("Längen Bemessung");
+                measuredLength.setTitle(i18n.getString("MeasureLengthDialogTitle"));
 
                 double distance = getDistance(rulerStartX, rulerStartY, rulerEndX, rulerEndY);
 
-                measuredLength.setHeaderText("Gemessen wurden " + distance + " Pixel" + " und entsprechen wieviel Meter?");
+                measuredLength.setHeaderText(String.format(i18n.getString("MeasureLengthDialogHint"), distance));
                 Optional<String> result = measuredLength.showAndWait();
                 if (result.isPresent()) {
 
@@ -268,7 +274,7 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
                         MapPin n = new MapPin();
                         n.x = e.getX();
                         n.y = e.getY();
-                        n.label = "Neuer Pin";
+                        n.label = i18n.getString("NewPin");
                         n.noteReference = null;
                         noteStructure.pins.add(n);
                         selectedPin = n;
@@ -288,10 +294,10 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
         labelProp = new TextField();
         colorProp = new ColorPicker();
         noteReferenceProp = new ComboBox<Note>();
-        deletePinButton = new Button("Pin entfernen");
+        deletePinButton = new Button(i18n.getString("RemovePin"));
 
 
-        mapPropertiesPane.getChildren().add(new Label("Beschriftung"));
+        mapPropertiesPane.getChildren().add(new Label(i18n.getString("PinLabel")));
         mapPropertiesPane.getChildren().add(labelProp);
 
         labelProp.onActionProperty().set(e -> {
@@ -302,7 +308,7 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
 
         });
 
-        mapPropertiesPane.getChildren().add(new Label("Farbe"));
+        mapPropertiesPane.getChildren().add(new Label(i18n.getString("PinColor")));
         mapPropertiesPane.getChildren().add(colorProp);
 
         colorProp.onActionProperty().set(e -> {
@@ -312,7 +318,7 @@ public class MapNoteEditor implements EditorPlugin<MapNoteDefinition> {
             }
         });
 
-        mapPropertiesPane.getChildren().add(new Label("Verknüpfte Notiz"));
+        mapPropertiesPane.getChildren().add(new Label(i18n.getString("PinLink")));
         mapPropertiesPane.getChildren().add(noteReferenceProp);
 
         noteReferenceProp.onActionProperty().set(e -> {

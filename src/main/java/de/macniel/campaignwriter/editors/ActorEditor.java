@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.ResourceBundle;
 public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
     ActorNoteDefinition notesStructure;
@@ -39,7 +40,13 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
     private ComboBox setTemplateProp;
 
     private HashMap<String, ActorNoteDefinition> actorTemplates;
+    private ResourceBundle i18n;
 
+
+    public ActorEditor() {
+        super();
+        this.i18n = ResourceBundle.getBundle("i18n.buildingview");
+    }
 
     @Override
     public NoteType defineHandler() {
@@ -53,9 +60,9 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
         ToggleGroup viewMode = new ToggleGroup();
 
-        ToggleButton previewMode = new ToggleButton("Preview");
-        ToggleButton editMode = new ToggleButton("edit");
-        Button saveAsTemplateButton = new Button("", new FontIcon("icm-floppy-disk"));
+        ToggleButton previewMode = new ToggleButton(i18n.getString("PreviewMode"));
+        ToggleButton editMode = new ToggleButton(i18n.getString("EditMode"));
+        Button saveAsTemplateButton = new Button(i18n.getString("SaveTemplateAs"), new FontIcon("icm-floppy-disk"));
         setTemplateProp = new ComboBox<>();
 
         previewMode.setToggleGroup(viewMode);
@@ -90,7 +97,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
             }
         });
         
-        t.getItems().addAll(new Label("Template: "), setTemplateProp);
+        t.getItems().addAll(new Label(i18n.getString("TemplateLabel")), setTemplateProp);
 
         saveAsTemplateButton.onActionProperty().set(event -> {
             saveTemplate(w);
@@ -113,7 +120,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         def.items = sanitized;
 
         FileChooser saveDialog = new FileChooser();
-        saveDialog.setTitle("Dateiname für Vorlage");
+        saveDialog.setTitle(i18n.getString("SaveTemplateDialogTitle"));
         saveDialog.setInitialDirectory(Paths.get(System.getProperty("user.home"), "campaignwriter", "templates").toFile());
         File f = saveDialog.showSaveDialog(owner);
         try (JsonWriter writer = new JsonWriter(new FileWriter(f))) {
@@ -468,7 +475,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         HBox newLine = new HBox();
         ComboBox<ActorNoteItem.ActorNoteItemType> newType = new ComboBox<>();
         newType.setItems(types);
-        newType.setPromptText("Neue");
+        newType.setPromptText(i18n.getString("AddPropLine"));
         newType.setPrefWidth(120);
         newType.onActionProperty().set(e -> {
                 if (notesStructure == null) {

@@ -25,10 +25,12 @@ import javafx.util.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.UUID;
 
-public class SessionView implements ViewInterface {
-    
+public class SessionView extends ViewInterface {
+
+    private final ResourceBundle i18n;
     @SuppressWarnings("unused")
     private Callback<UUID, Note> requester;
 
@@ -55,9 +57,17 @@ public class SessionView implements ViewInterface {
         return "session-view.fxml";
     }
 
+    public static String getLocalizationBase() {
+        return "i18n.sessions";
+    }
+
+    public SessionView() {
+        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
+    }
+
     @Override
     public String getMenuItemLabel() {
-        return "Sitzung";
+        return  i18n.getString("SessionViewMenuItem");
     }
 
     @Override
@@ -228,7 +238,7 @@ public class SessionView implements ViewInterface {
 
     public void newSession(ActionEvent actionEvent) {
         SessionNote newNote = new SessionNote();
-        newNote.setLabel("Neue Sitzung");
+        newNote.setLabel(i18n.getString("UntitledSession"));
         FileAccessLayer.getInstance().addSessionNote(0, newNote);
         notes.setAll(FileAccessLayer.getInstance().getAllSessionNotes());
         notesLister.setItems(notes);

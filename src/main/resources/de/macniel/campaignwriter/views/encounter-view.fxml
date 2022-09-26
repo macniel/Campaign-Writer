@@ -3,33 +3,41 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
-<SplitPane xmlns="http://javafx.com/javafx"
-           xmlns:fx="http://javafx.com/fxml"
-           fx:controller="de.macniel.campaignwriter.views.EncounterView"
-           prefHeight="400.0" prefWidth="600.0">
+<SplitPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="de.macniel.campaignwriter.views.EncounterView" prefHeight="400.0" prefWidth="600.0">
 
     <BorderPane SplitPane.resizableWithParent="false">
         <center>
-            <ListView fx:id="notesLister"/>
+            <ListView fx:id="notesLister" />
         </center>
         <bottom>
-            <ButtonBar>
-                <buttons>
-                    <Button text="Begegnung" onAction="#newEncounter"><graphic>
-                        <FontIcon iconLiteral="icm-plus"/></graphic></Button>
-                    <Button onAction="#deleteEncounter"><graphic>
-                        <FontIcon iconLiteral="icm-bin"/></graphic></Button>
-                    <Button onAction="#beginEncounter"><graphic>
-                        <FontIcon iconLiteral="icm-play3"/> </graphic></Button>
-                </buttons>
-            </ButtonBar>
+            <ToolBar>
+                <items>
+                    <Button text="%AddEncounter" onAction="#newEncounter">
+                        <graphic>
+                            <FontIcon iconLiteral="icm-plus" />
+                        </graphic>
+                    </Button>
+                    <Button onAction="#beginEncounter">
+                        <graphic>
+                            <FontIcon iconLiteral="icm-play3" />
+                        </graphic>
+                    </Button>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button onAction="#deleteEncounter">
+                        <graphic>
+                            <FontIcon iconLiteral="icm-bin" />
+                        </graphic>
+                    </Button>
+
+                </items>
+            </ToolBar>
         </bottom>
     </BorderPane>
     <BorderPane>
         <top>
             <ToolBar>
                 <items>
-                    <Label text="Teilnehmer hinzu"/>
+                    <Label text="Teilnehmer hinzu" />
                     <ComboBox fx:id="addCombatant" HBox.hgrow="ALWAYS" />
                 </items>
             </ToolBar>
@@ -38,34 +46,33 @@
             <AnchorPane>
                 <VBox fx:id="scroller" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="0" AnchorPane.topAnchor="0">
                     <HBox>
-                        <Label text="Name" prefWidth="120"/>
-                        <TextField VBox.vgrow="ALWAYS" fx:id="encounterNameProp"/>
+                        <Label text="Name" prefWidth="120" />
+                        <TextField VBox.vgrow="ALWAYS" fx:id="encounterNameProp" />
                     </HBox>
-        
+
                     <HBox>
                         <Label text="Austragungsort" prefWidth="120" />
-                        <ComboBox VBox.vgrow="ALWAYS" fx:id="encounterLocationProp"/>
+                        <ComboBox VBox.vgrow="ALWAYS" fx:id="encounterLocationProp" />
                     </HBox>
-        
+
                     <HBox>
                         <Label text="Umstände" prefWidth="120" />
                         <TextArea VBox.vgrow="ALWAYS" fx:id="circumstancesProp" />
                     </HBox>
-        
+
                     <HBox>
-                        <Label text="Schwierigkeit" prefWidth="120"/>
-                        <TextField VBox.vgrow="ALWAYS" fx:id="encounterDifficultyProp"/>
+                        <Label text="Schwierigkeit" prefWidth="120" />
+                        <TextField VBox.vgrow="ALWAYS" fx:id="encounterDifficultyProp" />
                     </HBox>
-        
-                    <Label text="Teilnehmer"/>
-                    
+
+                    <Label text="Teilnehmer" />
+
                     <ScrollPane fx:id="scrollPane">
-                    <FlowPane hgap="5" vgap="5" fx:id="combatantsPropLine" HBox.hgrow="ALWAYS">
-                    </FlowPane>
-                </ScrollPane>
+                        <FlowPane hgap="5" vgap="5" fx:id="combatantsPropLine" HBox.hgrow="ALWAYS"></FlowPane>
+                    </ScrollPane>
                 </VBox>
             </AnchorPane>
         </center>
     </BorderPane>
-    
+
 </SplitPane>

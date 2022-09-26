@@ -6,16 +6,20 @@ import javafx.util.Callback;
 
 import java.util.UUID;
 
-public interface ViewInterface {
+public abstract class ViewInterface {
 
-    public String getPathToFxmlDefinition();
+    abstract public String getPathToFxmlDefinition();
 
-    public String getMenuItemLabel();
+    public static String getLocalizationBase() {
+        return "";
+    };
 
-    public abstract void requestLoad(CampaignFile items);
+    abstract public String getMenuItemLabel();
 
-    public abstract void requestSave();
+    abstract public void requestLoad(CampaignFile items);
 
-    abstract void requestNote(Callback<UUID, Note> cb);
+    abstract public void requestSave();
+
+    public abstract void requestNote(Callback<UUID, Note> cb);
 
 }

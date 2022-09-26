@@ -16,10 +16,12 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
+import java.util.ResourceBundle;
 import java.util.UUID;
 
 public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
 
+    private final ResourceBundle i18n;
     SceneNoteDefinition notesStructure;
 
     Note actualNote;
@@ -40,6 +42,10 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         t.setVisible(false);
     }
 
+    public SceneEditor() {
+        this.i18n = ResourceBundle.getBundle("i18n.buildingview");
+    }
+
     @Override
     public Node defineEditor() {
         if (notesStructure == null) {
@@ -49,7 +55,7 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         VBox box = new VBox();
 
         HBox shortDescriptionPropLine = new HBox();
-        Label shortDescriptionPropLineLabel = new Label("Einleitung");
+        Label shortDescriptionPropLineLabel = new Label(i18n.getString("Introduction"));
         shortDescriptionPropLineLabel.setPrefWidth(120);
         shortDescriptionPropLine.getChildren().add(shortDescriptionPropLineLabel);
         shortDescriptionProp = new TextField();
@@ -64,7 +70,7 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         HBox.setHgrow(shortDescriptionProp, Priority.ALWAYS);
 
         HBox locationPropLine = new HBox();
-        Label locationPropLineLabel = new Label("Ort");
+        Label locationPropLineLabel = new Label(i18n.getString("Location"));
         locationPropLineLabel.setPrefWidth(120);
         locationPropLine.getChildren().add(locationPropLineLabel);
 
@@ -87,7 +93,7 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         locationPropLine.getChildren().add(locationProp);
 
         HBox actorListPropLine = new HBox();
-        Label actorListPropLineLabel = new Label("Akteure");
+        Label actorListPropLineLabel = new Label(i18n.getString("ParticipatingActors"));
         actorListPropLineLabel.setPrefWidth(120);
         actorListPropLine.getChildren().add(actorListPropLineLabel);
 
@@ -109,7 +115,7 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
 
         actorListPropLine.getChildren().add(actorListProp);
 
-        Label longDescription = new Label("Beschreibung");
+        Label longDescription = new Label(i18n.getString("SceneDescription"));
         longDescriptionProp = new TextArea();
         longDescriptionProp.textProperty().addListener((observableValue, oldText, newText) -> {
             if (notesStructure == null) {

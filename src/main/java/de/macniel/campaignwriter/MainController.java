@@ -19,11 +19,13 @@ import javafx.util.Callback;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -54,14 +56,19 @@ public class MainController {
 
     private HashMap<Toggle, Map.Entry<ViewInterface, Scene>>  mapping;
 
+    private ResourceBundle i18n;
+
 
     @FXML
     public void initialize() {
+        i18n = ResourceBundle.getBundle("i18n.base");
 
         title = new SimpleObjectProperty<>();
 
         supportedFileExtensions = new ArrayList<>();
-        supportedFileExtensions.add(new FileChooser.ExtensionFilter("campaign file", "*.campaign"));
+        supportedFileExtensions.add(new FileChooser.ExtensionFilter(
+            i18n.getString("fileFormatName")
+            , "*.campaign"));
 
         mapping = new HashMap<>();
 
@@ -80,21 +87,28 @@ public class MainController {
                 String path = view.getPathToFxmlDefinition();
                 String menuItemLabel = view.getMenuItemLabel();
 
-                FXMLLoader fxmlLoader = new FXMLLoader(view.getClass().getResource(path));
-                Scene scene = new Scene(fxmlLoader.load(), 480, 240);
-                
-                ViewInterface v = fxmlLoader.getController();
+                try {
+                    String basePath = (String) view.getClass().getMethod("getLocalizationBase").invoke(null);
+                    FXMLLoader fxmlLoader = new FXMLLoader(view.getClass().getResource(path), ResourceBundle.getBundle(basePath));
+                    Scene scene = new Scene(fxmlLoader.load(), 480, 240);
 
-                RadioMenuItem item = new RadioMenuItem();
+                    ViewInterface v = fxmlLoader.getController();
 
-                item.setText(menuItemLabel);
-                item.setToggleGroup(viewMode);
-                if (view == bv) {
-                    br.set(item);
+                    RadioMenuItem item = new RadioMenuItem();
+
+                    item.setText(menuItemLabel);
+                    item.setToggleGroup(viewMode);
+                    if (view == bv) {
+                        br.set(item);
+                    }
+                    AbstractMap.SimpleEntry<ViewInterface, Scene> set = new AbstractMap.SimpleEntry<>(v, scene);
+                    mapping.put(item, set);
+                    this.views.getItems().add(item);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    throw new RuntimeException(e);
                 }
-                AbstractMap.SimpleEntry<ViewInterface, Scene> set = new AbstractMap.SimpleEntry<>(v, scene);
-                mapping.put(item, set);
-                this.views.getItems().add(item);
+
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -172,7 +186,7 @@ public class MainController {
 
     @FXML public void openCampaign() throws IOException {
         FileChooser dialog = new FileChooser();
-        dialog.setTitle("Kampagne zum Öffnen auswählen");
+        dialog.setTitle(i18n.getString("openFileDialogTitle"));
 
         dialog.getExtensionFilters().setAll(supportedFileExtensions);
         File newFile = dialog.showOpenDialog(null);
@@ -196,7 +210,7 @@ public class MainController {
 
         if (this.currentFile == null) {
             FileChooser dialog = new FileChooser();
-            dialog.setTitle("Kampagne zum Speichern auswählen");
+            dialog.setTitle(i18n.getString("saveFileDialogTitle"));
             dialog.getExtensionFilters().setAll(supportedFileExtensions);
             this.currentFile = dialog.showSaveDialog(null);
         }

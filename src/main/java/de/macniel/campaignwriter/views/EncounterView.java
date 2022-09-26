@@ -1,6 +1,7 @@
 package de.macniel.campaignwriter.views;
 
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.UUID;
 
 import de.macniel.campaignwriter.CampaignFile;
@@ -32,17 +33,15 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
-public class EncounterView  implements ViewInterface {
+public class EncounterView  extends ViewInterface {
+    private final ResourceBundle i18n;
     @FXML
     public TextField encounterNameProp;
     @FXML
@@ -75,9 +74,17 @@ public class EncounterView  implements ViewInterface {
         return "encounter-view.fxml";
     }
 
+    public static String getLocalizationBase() {
+        return "i18n.encounters";
+    }
+    
+    public EncounterView() {
+        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
+    }
+
     @Override
     public String getMenuItemLabel() {
-        return "Begegnung";
+        return i18n.getString("EncounterViewMenuItem");
     }
 
     @Override
@@ -104,14 +111,16 @@ public class EncounterView  implements ViewInterface {
     public void requestNote(Callback<UUID, Note> cb) {
         this.requester = cb;
     }
-    
+
     @FXML
     public void initialize() {
 
         notesLister.getSelectionModel().selectedItemProperty().addListener( (observableValue, encounterNote, newNote) -> {
-            activeNote = newNote;
-            FileAccessLayer.getInstance().updateSetting("lastNote", newNote.getReference().toString());
-            updateScroller();
+            if (newNote != null) {
+                activeNote = newNote;
+                FileAccessLayer.getInstance().updateSetting("lastNote", newNote.getReference().toString());
+                updateScroller();
+            }
         });
 
         encounterNameProp.textProperty().addListener((observableValue, s, newValue) -> {
@@ -222,11 +231,8 @@ public class EncounterView  implements ViewInterface {
             // FIXME: dynamic field in encounterdef
             combatant.items.stream().filter(actorNoteItem ->
                     "Portrait".equals(actorNoteItem.getLabel())
-            ).findFirst().ifPresent( text -> {
-                FileAccessLayer.getInstance().getImageFromString(text.getContent()).ifPresent(entry -> {
-                    combatantPortrait.setImage(entry.getValue());
-                });
-                
+            ).findFirst().flatMap(text -> FileAccessLayer.getInstance().getImageFromString(text.getContent())).ifPresent(entry -> {
+                combatantPortrait.setImage(entry.getValue());
             });
 
             HBox hitpoints = new HBox();
@@ -250,13 +256,13 @@ public class EncounterView  implements ViewInterface {
                 currentHP.onKeyReleasedProperty().set( event -> {
                     if (event.getCode() == KeyCode.ENTER) {
                         if (currentHP.getText().indexOf("-") >= 1) {
-                            int opr1 = Integer.valueOf(currentHP.getText().split("-")[0]);
-                            int opr2 = Integer.valueOf(currentHP.getText().split("-")[1]);
+                            int opr1 = Integer.parseInt(currentHP.getText().split("-")[0]);
+                            int opr2 = Integer.parseInt(currentHP.getText().split("-")[1]);
                             currentHP.setText(String.valueOf((opr1 - opr2)));
                             
                         } else if (currentHP.getText().indexOf("+") >= 1) {
-                            int opr1 = Integer.valueOf(currentHP.getText().split("+")[0]);
-                            int opr2 = Integer.valueOf(currentHP.getText().split("+")[1]);
+                            int opr1 = Integer.parseInt(currentHP.getText().split("+")[0]);
+                            int opr2 = Integer.parseInt(currentHP.getText().split("+")[1]);
                             currentHP.setText(String.valueOf((opr1 + opr2)));
                             
                         }
@@ -354,7 +360,7 @@ public class EncounterView  implements ViewInterface {
 
     public void newEncounter(ActionEvent actionEvent) {
         EncounterNote n = new EncounterNote();
-        n.setEncounterName("Neuer Encounter");
+        n.setEncounterName(i18n.getString("UntitledEncounter"));
         encounters.add(n);
         notesLister.setItems(FXCollections.observableArrayList(encounters));
         activeNote = n;

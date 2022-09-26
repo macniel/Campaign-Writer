@@ -19,7 +19,7 @@ import javafx.util.Callback;
 
 import java.util.*;
 
-public class BuildingView implements ViewInterface {
+public class BuildingView extends ViewInterface {
 
     private ObservableList<Note> notes;
 
@@ -45,6 +45,8 @@ public class BuildingView implements ViewInterface {
 
     private Callback<UUID, Note> requester;
 
+    private ResourceBundle i18n;
+
     public void setPlugins(ArrayList<EditorPlugin<?>> plugins) {
         this.plugins = plugins;
     }
@@ -63,9 +65,19 @@ public class BuildingView implements ViewInterface {
         return "building-view.fxml";
     }
 
+
+    public static String getLocalizationBase() {
+        return "i18n.buildingview";
+    }
+
     @Override
     public String getMenuItemLabel() {
-        return "Worldbuilding";
+        return i18n.getString("WorldbuildingViewMenuItem");
+    }
+
+    public BuildingView() {
+        super();
+        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
     }
 
     public void requestLoad(CampaignFile file) {
@@ -141,30 +153,30 @@ public class BuildingView implements ViewInterface {
         });
 
         ContextMenu notesListerMenu = new ContextMenu();
-        MenuItem deleteNoteMenuItem = new MenuItem("Löschen");
+        MenuItem deleteNoteMenuItem = new MenuItem(i18n.getString("DeleteNote"));
         deleteNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
             FileAccessLayer.getInstance().removeNote(contextedNote);
             notesLister.getItems().remove(contextedNote);
             notesLister.refresh();
         });
-        MenuItem renameNoteMenuItem = new MenuItem("Umbenenen");
+        MenuItem renameNoteMenuItem = new MenuItem(i18n.getString("RenameNote"));
         renameNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
 
             TextInputDialog input = new TextInputDialog();
-            input.setTitle("Neuer Name der Notiz " + contextedNote.getLabel());
+            input.setTitle(String.format(i18n.getString("RenameDialogTitle"), contextedNote.getLabel()));
             Optional<String> result = input.showAndWait();
             contextedNote.setLabel(result.get());
             notesLister.refresh();
         });
-        MenuItem indentNoteMenuItem = new MenuItem("Einrücken");
+        MenuItem indentNoteMenuItem = new MenuItem(i18n.getString("IndentNote"));
         indentNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
             contextedNote.increaseLevel();
             notesLister.refresh();
         });
-        MenuItem deindentNoteMenuItem = new MenuItem("Ausrücken");
+        MenuItem deindentNoteMenuItem = new MenuItem(i18n.getString("DeindentNote"));
         deindentNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
             contextedNote.decreaseLevel();

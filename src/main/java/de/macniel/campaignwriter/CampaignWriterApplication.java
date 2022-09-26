@@ -8,11 +8,13 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ResourceBundle;
 
 public class CampaignWriterApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(CampaignWriterApplication.class.getResource("main-view.fxml"));
+        fxmlLoader.setResources(ResourceBundle.getBundle("i18n.base"));
 
         FileAccessLayer.getInstance().getGlobal("width").ifPresent(loadedWidth -> {
             stage.setWidth(Double.valueOf(loadedWidth));

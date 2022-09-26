@@ -15,6 +15,7 @@ import javafx.util.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 
 public class LocationEditor implements EditorPlugin {
 
@@ -29,6 +30,11 @@ public class LocationEditor implements EditorPlugin {
     private Note actualNote;
 
     private Callback onNoteLoadRequest;
+    private ResourceBundle i18n;
+
+    public LocationEditor() {
+        this.i18n = ResourceBundle.getBundle("i18n.buildingview");
+    }
 
     @Override
     public NoteType defineHandler() {
@@ -47,34 +53,34 @@ public class LocationEditor implements EditorPlugin {
         VBox box = new VBox();
 
         HBox locationNamePropLine = new HBox();
-        Label locationNamePropLineLabel = new Label("Name");
+        Label locationNamePropLineLabel = new Label(i18n.getString("LocationName"));
         locationNamePropLineLabel.setPrefWidth(120);
         locationNameProp = new TextField();
         locationNamePropLine.getChildren().addAll(locationNamePropLineLabel, locationNameProp);
         HBox.setHgrow(locationNameProp, Priority.ALWAYS);
         HBox locationCanonicalNamePropLine = new HBox();
-        Label locationCanonicalNamePropLineLabel = new Label("AKA");
+        Label locationCanonicalNamePropLineLabel = new Label(i18n.getString("LocationCanonicalName"));
         locationCanonicalNamePropLineLabel.setPrefWidth(120);
         locationCanonicalNameProp = new TextField();
         HBox.setHgrow(locationCanonicalNameProp, Priority.ALWAYS);
         locationCanonicalNamePropLine.getChildren().addAll(locationCanonicalNamePropLineLabel, locationCanonicalNameProp);
 
         HBox parentLocationPropLine = new HBox();
-        Label parentLocationPropLineLabel = new Label("Region");
+        Label parentLocationPropLineLabel = new Label(i18n.getString("LocationRegionName"));
         parentLocationPropLineLabel.setPrefWidth(120);
         parentLocationPropLineLabel.setPrefWidth(120);
         parentLocationProp = new ComboBox<>();
         parentLocationPropLine.getChildren().addAll(parentLocationPropLineLabel, parentLocationProp);
 
         HBox ambiancePropLine = new HBox();
-        Label ambiancePropLineLabel = new Label("Ambiente");
+        Label ambiancePropLineLabel = new Label(i18n.getString("Ambiance"));
         ambiancePropLineLabel.setPrefWidth(120);
         ambianceProp = new TextArea();
         ambiancePropLine.getChildren().addAll(ambiancePropLineLabel, ambianceProp);
         HBox.setHgrow(ambianceProp, Priority.ALWAYS);
         VBox.setVgrow(ambianceProp, Priority.ALWAYS);
         HBox descriptionPropLine = new HBox();
-        Label descriptionPropLineLabel = new Label("Beschreibung");
+        Label descriptionPropLineLabel = new Label(i18n.getString("Description"));
         descriptionPropLineLabel.setPrefWidth(120);
         descriptionProp = new TextArea();
         HBox.setHgrow(descriptionProp, Priority.ALWAYS);
@@ -82,7 +88,7 @@ public class LocationEditor implements EditorPlugin {
         descriptionPropLine.getChildren().addAll(descriptionPropLineLabel, descriptionProp);
 
         HBox historyPropLine = new HBox();
-        Label historyPropLineLabel = new Label("Hintergrund");
+        Label historyPropLineLabel = new Label(i18n.getString("Background"));
         historyPropLineLabel.setPrefWidth(120);
         historyProp = new TextArea();
         HBox.setHgrow(historyProp, Priority.ALWAYS);
@@ -90,7 +96,7 @@ public class LocationEditor implements EditorPlugin {
         historyPropLine.getChildren().addAll(historyPropLineLabel, historyProp);
 
         HBox picturePropLine = new HBox();
-        Label picturePropLineLabel = new Label("Aussehen");
+        Label picturePropLineLabel = new Label(i18n.getString("LookAndFeel"));
         picturePropLineLabel.setPrefWidth(120);
         pictureProp = new ComboBox<>();
         picturePropLine.getChildren().addAll(picturePropLineLabel, pictureProp);
