@@ -1,10 +1,14 @@
 package de.macniel.campaignwriter.editors;
 
-import com.google.gson.Gson;
 import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.Note;
-import de.macniel.campaignwriter.NoteType;
+import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.NotesRenderer;
+import de.macniel.campaignwriter.SDK.EditorPlugin;
+import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.types.ActorNote;
+import de.macniel.campaignwriter.types.LocationNote;
+import de.macniel.campaignwriter.types.Scene;
+import de.macniel.campaignwriter.types.SceneNote;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
@@ -16,28 +20,28 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
+import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
-public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
+public class SceneEditor extends EditorPlugin<SceneNote> {
 
     private final ResourceBundle i18n;
-    SceneNoteDefinition notesStructure;
+    SceneNote notesStructure;
 
-    Note actualNote;
-
-    private ComboBox<Note> locationProp;
+    private ComboBox<LocationNote> locationProp;
     private TextField shortDescriptionProp;
-    private ListView<Note> actorListProp;
+    private ListView<ActorNote> actorListProp;
     private TextArea longDescriptionProp;
 
     @Override
-    public NoteType defineHandler() {
-        return NoteType.SCENE_NOTE;
+    public String defineHandler() {
+        return "building/scene";
     }
 
     @Override
-    public void prepareToolbar(ToolBar t, Window w) {
+    public void prepareToolbar(Node n, Window w) {
+        ToolBar t = (ToolBar) n;
         t.getItems().clear();
         t.setVisible(false);
     }
@@ -49,7 +53,7 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
     @Override
     public Node defineEditor() {
         if (notesStructure == null) {
-            notesStructure = new SceneNoteDefinition();
+            notesStructure = new SceneNote();
         }
 
         VBox box = new VBox();
@@ -62,9 +66,9 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
 
         shortDescriptionProp.textProperty().addListener( (observable, oldText, newText) -> {
             if (notesStructure == null) {
-                notesStructure = new SceneNoteDefinition();
+                notesStructure = new SceneNote();
             }
-            notesStructure.shortDescription = newText;
+            notesStructure.content.setShortDescription(newText);
         });
         shortDescriptionPropLine.getChildren().add(shortDescriptionProp);
         HBox.setHgrow(shortDescriptionProp, Priority.ALWAYS);
@@ -75,7 +79,7 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         locationPropLine.getChildren().add(locationPropLineLabel);
 
 
-        ObservableList<Note> locations = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.type == NoteType.LOCATION_NOTE).toList());
+        ObservableList<LocationNote> locations = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(Objects::nonNull).filter(note -> note.getType().equals("location")).map(note -> (LocationNote) note).toList());
 
         locationProp = new ComboBox<>(locations);
         locationProp.getSelectionModel().clearSelection();
@@ -83,9 +87,9 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         //locationProp.setCellFactory(noteListView -> new NotesRenderer());
         locationProp.getSelectionModel().selectedItemProperty().addListener((observableValue, note, newLocation) -> {
             if (notesStructure == null) {
-                notesStructure = new SceneNoteDefinition();
+                notesStructure = new SceneNote();
             }
-            notesStructure.location = newLocation;
+            notesStructure.content.setLocation(newLocation.reference);
         });
         HBox.setHgrow(locationProp, Priority.ALWAYS);
 
@@ -97,13 +101,13 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         actorListPropLineLabel.setPrefWidth(120);
         actorListPropLine.getChildren().add(actorListPropLineLabel);
 
-        ObservableList<Note> actors = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.type == NoteType.ACTOR_NOTE).toList());
+        ObservableList<ActorNote> actors = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().equals("actor")).map(note -> (ActorNote) note).toList());
 
         actorListProp = new ListView<>(actors);
-        actorListProp.setCellFactory(noteListView -> new NotesRenderer());
+        //actorListProp.setCellFactory(noteListView -> new NotesRenderer());
         actorListProp.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         actorListProp.getSelectionModel().selectedItemProperty().addListener( (observable, oldValue, newValue) -> {
-            notesStructure.actors = actorListProp.getSelectionModel().getSelectedItems().stream().map(actor -> actor.reference).toList();
+            notesStructure.content.setActors(actorListProp.getSelectionModel().getSelectedItems().stream().map(actor -> actor.reference).toList());
         });
 
         actorListProp.setOrientation(Orientation.HORIZONTAL);
@@ -119,9 +123,9 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
         longDescriptionProp = new TextArea();
         longDescriptionProp.textProperty().addListener((observableValue, oldText, newText) -> {
             if (notesStructure == null) {
-                notesStructure = new SceneNoteDefinition();
+                notesStructure = new SceneNote();
             }
-            notesStructure.longDescription = newText;
+            notesStructure.content.setLongDescription(newText);
         });
         longDescriptionProp.setWrapText(true);
         HBox.setHgrow(longDescriptionProp, Priority.ALWAYS);
@@ -134,46 +138,60 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
     }
 
     @Override
-    public Callback<Note, Boolean> defineSaveCallback() {
-        return new Callback<Note, Boolean>() {
-            @Override
-            public Boolean call(Note note) {
-                note.content = FileAccessLayer.getInstance().getParser().toJson(notesStructure);
-                return true;
-            }
-        };
+    public Callback<Boolean, SceneNote> defineSaveCallback() {
+        return note -> notesStructure;
     }
 
     @Override
-    public Callback<Note, Boolean> defineLoadCallback() {
-        return new Callback<Note, Boolean>() {
-            @Override
-            public Boolean call(Note note) {
-                actualNote = note;
-                notesStructure = FileAccessLayer.getInstance().getParser().fromJson(actualNote.content, SceneNoteDefinition.class);
-                updateFields();
-                return true;
-            }
+    public Callback<SceneNote, Boolean> defineLoadCallback() {
+        return note -> {
+            notesStructure = note;
+            updateView();
+            return true;
         };
     }
 
-    void updateFields() {
+    void updateView() {
         if (notesStructure != null) {
-            shortDescriptionProp.setText(notesStructure.shortDescription);
-            if (notesStructure.location.type == NoteType.LOCATION_NOTE) {
-                locationProp.getSelectionModel().clearSelection();
-                locationProp.getSelectionModel().select(notesStructure.location);
+            shortDescriptionProp.setText(notesStructure.content.getShortDescription());
+
+            if (notesStructure.content.getLocation() != null) {
+                FileAccessLayer.getInstance().findByReference(notesStructure.content.getLocation()).ifPresent(location -> {
+                        locationProp.getSelectionModel().clearSelection();
+                        locationProp.getSelectionModel().select((LocationNote) location);
+                });
             }
-            MultipleSelectionModel<Note> selectionModel = actorListProp.getSelectionModel();
-            for (UUID actorReference : notesStructure.actors) {
+            MultipleSelectionModel<ActorNote> selectionModel = actorListProp.getSelectionModel();
+            for (UUID actorReference : notesStructure.content.getActors()) {
                 FileAccessLayer.getInstance().findByReference(actorReference).ifPresent(actor -> {
                     selectionModel.select(actorListProp.getItems().indexOf(actor));
                 });
             };
 
-            longDescriptionProp.setText(notesStructure.longDescription);
+            longDescriptionProp.setText(notesStructure.content.getLongDescription());
         }
     }
+
+    @Override
+    public Node getPreviewVersionOf(SceneNote t) {
+        return null;
+    }
+
+    @Override
+    public Node getStandaloneVersion(SceneNote t) {
+        return null;
+    }
+
+    @Override
+    public Note createNewNote() {
+        return new SceneNote();
+    }
+
+    @Override
+    public void register(RegistryInterface registry) {
+        registry.registerEditor(this);
+    }
+
 
     @Override
     public void setOnNoteRequest(Callback<String, Note> stringNoteCallback) {
@@ -183,10 +201,5 @@ public class SceneEditor implements EditorPlugin<SceneNoteDefinition> {
     @Override
     public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
 
-    }
-
-    @Override
-    public Node getPreviewVersionOf(SceneNoteDefinition t) {
-        return null;
     }
 }

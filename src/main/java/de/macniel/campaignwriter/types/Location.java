@@ -1,8 +1,11 @@
-package de.macniel.campaignwriter.editors;
+package de.macniel.campaignwriter.types;
 
+import de.macniel.campaignwriter.SDK.Note;
+
+import java.util.Date;
 import java.util.UUID;
 
-public class LocationNoteDefinition {
+public class Location extends Note {
 
     UUID parentLocation;
 

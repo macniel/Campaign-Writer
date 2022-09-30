@@ -1,9 +1,7 @@
 package de.macniel.campaignwriter;
 
-import de.macniel.campaignwriter.views.BuildingView;
-import de.macniel.campaignwriter.views.EncounterView;
-import de.macniel.campaignwriter.views.SessionView;
-import de.macniel.campaignwriter.views.ViewInterface;
+import de.macniel.campaignwriter.SDK.Note;
+import de.macniel.campaignwriter.SDK.ViewerPlugin;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
@@ -45,16 +43,16 @@ public class MainController {
     @FXML
     private BorderPane inset;
 
-    private ViewInterface activeInterface;
+    private ViewerPlugin activeInterface;
 
     @FXML
     private Menu views;
 
-    private ArrayList<ViewInterface> viewerPlugins = new ArrayList<>();
+    private ArrayList<ViewerPlugin> viewerPlugins = new ArrayList<>();
 
     private ToggleGroup viewMode;
 
-    private HashMap<Toggle, Map.Entry<ViewInterface, Scene>>  mapping;
+    private HashMap<Toggle, Map.Entry<ViewerPlugin, Scene>>  mapping;
 
     private ResourceBundle i18n;
 
@@ -72,16 +70,9 @@ public class MainController {
 
         mapping = new HashMap<>();
 
-        ViewInterface bv = new BuildingView();
-        AtomicReference<RadioMenuItem> br = new AtomicReference<>();
-
-        viewerPlugins.add(bv);
-        viewerPlugins.add(new SessionView());
-        viewerPlugins.add(new EncounterView());
-
         viewMode = new ToggleGroup();
 
-        viewerPlugins.forEach( view -> {
+        Registry.getInstance().getAllViewers().forEach( view -> {
             try {
 
                 String path = view.getPathToFxmlDefinition();
@@ -92,16 +83,14 @@ public class MainController {
                     FXMLLoader fxmlLoader = new FXMLLoader(view.getClass().getResource(path), ResourceBundle.getBundle(basePath));
                     Scene scene = new Scene(fxmlLoader.load(), 480, 240);
 
-                    ViewInterface v = fxmlLoader.getController();
+                    ViewerPlugin v = fxmlLoader.getController();
 
                     RadioMenuItem item = new RadioMenuItem();
 
                     item.setText(menuItemLabel);
                     item.setToggleGroup(viewMode);
-                    if (view == bv) {
-                        br.set(item);
-                    }
-                    AbstractMap.SimpleEntry<ViewInterface, Scene> set = new AbstractMap.SimpleEntry<>(v, scene);
+
+                    AbstractMap.SimpleEntry<ViewerPlugin, Scene> set = new AbstractMap.SimpleEntry<>(v, scene);
                     mapping.put(item, set);
                     this.views.getItems().add(item);
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
@@ -117,7 +106,7 @@ public class MainController {
         viewMode.selectedToggleProperty().addListener((observableValue, toggle, t1) -> {
            switchViewer(t1);
         });
-        viewMode.selectToggle(viewMode.getToggles().get(0));
+        // viewMode.selectToggle(viewMode.getToggles().get(0));
     }
 
     void switchViewer(Toggle present) {
@@ -128,18 +117,9 @@ public class MainController {
 
             inset.setCenter(editor.getRoot());
             activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
-            activeInterface.requestNote(new Callback<UUID,Note>() {
-
-             @Override
-             public Note call(UUID param) {
-                 Optional<Note> foundNote = FileAccessLayer.getInstance().findByReference(param);
-                 if (foundNote.isPresent()) {
-                     return foundNote.get();
-                 } else {
-                     return null;
-                 }
-             }
-              
+            activeInterface.requestNote(param -> {
+                Optional<Note<?>> foundNote = FileAccessLayer.getInstance().findByReference(param);
+                return foundNote.orElse(null);
             });
         }
     }
@@ -208,12 +188,13 @@ public class MainController {
             activeInterface.requestSave();
         }
 
-        if (this.currentFile == null) {
+        //if (this.currentFile == null) {
             FileChooser dialog = new FileChooser();
             dialog.setTitle(i18n.getString("saveFileDialogTitle"));
             dialog.getExtensionFilters().setAll(supportedFileExtensions);
             this.currentFile = dialog.showSaveDialog(null);
-        }
+
+        //}
         if (this.currentFile != null) {
             FileAccessLayer.getInstance().saveToFile(this.currentFile);
             title.set(this.currentFile.getName());

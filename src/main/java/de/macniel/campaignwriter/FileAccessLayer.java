@@ -7,10 +7,10 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import de.macniel.campaignwriter.SDK.FileAccessLayerInterface;
+import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.adapters.ColorAdapter;
-import de.macniel.campaignwriter.editors.ActorNoteDefinition;
-import de.macniel.campaignwriter.editors.EncounterNote;
-import de.macniel.campaignwriter.editors.SessionNote;
+import de.macniel.campaignwriter.types.Actor;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 
@@ -19,7 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class FileAccessLayer {
+public class FileAccessLayer implements FileAccessLayerInterface {
 
     private CampaignFile file;
 
@@ -45,6 +45,11 @@ public class FileAccessLayer {
 
   
         initConfFile();
+    }
+
+    @Override
+    public void registerClass(Class c) {
+        gsonParser = gsonParser.newBuilder().registerTypeAdapter(c, c).create();
     }
 
     public Gson getParser() {
@@ -128,17 +133,17 @@ public class FileAccessLayer {
         return null;
     }
 
-    public HashMap<String, ActorNoteDefinition> getTemplates() {
+    public HashMap<String, Actor> getTemplates() {
     
         File templateDir = Paths.get(System.getProperty("user.home"), "campaignwriter", "templates").toFile();
         if (templateDir.exists() && templateDir.isDirectory()) {
-            HashMap<String, ActorNoteDefinition> templates = new HashMap<>();
+            HashMap<String, Actor> templates = new HashMap<>();
 
             for (File f : templateDir.listFiles()) {
                 
-                ActorNoteDefinition fromFile;
+                Actor fromFile;
                 try {
-                    fromFile = gsonParser.fromJson(new JsonReader(new FileReader(f)), ActorNoteDefinition.class);
+                    fromFile = gsonParser.fromJson(new JsonReader(new FileReader(f)), Actor.class);
                     templates.put(f.getName(), fromFile);
                 } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
                     System.err.println("Failure to read template file \"" + f.getAbsolutePath() + "\"");
@@ -210,7 +215,7 @@ public class FileAccessLayer {
         file = new CampaignFile();
     }
 
-    public Optional<Note> findByLabel(String label) {
+    public Optional<Note<?>> findByLabel(String label) {
         System.out.println("searching for Note with Label " + label);
         return file.notes.stream().filter( note -> {
             System.out.println(note.label);
@@ -220,16 +225,12 @@ public class FileAccessLayer {
     }
 
 
-    public Optional<Note> findByReference(UUID ref) {
+    public Optional<Note<?>> findByReference(UUID ref) {
         System.out.println("searching for " + ref);
-        return file.notes.stream().filter( note -> {
-            System.out.println(note.reference);
-            return note.getReference().equals(ref);
-
-        } ).findFirst();
+        return file.notes.stream().filter(Objects::nonNull).filter(note ->  note.getReference().equals(ref)).findFirst();
     }
 
-    public void removeNote(Note selectedNote) {
+    public void removeNote(Note<?> selectedNote) {
         findByReference(selectedNote.getReference()).ifPresent( note -> {
             file.notes.remove(selectedNote);
         });
@@ -239,19 +240,11 @@ public class FileAccessLayer {
         file.notes.clear();
     }
 
-    public List<Note> getAllNotes() {
+    public List<Note<?>> getAllNotes() {
         return file.notes;
     }
 
-    public void removeSessionNote(SessionNote note) {
-        file.sessionNotes.remove(note);
-    }
-
-    public void addSessionNote(int position, SessionNote note) {
-        file.sessionNotes.add(position, note);
-    }
-
-    public void addNote(int position, Note note) {
+    public void addNote(int position, Note<?> note) {
         if (position > file.notes.size()) {
             position = file.notes.size();
         }
@@ -259,11 +252,4 @@ public class FileAccessLayer {
 
     }
 
-    public List<SessionNote> getAllSessionNotes() {
-        return file.sessionNotes;
-    }
-
-    public List<EncounterNote> getAllEncounterNotes() {
-        return file.encounterNotes;
-    }
 }

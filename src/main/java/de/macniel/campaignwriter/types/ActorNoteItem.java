@@ -1,4 +1,4 @@
-package de.macniel.campaignwriter.editors;
+package de.macniel.campaignwriter.types;
 
 public class ActorNoteItem {
 

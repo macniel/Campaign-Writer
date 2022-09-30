@@ -1,18 +1,62 @@
 package de.macniel.campaignwriter;
 
+import de.macniel.campaignwriter.SDK.EditorPlugin;
+import de.macniel.campaignwriter.SDK.Registrable;
+import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.editors.ActorEditor;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import org.reflections.Reflections;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 public class CampaignWriterApplication extends Application {
+
+    private void registerModules(String path) {
+
+        Registry registry = Registry.getInstance();
+
+        Reflections reflections = new Reflections(path);
+        Set<Class<? extends Registrable>> allClasses =
+                reflections.getSubTypesOf(Registrable.class);
+
+        System.out.println("Found " + (allClasses.size()-1) + " registrable classes in path '" + path + "'");
+
+        for ( Class<? extends Registrable> c : allClasses) {
+            if (Modifier.isAbstract(c.getModifiers())) {
+                continue;
+            }
+            try {
+                System.out.print("registering " + c.getSimpleName());
+                Object actualObject = c.getConstructor().newInstance();
+
+                Method registerMethod = c.getMethod("register", RegistryInterface.class);
+                registerMethod.invoke(actualObject, registry);
+                System.out.println(" ... success");
+
+            } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                System.out.println(" ... failure");
+            }
+        }
+    }
+
     @Override
     public void start(Stage stage) throws IOException {
+
+            registerModules("de.macniel.campaignwriter.editors");
+            registerModules("de.macniel.campaignwriter.views");
+
+
+
         FXMLLoader fxmlLoader = new FXMLLoader(CampaignWriterApplication.class.getResource("main-view.fxml"));
         fxmlLoader.setResources(ResourceBundle.getBundle("i18n.base"));
 

@@ -1,11 +1,13 @@
-package de.macniel.campaignwriter.editors;
+package de.macniel.campaignwriter.types;
+
+import de.macniel.campaignwriter.SDK.Note;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-public class SessionNote {
+public class Session {
 
     String label;
 
@@ -18,6 +20,7 @@ public class SessionNote {
     Date playDate;
 
     Boolean played;
+
 
     public String getLabel() {
         return label;
@@ -55,13 +58,6 @@ public class SessionNote {
         this.playDate = playDate;
     }
 
-    public SessionNote() {
-        this.comment = "";
-        this.notes = new ArrayList<>();
-        this.played = false;
-        this.playDate = null;
-        this.reference = UUID.randomUUID();
-    }
 
     public UUID getReference() {
         return reference;

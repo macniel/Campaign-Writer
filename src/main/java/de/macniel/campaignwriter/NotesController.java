@@ -1,5 +1,6 @@
 package de.macniel.campaignwriter;
 
+import de.macniel.campaignwriter.SDK.Note;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -49,15 +50,17 @@ public class NotesController {
             this.note = note;
             this.label.setText(note.getLabel());
             view.backgroundProperty().set(Background.EMPTY);
-            switch (note.getType()) {
-                case LOCATION_NOTE -> icon.setIconLiteral("icm-location");
-                case TEXT_NOTE -> icon.setIconLiteral("icm-file-text");
-                case ACTOR_NOTE -> icon.setIconLiteral("icm-user");
-                case MAP_NOTE -> icon.setIconLiteral("icm-map");
-                case PICTURE_NOTE -> icon.setIconLiteral("icm-image");
-                case SCENE_NOTE -> icon.setIconLiteral("icm-clock");
-                case RELATIONSHIP_NOTE -> icon.setIconLiteral("icm-share2");
-                default -> icon.setIconLiteral("icm-file-text");
+            if (note.getType() != null) {
+                switch (note.getType()) {
+                    case "location" -> icon.setIconLiteral("icm-location");
+                    case "text" -> icon.setIconLiteral("icm-file-text");
+                    case "actor" -> icon.setIconLiteral("icm-user");
+                    case "map" -> icon.setIconLiteral("icm-map");
+                    case "picture" -> icon.setIconLiteral("icm-image");
+                    case "scene" -> icon.setIconLiteral("icm-clock");
+                    case "relationship" -> icon.setIconLiteral("icm-share2");
+                    default -> icon.setIconLiteral("icm-file-text");
+                }
             }
         }
     }

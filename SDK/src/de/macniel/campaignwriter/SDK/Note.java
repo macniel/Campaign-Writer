@@ -1,27 +1,24 @@
-package de.macniel.campaignwriter;
+package de.macniel.campaignwriter.SDK;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
-public class Note implements Serializable {
+public class Note<T> {
 
     public String label;
-    public NoteType type;
+    public String type;
     public UUID reference;
 
     public Date createdDate;
 
     public Date lastModifiedDate;
 
-    public String content;
+    public T content;
 
     public int level;
 
-    public int position;
-
-    public Note(String label, NoteType type) {
+    public Note(String label, String type) {
         this(label, type, UUID.randomUUID());
     }
 
@@ -33,29 +30,33 @@ public class Note implements Serializable {
         return this.reference;
     }
 
+    public Date getCreationDate() {
+        return createdDate;
+    }
+
     static ArrayList<Note> dataset = new ArrayList<>();
 
-    public Note(String label, NoteType type, UUID reference, Date createdDate, Date lastModifiedDate, String content) {
+    public Note(String label, String type, UUID reference, Date createdDate, Date lastModifiedDate) {
         this.label = label;
         this.type = type;
         this.reference = reference;
         this.createdDate = createdDate;
         this.lastModifiedDate = lastModifiedDate;
-        this.content = content;
         this.level = 0;
         dataset.add(this);
     }
 
     public Note() {
+        this.reference = UUID.randomUUID();
         dataset.add(this);
     }
 
-    public Note(String label, NoteType type, UUID reference) {
-        this(label,type, reference, new Date(), new Date(), "");
+    public Note(String label, String type, UUID reference) {
+        this(label,type, reference, new Date(), new Date());
     }
 
     public Note(String label, UUID reference) {
-        this(label, NoteType.TEXT_NOTE, reference);
+        this(label, "text", reference);
     }
 
     public String getLabel() {
@@ -66,7 +67,7 @@ public class Note implements Serializable {
         return createdDate;
     }
 
-    public String getContent() {
+    public T getContent() {
         return content;
     }
 
@@ -74,7 +75,7 @@ public class Note implements Serializable {
         return lastModifiedDate;
     }
 
-    public void setContent(String content) {
+    public void setContent(T content) {
         this.content = content;
         lastModifiedDate = new Date();
     }
@@ -91,7 +92,7 @@ public class Note implements Serializable {
         }
     }
 
-    public NoteType getType() {
+    public String getType() {
         return type;
     }
 
@@ -101,14 +102,6 @@ public class Note implements Serializable {
 
     public void setLabel(String s) {
         this.label = s;
-    }
-
-    public int getPosition() {
-        return position;
-    }
-
-    public void setPosition(int position) {
-        this.position = position;
     }
 
     @Override

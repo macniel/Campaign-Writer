@@ -1,10 +1,11 @@
-package de.macniel.campaignwriter.editors;
+package de.macniel.campaignwriter.types;
 
-import com.google.gson.Gson;
 import de.macniel.campaignwriter.FileAccessLayer;
+import de.macniel.campaignwriter.SDK.Note;
 import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,18 +19,14 @@ public class Combatant {
 
     public static Combatant fromActor(UUID actorRef) {
         AtomicReference<Combatant> newCombatant = new AtomicReference<>();
-        FileAccessLayer.getInstance().findByReference(actorRef).ifPresent(actor -> {
+        FileAccessLayer.getInstance().findByReference(actorRef).ifPresent( actor -> {
             Combatant tmp = new Combatant();
-            ActorNoteDefinition def = FileAccessLayer.getInstance().getParser().fromJson(actor.content, ActorNoteDefinition.class);
             tmp.teamColor = Color.GRAY;
-            tmp.items = new ArrayList<>(def.items);
+
+            tmp.items = new ArrayList<>( ((ActorNote)actor).getContent().getItems());
             newCombatant.set(tmp);
         });
         return newCombatant.get();
-    }
-
-    public Combatant() {
-        this.items = new ArrayList<>();
     }
 
 	public ArrayList<ActorNoteItem> getItems() {

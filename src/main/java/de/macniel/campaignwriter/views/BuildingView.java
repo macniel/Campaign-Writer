@@ -1,7 +1,7 @@
 package de.macniel.campaignwriter.views;
 
 import de.macniel.campaignwriter.*;
-import de.macniel.campaignwriter.editors.*;
+import de.macniel.campaignwriter.SDK.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -19,7 +19,7 @@ import javafx.util.Callback;
 
 import java.util.*;
 
-public class BuildingView extends ViewInterface {
+public class BuildingView extends ViewerPlugin {
 
     private ObservableList<Note> notes;
 
@@ -30,13 +30,12 @@ public class BuildingView extends ViewInterface {
 
     @FXML
     public TextArea editor;
-    private NoteType lastCreationAction;
+    private EditorPlugin lastCreationAction;
 
     @FXML
     private SplitMenuButton creationMenuButton;
 
-    private ArrayList<EditorPlugin<?>> plugins;
-
+    private ArrayList<EditorPlugin> plugins;
 
     int dragPosition;
     Note dragElement;
@@ -46,19 +45,6 @@ public class BuildingView extends ViewInterface {
     private Callback<UUID, Note> requester;
 
     private ResourceBundle i18n;
-
-    public void setPlugins(ArrayList<EditorPlugin<?>> plugins) {
-        this.plugins = plugins;
-    }
-
-    public void requestSave() {
-        getByType(activeNote.getType()).defineSaveCallback().call(activeNote);
-    }
-
-    @Override
-    public void requestNote(Callback<UUID, Note> cb) {
-        this.requester = cb;
-    }
 
     @Override
     public String getPathToFxmlDefinition() {
@@ -71,8 +57,29 @@ public class BuildingView extends ViewInterface {
     }
 
     @Override
+    public String defineViewerHandlerPrefix() {
+        return "building";
+    }
+
+    @Override
     public String getMenuItemLabel() {
         return i18n.getString("WorldbuildingViewMenuItem");
+    }
+
+
+    @Override
+    public void requestSave() {
+
+    }
+
+    @Override
+    public void requestNote(Callback<UUID, Note> cb) {
+
+    }
+
+    @Override
+    public void register(RegistryInterface registry) {
+        registry.registerViewer(this);
     }
 
     public BuildingView() {
@@ -80,9 +87,10 @@ public class BuildingView extends ViewInterface {
         this.i18n = ResourceBundle.getBundle(getLocalizationBase());
     }
 
-    public void requestLoad(CampaignFile file) {
+    @Override
+    public void requestLoad(CampaignFileInterface file) {
         if (notesLister != null) {
-            notesLister.setItems(FXCollections.observableArrayList(file.notes));
+            notesLister.setItems(FXCollections.observableArrayList(file.getNotes()));
             String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
             if (lastLoadedNote != null) {
                 FileAccessLayer.getInstance().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
@@ -95,20 +103,18 @@ public class BuildingView extends ViewInterface {
     @FXML
     public void initialize() {
 
-        plugins = new ArrayList<>();
-        plugins.add(new TextNoteEditor());
-        plugins.add(new PictureNoteEditor());
-        plugins.add(new MapNoteEditor());
-        plugins.add(new ActorEditor());
-        plugins.add(new SceneEditor());
-        plugins.add(new LocationEditor());
+        plugins = Registry.getInstance().getEditorsByPrefix("building");
 
-        notes = FXCollections.observableArrayList();
+        List<Note<?>> listOfBuildingNotes = FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().startsWith("building")).toList();
+
+                System.out.println("reading " + listOfBuildingNotes.size() + " of " + FileAccessLayer.getInstance().getAllNotes().size() + " notes");
+
+        notes = FXCollections.observableArrayList(listOfBuildingNotes);
 
         notesLister.setItems(notes);
-
+/*
         notesLister.setCellFactory(listView -> {
-            ListCell<Note> t = new NotesRenderer();
+            ListCell<Note> t = new NotesRenderer<Note>();
 
             t.onDragOverProperty().set(e -> {
                 dragPosition = t.getIndex();
@@ -151,7 +157,7 @@ public class BuildingView extends ViewInterface {
 
             return t;
         });
-
+*/
         ContextMenu notesListerMenu = new ContextMenu();
         MenuItem deleteNoteMenuItem = new MenuItem(i18n.getString("DeleteNote"));
         deleteNoteMenuItem.onActionProperty().set( event -> {
@@ -193,7 +199,7 @@ public class BuildingView extends ViewInterface {
 
             @Override
             public void changed(ObservableValue observableValue, Note old, Note selected) {
-                if (old != selected) {
+                if (old != selected && selected != null) {
                     FileAccessLayer.getInstance().updateSetting("lastNote", selected.getReference().toString());
                     saveAndLoad(old, selected);
                 }
@@ -203,82 +209,67 @@ public class BuildingView extends ViewInterface {
         creationMenuButton.getItems().clear();
         plugins.forEach(plugin -> {
             MenuItem tmp = new MenuItem();
-            tmp.setText(plugin.defineHandler().label);
+            tmp.setText(plugin.defineHandler());
             tmp.onActionProperty().set( (ActionEvent e) -> {
-                createNote(plugin.defineHandler());
+                createNote(plugin);
             });
             creationMenuButton.getItems().add(tmp);
         });
 
     }
 
+    public void createNote(EditorPlugin editor) {
 
-    private EditorPlugin<?> getByType (NoteType type) {
-        try {
-            return plugins.stream().filter( editorPlugin -> editorPlugin.defineHandler() == type).findFirst().get();
-        } catch (NoSuchElementException e) {
-            return null;
-        }
-    }
+        Note newNote = editor.createNewNote();
 
-    public void createNote(NoteType type) {
-
-        Note newNote = new Note(type.label, type, UUID.randomUUID(), new Date(), new Date(), "");
         FileAccessLayer.getInstance().getAllNotes().add(newNote);
         notesLister.getItems().add(newNote);
         notesLister.getSelectionModel().select(newNote);
         saveAndLoad(activeNote, newNote);
-        lastCreationAction = type;
-        creationMenuButton.setText(type.label);
+        lastCreationAction = editor;
+        creationMenuButton.setText(newNote.getType());
     }
 
-    public void saveAndLoad(Note oldNote, Note newNote) {
-       
-        EditorPlugin<?> oldEditor = null;
-        EditorPlugin<?> newEditor = null;
+    public void saveAndLoad(final Note<?> oldNote, Note<?> newNote) {
+
         if (oldNote != null) {
-            oldEditor = getByType(oldNote.getType());
+            Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/" + oldNote.getType()).ifPresent(oe -> {
+                Callback<Boolean, Note<?>> saveEditor = oe.defineSaveCallback();
+                Note<?> res = saveEditor.call(true);
+                System.out.println("Saving note as type " + res.getClass().toString());
+                int insertionPoint = FileAccessLayer.getInstance().getAllNotes().indexOf(oldNote);
+                if (insertionPoint >= 0) {
+                    FileAccessLayer.getInstance().getAllNotes().remove(oldNote);
+                    FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
+                }
+            });
         }
-        if (newNote != null) {
-            newEditor = getByType(newNote.getType());
-        }
+        Optional<EditorPlugin> newEditor = Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/"+ newNote.getType());
 
 
-        if (oldEditor != null) {
-            Callback<Note, Boolean> saveEditor = oldEditor.defineSaveCallback();
-            saveEditor.call(oldNote);
-        }
 
-        if (newEditor != null) {
-            Node editor = newEditor.defineEditor();
-            newEditor.prepareToolbar(editorToolbar, stage);
+        newEditor.ifPresent(ne -> {
+            Node editor = ne.defineEditor();
+            ne.prepareToolbar(editorToolbar, stage);
             editorWindow.setCenter(editor);
 
-            Callback<Note, Boolean> loadEditor = newEditor.defineLoadCallback();
+            Callback<Note<?>, Boolean> loadEditor = ne.defineLoadCallback();
             loadEditor.call(newNote);
             activeNote = newNote;
 
-            newEditor.setOnNoteRequest(new Callback<String, Note>() {
-                @Override
-                public Note call(String param) {
-                    return requester.call(UUID.fromString(param));
+            ne.setOnNoteRequest((Callback<String, Note>) param -> requester.call(UUID.fromString(param)));
+
+            ne.setOnNoteLoadRequest((Callback<String, Boolean>) param -> {
+                Note found = requester.call(UUID.fromString(param));
+                if (found != null) {
+                    notesLister.getSelectionModel().select(found);
+                    saveAndLoad(newNote, found);
+                    return true;
                 }
+                return false;
             });
 
-            newEditor.setOnNoteLoadRequest(new Callback<String, Boolean>() {
-                @Override
-                public Boolean call(String param) {
-                    Note found = requester.call(UUID.fromString(param));
-                    if (found != null) {
-                        notesLister.getSelectionModel().select(found);
-                        saveAndLoad(newNote, found);
-                        return true;
-                    }
-                    return false;
-                }
-            });
-
-        }
+        });
     }
 
     @FXML

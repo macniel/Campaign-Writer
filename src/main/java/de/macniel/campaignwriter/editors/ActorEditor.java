@@ -1,18 +1,22 @@
 package de.macniel.campaignwriter.editors;
 
-import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
-
 import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.Note;
-import de.macniel.campaignwriter.NoteType;
+import de.macniel.campaignwriter.SDK.Note;
+import de.macniel.campaignwriter.SDK.EditorPlugin;
+import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.types.Actor;
+import de.macniel.campaignwriter.types.ActorNote;
+import de.macniel.campaignwriter.types.ActorNoteItem;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.*;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -32,15 +36,15 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ResourceBundle;
-public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
+public class ActorEditor extends EditorPlugin<ActorNote> {
 
-    ActorNoteDefinition notesStructure;
+    ActorNote notesStructure;
     private ScrollPane editor;
 
     private ComboBox setTemplateProp;
 
-    private HashMap<String, ActorNoteDefinition> actorTemplates;
-    private ResourceBundle i18n;
+    private HashMap<String, Actor> actorTemplates;
+    private final ResourceBundle i18n;
 
 
     public ActorEditor() {
@@ -49,13 +53,28 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
     }
 
     @Override
-    public NoteType defineHandler() {
-        return NoteType.ACTOR_NOTE;
+    public String defineHandler() {
+        return "building/actor";
     }
 
     @Override
-    public void prepareToolbar(ToolBar t, Window w) {
+    public Note createNewNote() {
+        return new ActorNote();
+    }
 
+    @Override
+    public void setOnNoteRequest(Callback<String, Note> stringNoteCallback) {
+
+    }
+
+    @Override
+    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
+
+    }
+
+    @Override
+    public void prepareToolbar(Node n, Window w) {
+        ToolBar t = (ToolBar) n;
         t.getItems().clear();
 
         ToggleGroup viewMode = new ToggleGroup();
@@ -88,9 +107,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         actorTemplates = FileAccessLayer.getInstance().getTemplates();
         setTemplateProp.getItems().clear();
         setTemplateProp.getItems().add("");
-        actorTemplates.keySet().forEach(actorTemplateName -> {
-            setTemplateProp.getItems().add(actorTemplateName);
-        });
+        actorTemplates.keySet().forEach(actorTemplateName -> setTemplateProp.getItems().add(actorTemplateName));
         setTemplateProp.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (actorTemplates != null && actorTemplates.get(newValue) != null) {
                 updateActorSheetToTemplate(actorTemplates.get(newValue));
@@ -110,14 +127,14 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
     void saveTemplate(Window owner) {
         ArrayList<ActorNoteItem> sanitized = new ArrayList<>();
-        notesStructure.items.forEach(item -> {
+        notesStructure.content.getItems().forEach(item -> {
             ActorNoteItem tmp = new ActorNoteItem();
-            tmp.label = item.label;
-            tmp.type = item.type;
+            tmp.setLabel(item.getLabel());
+            tmp.setType(item.getType());
             sanitized.add(tmp);
         });
-        ActorNoteDefinition def = new ActorNoteDefinition();
-        def.items = sanitized;
+        Actor def = new Actor();
+        def.setItems(sanitized);
 
         FileChooser saveDialog = new FileChooser();
         saveDialog.setTitle(i18n.getString("SaveTemplateDialogTitle"));
@@ -125,9 +142,8 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         File f = saveDialog.showSaveDialog(owner);
         try (JsonWriter writer = new JsonWriter(new FileWriter(f))) {
             
-            FileAccessLayer.getInstance().getParser().toJson(def, ActorNoteDefinition.class, writer);
+            FileAccessLayer.getInstance().getParser().toJson(def, Actor.class, writer);
             writer.flush();
-            writer.close();
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -135,31 +151,31 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
     }
 
-    void updateActorSheetToTemplate(ActorNoteDefinition template) {
+    void updateActorSheetToTemplate(Actor template) {
 
         ArrayList<ActorNoteItem> merged = new ArrayList<>();
 
-        template.items.forEach(templateItem -> {
-            notesStructure.items.stream().filter(item -> 
-            templateItem.label.equals(item.label)
+        template.getItems().forEach(templateItem -> {
+            notesStructure.content.getItems().stream().filter(item ->
+            templateItem.getLabel().equals(item.getLabel())
             ).findFirst().ifPresentOrElse(previousValue -> {
                 ActorNoteItem tmp = new ActorNoteItem();
-                tmp.content = previousValue.content;
-                tmp.max = previousValue.max;
-                tmp.value = previousValue.value;
-                tmp.type = previousValue.type;
+                tmp.setContent(previousValue.getContent());
+                tmp.setMax(previousValue.getMax());
+                tmp.setValue(previousValue.getValue());
+                tmp.setType(previousValue.getType());
                 merged.add(tmp);
             }, () -> {
                 ActorNoteItem tmp = new ActorNoteItem();
-                tmp.content = "";
-                tmp.max = 0;
-                tmp.value = 0;
-                tmp.type = templateItem.type;
-                tmp.label = templateItem.label;
+                tmp.setContent("");
+                tmp.setMax(0);
+                tmp.setValue(0);
+                tmp.setType(templateItem.getType());
+                tmp.setLabel(templateItem.getLabel());
                 merged.add(tmp);
             });
         });
-        notesStructure.items = merged;
+        notesStructure.content.setItems(merged);
         
         editor.setContent(getEditableVersion());
     }
@@ -185,28 +201,28 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         HBox line = new HBox();
         Button removeLine = new Button("", new FontIcon("icm-bin"));
         removeLine.onActionProperty().set(e -> {
-            notesStructure.items.remove(item);
+            notesStructure.content.getItems().remove(item);
             editor.setContent(getEditableVersion());
         });
 
-        switch(item.type) {
+        switch(item.getType()) {
             case TEXT -> {
                 if (editable) {
                     TextField label = new TextField();
                     label.setPrefWidth(120);
-                    label.setText(item.label);
-                    TextArea texteditor = new TextArea(item.content);
+                    label.setText(item.getLabel());
+                    TextArea texteditor = new TextArea(item.getContent());
                     texteditor.setWrapText(true);
                     texteditor.setPrefRowCount(3);
                     HBox.setHgrow(texteditor, Priority.ALWAYS);
 
                     label.textProperty().addListener( (editor, oldText, newText) -> {
-                        item.label = newText;
+                        item.setLabel(newText);
                     });
 
                     texteditor.textProperty().addListener( (editor, oldText, newText) -> {
 
-                        item.content = newText;
+                        item.setContent(newText);
                     });
                     line.getChildren().add(label);
                     line.getChildren().add(texteditor);
@@ -214,10 +230,10 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                 } else {
                     Label label = new Label();
                     label.setPrefWidth(120);
-                    label.setText(item.label);
+                    label.setText(item.getLabel());
                     TextFlow texteditor = new TextFlow();
 
-                    texteditor.getChildren().add(new Text(item.content));
+                    texteditor.getChildren().add(new Text(item.getContent()));
                     line.getChildren().add(label);
                     line.getChildren().add(texteditor);
                 }
@@ -227,16 +243,16 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                 if (editable) {
                     TextField label = new TextField();
                     label.setPrefWidth(120);
-                    label.setText(item.label);
-                    TextField texteditor = new TextField(item.content);
+                    label.setText(item.getLabel());
+                    TextField texteditor = new TextField(item.getContent());
                     HBox.setHgrow(texteditor, Priority.ALWAYS);
                     label.textProperty().addListener((editor, oldText, newText) -> {
-                        item.label = newText;
+                        item.setLabel(newText);
                     });
 
                     texteditor.textProperty().addListener((editor, oldText, newText) -> {
 
-                        item.content = newText;
+                        item.setContent(newText);
                     });
 
                     line.getChildren().add(label);
@@ -245,9 +261,9 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                 } else {
                     Label label = new Label();
                     label.setPrefWidth(120);
-                    label.setText(item.label);
+                    label.setText(item.getLabel());
                     TextFlow texteditor = new TextFlow();
-                    texteditor.getChildren().add(new Text(item.content));
+                    texteditor.getChildren().add(new Text(item.getContent()));
                     line.getChildren().add(label);
                     line.getChildren().add(texteditor);
                 }
@@ -256,14 +272,14 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                 if (editable) {
                     TextField label = new TextField();
                     label.setPrefWidth(120);
-                    label.setText(item.label);
+                    label.setText(item.getLabel());
                     ImageView v = new ImageView();
                     v.setPreserveRatio(true);
                     v.setFitWidth(250);
                     v.setFitHeight(250);
 
-                    if (item.content != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.content).ifPresent(imgEntry -> {
+                    if (item.getContent() != null) {
+                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(imgEntry -> {
                                 v.setImage(imgEntry.getValue());
                         });
                     }
@@ -271,16 +287,16 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     Button selectFileButton = new Button("", new FontIcon("icm-link"));
 
                     label.textProperty().addListener((editor, oldText, newText) -> {
-                        item.label = newText;
+                        item.setLabel(newText);
                     });
 
                     selectFileButton.onActionProperty().set(e -> {
                         FileChooser chooser = new FileChooser();
                         File selectedFile = chooser.showOpenDialog(null);
                         if (selectedFile != null) {
-                            item.content = selectedFile.getAbsolutePath();
+                            item.setContent(selectedFile.getAbsolutePath());
                             FileAccessLayer.getInstance().getImageFromString(selectedFile.getAbsolutePath()).ifPresent(entry -> {
-                                item.content = entry.getKey();
+                                item.setContent(entry.getKey());
                                 v.setImage(entry.getValue());
                             });
                         }
@@ -294,14 +310,14 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                 } else {
                     Label label = new Label();
                     label.setPrefWidth(120);
-                    label.setText(item.label);
+                    label.setText(item.getLabel());
                     ImageView v = new ImageView();
                     v.setPreserveRatio(true);
                     v.setFitWidth(250);
                     v.setFitHeight(250);
 
-                    if (item.content != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.content).ifPresent(value -> v.setImage(value.getValue()));
+                    if (item.getContent() != null) {
+                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> v.setImage(value.getValue()));
                     }
 
                     line.getChildren().add(label);
@@ -315,11 +331,11 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
                     TextField content = new TextField();
                     content.setAlignment(Pos.TOP_CENTER);
-                    content.setText(item.content);
+                    content.setText(item.getContent());
                     HBox.setHgrow(content, Priority.ALWAYS);
 
                     content.textProperty().addListener((editor, oldText, newText) -> {
-                        item.content = newText;
+                        item.setContent(newText);
                     });
 
 
@@ -331,7 +347,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                     label.setPrefWidth(120);
 
                     TextFlow content = new TextFlow();
-                    Text t = new Text(item.content);
+                    Text t = new Text(item.getContent());
                     t.setStyle("-fx-font-weight: bold;");
                     content.setTextAlignment(TextAlignment.CENTER);
                     content.getChildren().add(t);
@@ -344,19 +360,19 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                 if (editable) {
                     TextField label = new TextField();
                     label.setPrefWidth(120);
-                    label.setText(item.label);
-                    TextField value = new TextField(String.valueOf(item.value));
-                    TextField maxValue = new TextField(String.valueOf(item.max));
+                    label.setText(item.getLabel());
+                    TextField value = new TextField(String.valueOf(item.getValue()));
+                    TextField maxValue = new TextField(String.valueOf(item.getMax()));
 
                     label.textProperty().addListener((editor, oldText, newText) -> {
-                        item.label = newText;
+                        item.setLabel(newText);
                     });
 
                     value.textProperty().addListener((editor, oldText, newText) -> {
-                        item.value = Integer.valueOf(newText);
+                        item.setValue(Integer.valueOf(newText));
                     });
                     maxValue.textProperty().addListener((editor, oldText, newText) -> {
-                        item.max = Integer.valueOf(newText);
+                        item.setMax(Integer.valueOf(newText));
                     });
 
                     HBox.setHgrow(value, Priority.ALWAYS);
@@ -370,12 +386,12 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
                 } else {
                     Label label = new Label();
                     label.setPrefWidth(120);
-                    label.setText(item.label);
-                    TextField value = new TextField(String.valueOf(item.value));
-                    Label maxValue = new Label(String.valueOf(item.max));
+                    label.setText(item.getLabel());
+                    TextField value = new TextField(String.valueOf(item.getValue()));
+                    Label maxValue = new Label(String.valueOf(item.getMax()));
 
                     value.textProperty().addListener((editor, oldText, newText) -> {
-                        item.value = Integer.valueOf(newText);
+                        item.setValue(Integer.valueOf(newText));
                     });
 
                     line.getChildren().add(label);
@@ -389,21 +405,97 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
     }
 
     @Override
-    public Node getPreviewVersionOf(ActorNoteDefinition t) {
+    public Node getPreviewVersionOf(ActorNote t) {
 
         ScrollPane p = new ScrollPane();
         VBox lines = new VBox();
         if (t != null) {
-            System.out.println("Rendering " + notesStructure.items.size() + " elements");
+            System.out.println("Rendering " + notesStructure.content.getItems().size() + " elements");
 
 
-            t.items.forEach(item -> {
+            t.content.getItems().forEach(item -> {
                 HBox line = renderItem(item, false);
                 lines.getChildren().add(line);
             });
         }
         p.setContent(lines);
         return p;
+    }
+
+    @Override
+    public Node getStandaloneVersion(ActorNote t) {
+        VBox n = new VBox();
+        t.content.getItems().forEach(item -> {
+            HBox line = new HBox();
+            switch(item.getType()) {
+                case TEXT -> {
+                    Label label = new Label();
+                    label.setPrefWidth(120);
+                    label.setText(item.getLabel());
+                    TextFlow texteditor = new TextFlow();
+
+                    texteditor.getChildren().add(new Text(item.getContent()));
+                    line.getChildren().add(label);
+                    line.getChildren().add(texteditor);
+                }
+                case STRING -> {
+                    Label label = new Label();
+                    label.setPrefWidth(120);
+                    label.setText(item.getLabel());
+                    TextFlow texteditor = new TextFlow();
+                    texteditor.getChildren().add(new Text(item.getContent()));
+                    line.getChildren().add(label);
+                    line.getChildren().add(texteditor);
+                }
+                case IMAGE -> {
+                    Label label = new Label();
+                    label.setPrefWidth(120);
+                    label.setText(item.getLabel());
+                    ImageView v = new ImageView();
+                    v.setPreserveRatio(true);
+                    v.setFitWidth(250);
+                    v.setFitHeight(250);
+
+                    if (item.getClass() != null) {
+                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> v.setImage(value.getValue()));
+                    }
+
+                    line.getChildren().add(label);
+                    line.getChildren().add(v);
+                }
+                case HEADER -> {
+                    VBox label = new VBox();
+                    label.setPrefWidth(120);
+
+                    TextFlow content = new TextFlow();
+                    Text text = new Text(item.getContent());
+                    text.setStyle("-fx-font-weight: bold;");
+                    content.setTextAlignment(TextAlignment.CENTER);
+                    content.getChildren().add(text);
+                    HBox.setHgrow(content, Priority.ALWAYS);
+                    line.getChildren().add(label);
+                    line.getChildren().add(content);
+                }
+                case RESOURCE -> {
+                    Label label = new Label();
+                    label.setPrefWidth(120);
+                    label.setText(item.getLabel());
+                    TextField value = new TextField(String.valueOf(item.getValue()));
+                    Label maxValue = new Label(String.valueOf(item.getMax()));
+
+                    value.textProperty().addListener((editor, oldText, newText) -> {
+                        item.setValue(Integer.valueOf(newText));
+                    });
+
+                    line.getChildren().add(label);
+                    line.getChildren().add(value);
+                    line.getChildren().add(new Label(" / "));
+                    line.getChildren().add(maxValue);
+                }
+            }
+            n.getChildren().add(line);
+        });
+        return n;
     }
 
     private Node getEditableVersion() {
@@ -418,7 +510,7 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
         if (notesStructure != null) {
 
-            notesStructure.items.forEach(item -> {
+            notesStructure.content.getItems().forEach(item -> {
                 HBox line = renderItem(item);
                 FontIcon fi = new FontIcon("icm-page-break");
                 fi.setIconSize(20);
@@ -448,8 +540,8 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
 
                 dragButton.onDragDroppedProperty().set(e -> {
                     if (dragelement != null) {
-                        notesStructure.items.remove(dragelement);
-                        notesStructure.items.add(dragposition, dragelement);
+                        notesStructure.content.getItems().remove(dragelement);
+                        notesStructure.content.getItems().add(dragposition, dragelement);
                     }
                     editor.setContent(getEditableVersion());
                     e.setDropCompleted(true);
@@ -479,14 +571,14 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
         newType.setPrefWidth(120);
         newType.onActionProperty().set(e -> {
                 if (notesStructure == null) {
-                    notesStructure = new ActorNoteDefinition();
+                    notesStructure = new ActorNote();
                 }
-                if (notesStructure.items == null) {
-                    notesStructure.items = new ArrayList<>();
+                if (notesStructure.content.getItems() == null) {
+                    notesStructure.content.setItems(new ArrayList<>());
                 }
                 ActorNoteItem added = new ActorNoteItem();
-                added.type = newType.getValue();
-                notesStructure.items.add(added);
+                added.setType(newType.getValue());
+                notesStructure.content.getItems().add(added);
                 editor.setContent(getEditableVersion());
 
         });
@@ -499,38 +591,21 @@ public class ActorEditor implements EditorPlugin<ActorNoteDefinition> {
     }
 
     @Override
-    public Callback<Note, Boolean> defineSaveCallback() {
-        return new Callback<Note, Boolean>() {
-            @Override
-            public Boolean call(Note note) {
-                note.content = FileAccessLayer.getInstance().getParser().toJson(notesStructure);
-                return true;
-            }
+    public Callback<Boolean, ActorNote> defineSaveCallback() {
+        return p -> notesStructure;
+    }
+
+    @Override
+    public Callback<ActorNote, Boolean> defineLoadCallback() {
+        return note -> {
+            notesStructure = note;
+            editor.setContent(getEditableVersion());
+            return true;
         };
     }
 
     @Override
-    public Callback<Note, Boolean> defineLoadCallback() {
-        return new Callback<Note, Boolean>() {
-            @Override
-            public Boolean call(Note note) {
-                notesStructure = FileAccessLayer.getInstance().getParser().fromJson(note.content, ActorNoteDefinition.class);
-                if (notesStructure == null) {
-                    notesStructure = new ActorNoteDefinition();
-                }
-                editor.setContent(getEditableVersion());
-                return true;
-            }
-        };
-    }
-
-    @Override
-    public void setOnNoteRequest(Callback<String, Note> stringNoteCallback) {
-
-    }
-
-    @Override
-    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
-
+    public void register(RegistryInterface registry) {
+        registry.registerEditor(this);
     }
 }

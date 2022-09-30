@@ -1,9 +1,11 @@
 package de.macniel.campaignwriter.editors;
 
-import com.google.gson.Gson;
 import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.Note;
-import de.macniel.campaignwriter.NoteType;
+import de.macniel.campaignwriter.SDK.Note;
+import de.macniel.campaignwriter.SDK.EditorPlugin;
+import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.types.Location;
+import de.macniel.campaignwriter.types.LocationNote;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -15,11 +17,12 @@ import javafx.util.Callback;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
-public class LocationEditor implements EditorPlugin {
+public class LocationEditor extends EditorPlugin<LocationNote> {
 
-    LocationNoteDefinition notesStructure;
+    Location notesStructure;
     private TextField locationNameProp;
     private ComboBox<Note> pictureProp;
     private TextArea historyProp;
@@ -27,7 +30,6 @@ public class LocationEditor implements EditorPlugin {
     private TextArea ambianceProp;
     private ComboBox<Note> parentLocationProp;
     private TextField locationCanonicalNameProp;
-    private Note actualNote;
 
     private Callback onNoteLoadRequest;
     private ResourceBundle i18n;
@@ -37,14 +39,26 @@ public class LocationEditor implements EditorPlugin {
     }
 
     @Override
-    public NoteType defineHandler() {
-        return NoteType.LOCATION_NOTE;
+    public String defineHandler() {
+        return "building/location";
     }
 
     @Override
-    public void prepareToolbar(ToolBar t, Window w) {
+    public void prepareToolbar(Node n, Window w) {
+        ToolBar t = (ToolBar) n;
         t.getItems().clear();
         t.setVisible(false);
+    }
+
+
+    @Override
+    public void setOnNoteRequest(Callback<String, Note> stringNoteCallback) {
+
+    }
+
+    @Override
+    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
+
     }
 
     @Override
@@ -104,121 +118,102 @@ public class LocationEditor implements EditorPlugin {
 
         parentLocationProp.getSelectionModel().selectedItemProperty().addListener((observableValue, o, newValue) -> {
             if (newValue != null) {
-                notesStructure.parentLocation = newValue.reference;
+                notesStructure.setParentLocation(newValue.reference);
             } else {
-                notesStructure.parentLocation = null;
+                notesStructure.setParentLocation(null);
             }
-            saveTo();
         });
 
         ambianceProp.textProperty().addListener((observableValue, s, newValue) -> {
-            notesStructure.ambiance = newValue;
-            saveTo();
+            notesStructure.setAmbiance(newValue);
         });
 
         historyProp.textProperty().addListener((observableValue, s, newValue) -> {
-            notesStructure.history = newValue;
-            saveTo();
+            notesStructure.setHistory(newValue);
         });
 
         descriptionProp.textProperty().addListener((observableValue, s, newValue) -> {
-            notesStructure.description = newValue;
-            saveTo();
+            notesStructure.setDescription(newValue);
         });
 
         locationNameProp.textProperty().addListener((observableValue, s, newValue) -> {
-            notesStructure.name = newValue;
-            saveTo();
+            notesStructure.setName(newValue);
         });
 
         locationCanonicalNameProp.textProperty().addListener((observableValue, s, newValue) -> {
-            notesStructure.canonicalName = newValue;
-            saveTo();
+            notesStructure.setCanonicalName(newValue);
         });
 
         box.getChildren().addAll(locationNamePropLine, locationCanonicalNamePropLine, parentLocationPropLine, ambiancePropLine, descriptionPropLine, historyPropLine, picturePropLine);
 
-        updateScroll();
+        updateView();
 
         return box;
     }
 
-    private void updateScroll() {
+    private void updateView() {
 
         if (notesStructure == null) {
-            notesStructure = new LocationNoteDefinition();
+            notesStructure = new Location();
         }
 
             List<Note> locationNotes = new ArrayList<>(FileAccessLayer
                     .getInstance()
                     .getAllNotes()
                     .stream()
-                    .filter(n -> n.type == NoteType.LOCATION_NOTE)
-                    .filter(n -> n != actualNote)
+                    .filter(Objects::nonNull)
+                    .filter(n -> {
+                        return n.getType().equals("location");
+                    })
+                    .filter(n -> n != notesStructure)
                     .toList());
         locationNotes.add(0, null);
             parentLocationProp.setItems(FXCollections.observableArrayList(locationNotes));
-            FileAccessLayer.getInstance().findByReference(notesStructure.parentLocation).ifPresent(parentLocation -> {
+            FileAccessLayer.getInstance().findByReference(notesStructure.getParentLocation()).ifPresent(parentLocation -> {
                 parentLocationProp.getSelectionModel().select(parentLocation);
             });
 
-            locationNameProp.setText(notesStructure.name);
-            locationCanonicalNameProp.setText(notesStructure.canonicalName);
-            ambianceProp.setText(notesStructure.ambiance);
-            descriptionProp.setText(notesStructure.description);
-            historyProp.setText(notesStructure.history);
+            locationNameProp.setText(notesStructure.getName());
+            locationCanonicalNameProp.setText(notesStructure.getCanonicalName());
+            ambianceProp.setText(notesStructure.getAmbiance());
+            descriptionProp.setText(notesStructure.getDescription());
+            historyProp.setText(notesStructure.getHistory());
 
 
-    }
-
-    private void saveTo() {
-
-        if (actualNote != null) {
-            actualNote.content = FileAccessLayer.getInstance().getParser().toJson(notesStructure);
-        }
     }
 
     @Override
-    public Callback<Note, Boolean> defineSaveCallback() {
-        return new Callback<Note, Boolean>() {
-            @Override
-            public Boolean call(Note note) {
-                actualNote = note;
-                saveTo();
-                return true;
-            }
-        };
+    public Callback<Boolean, Note> defineSaveCallback() {
+        return note -> notesStructure;
     }
 
     @Override
     public Callback<Note, Boolean> defineLoadCallback() {
-        return new Callback<Note, Boolean>() {
-            @Override
-            public Boolean call(Note note) {
-                actualNote = note;
-                notesStructure = FileAccessLayer.getInstance().getParser().fromJson(actualNote.content, LocationNoteDefinition.class);
-                updateScroll();
-
-                return true;
-            }
+        return note -> {
+            notesStructure = (Location) note;
+            updateView();
+            return true;
         };
     }
 
     @Override
-    public Node getPreviewVersionOf(Object t) {
-        return null;
+    public Node getPreviewVersionOf(LocationNote t) {
+        System.out.println("Rendering Location " + t.content.getCanonicalName() + " as standalone");
+        return new HBox(new Label("Willkommen in " + t.content.getCanonicalName()));
     }
 
     @Override
-    public void setOnNoteLoadRequest(Callback stringBooleanCallback) {
-        this.onNoteLoadRequest = stringBooleanCallback;
-        
+    public Node getStandaloneVersion(LocationNote t) {
+        return getPreviewVersionOf(t);
     }
 
     @Override
-    public void setOnNoteRequest(Callback stringNoteCallback) {
-        // TODO Auto-generated method stub
-        
+    public Note createNewNote() {
+        return new Location();
     }
 
+    @Override
+    public void register(RegistryInterface registry) {
+        registry.registerEditor(this);
+    }
 }

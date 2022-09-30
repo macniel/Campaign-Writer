@@ -1,26 +1,24 @@
 package de.macniel.campaignwriter.views;
 
 import de.macniel.campaignwriter.*;
-import de.macniel.campaignwriter.editors.SessionNote;
-import de.macniel.campaignwriter.viewers.LocationViewer;
-import de.macniel.campaignwriter.viewers.MapViewer;
-import de.macniel.campaignwriter.viewers.SceneViewer;
-import de.macniel.campaignwriter.viewers.TextViewer;
-import de.macniel.campaignwriter.viewers.ViewerPlugin;
+import de.macniel.campaignwriter.SDK.*;
+import de.macniel.campaignwriter.types.Session;
+import de.macniel.campaignwriter.types.SessionNote;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.util.ArrayList;
@@ -28,29 +26,10 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
-public class SessionView extends ViewInterface {
+public class SessionView extends ViewerPlugin {
 
     private final ResourceBundle i18n;
-    @SuppressWarnings("unused")
-    private Callback<UUID, Note> requester;
 
-    @FXML
-    private ListView<SessionNote> notesLister;
-
-    private ObservableList<SessionNote> notes;
-
-    private SessionNote activeNote;
-
-    @FXML
-    private VBox scriptBox;
-
-    @FXML
-    private ScrollPane scroller;
-
-    int dragPosition;
-
-    SessionNote dragElement;
-    private ArrayList<ViewerPlugin> scrollInterpreter;
 
     @Override
     public String getPathToFxmlDefinition() {
@@ -71,19 +50,18 @@ public class SessionView extends ViewInterface {
     }
 
     @Override
-    public void requestLoad(CampaignFile items) {
+    public void requestLoad(CampaignFileInterface items) {
         scriptBox.getChildren().clear();
 
-        notesLister.setItems(FXCollections.observableArrayList(items.sessionNotes));
+        notesLister.setItems(FXCollections.observableArrayList(items.getNotes().stream().filter(note -> note.getType().endsWith("session")).map(note -> ((SessionNote) note)).toList()));
 
         String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
         if (lastLoadedNote != null) {
-            FileAccessLayer.getInstance().getAllSessionNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
-                activeNote = note;
+            FileAccessLayer.getInstance().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
+                activeNote = (SessionNote) note;
                 notesLister.getSelectionModel().select(activeNote);
             });
         }
-
     }
 
     @Override
@@ -93,41 +71,44 @@ public class SessionView extends ViewInterface {
 
     @Override
     public void requestNote(Callback<UUID, Note> cb) {
-        this.requester = cb;
+
     }
 
-    Callback<UUID, Note> noteRequestRenderer;
+    @Override
+    public String defineViewerHandlerPrefix() {
+        return "session";
+    }
+
+    @SuppressWarnings("unused")
+    private Callback<UUID, Note> requester;
+
+    @FXML
+    private ListView<SessionNote> notesLister;
+
+    private ObservableList<SessionNote> notes;
+
+    private SessionNote activeNote;
+
+    @FXML
+    private VBox scriptBox;
+
+    @FXML
+    private ScrollPane scroller;
+
+    int dragPosition;
+
+    SessionNote dragElement;
+    private ArrayList<EditorPlugin> scrollInterpreter;
 
     @FXML
     public void initialize() {
 
         notes = FXCollections.observableArrayList(new ArrayList<>());
         notesLister.setItems(notes);
-        scrollInterpreter = new ArrayList<ViewerPlugin>();
-        scrollInterpreter.add(new TextViewer());
-        scrollInterpreter.add(new MapViewer());
-        scrollInterpreter.add(new SceneViewer());
-        scrollInterpreter.add(new LocationViewer());
-
-        noteRequestRenderer = new Callback<UUID,Note>() {
-            @Override
-            public Note call(UUID param) {
-                FileAccessLayer.getInstance().findByReference(param).ifPresent(note -> {
-                    scrollInterpreter.stream().filter(si -> si.defineNoteType() == note.getType()).findFirst().ifPresent(viewer -> {
-                        final Stage wnd = new Stage();
-                        AnchorPane b = new AnchorPane();
-                        b.getChildren().add(viewer.renderNoteStandalone(note));
-                        Scene popoutContent = new Scene(b, 300, 300);
-                        wnd.setScene(popoutContent);
-                        wnd.show();
-                    });
-                });
-                return null;
-            }
-        };
-
+        scrollInterpreter = Registry.getInstance().getEditorsByPrefix("");
+/*
         notesLister.setCellFactory(listView -> {
-            ListCell<SessionNote> t = new SessionNotesRenderer();
+            ListCell<SessionNote> t = new NotesRenderer<SessionNote>();
 
             t.onDragOverProperty().set(e -> {
                 dragPosition = t.getIndex();
@@ -147,9 +128,9 @@ public class SessionView extends ViewInterface {
 
             t.onDragDroppedProperty().set(e -> {
                 if (dragElement != null) {
-                    FileAccessLayer.getInstance().removeSessionNote(dragElement);
-                    FileAccessLayer.getInstance().addSessionNote(dragPosition, dragElement);
-                    notesLister.setItems(FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllSessionNotes()));
+                    FileAccessLayer.getInstance().removeNote(dragElement);
+                    FileAccessLayer.getInstance().addNote(dragPosition, dragElement);
+                    notesLister.setItems(FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().endsWith("session")).map(note -> (SessionNote) note).toList()));
                 }
                 e.setDropCompleted(true);
                 e.consume();
@@ -157,7 +138,7 @@ public class SessionView extends ViewInterface {
 
 
             t.onDragDetectedProperty().set(e -> {
-                dragElement = t.getItem();
+                dragElement = (SessionNote) t.getItem();
                 dragPosition = t.getIndex();
                 Dragboard db = t.startDragAndDrop(TransferMode.ANY);
                 ClipboardContent c = new ClipboardContent();
@@ -170,7 +151,7 @@ public class SessionView extends ViewInterface {
 
             return t;
         });
-
+*/
         notesLister.getSelectionModel().selectedItemProperty().addListener((observableValue, oldNote, newNote) -> {
             activeNote = newNote;
             FileAccessLayer.getInstance().updateSetting("lastNote", newNote.getReference().toString());
@@ -185,17 +166,17 @@ public class SessionView extends ViewInterface {
             scroller.setVisible(true);
             scriptBox.getChildren().clear();
 
-            activeNote.getNotes().forEach(noteUUID -> {
+            activeNote.content.getNotes().forEach(noteUUID -> {
                 FileAccessLayer.getInstance().findByReference(noteUUID).ifPresent(note -> {
                     HBox line = new HBox();
                     AnchorPane p = new AnchorPane();
 
                     scrollInterpreter
                             .stream()
-                            .filter(vp -> vp.defineNoteType() == note.type)
+                            .filter(vp -> vp.defineHandler().equals(note.getType()))
                             .findFirst()
                             .ifPresent(viewerPlugin -> {
-                                Node viewNode = viewerPlugin.renderNote(note, scroller.widthProperty(), noteRequestRenderer);
+                                Node viewNode = viewerPlugin.getPreviewVersionOf(note);
                                 p.getChildren().add(viewNode);
                                 AnchorPane.setBottomAnchor(viewNode, 0.0);
                                 AnchorPane.setTopAnchor(viewNode, 0.0);
@@ -212,10 +193,9 @@ public class SessionView extends ViewInterface {
             });
 
             ComboBox<Note> adder = new ComboBox<>();
-            List<Note> filteredList = FileAccessLayer.getInstance().getAllNotes().stream().filter(n -> {
-                return n.type == NoteType.TEXT_NOTE ||
-                        n.type == NoteType.SCENE_NOTE ||
-                        n.type == NoteType.MAP_NOTE;
+            List<Note<?>> filteredList = FileAccessLayer.getInstance().getAllNotes().stream().filter(n -> {
+                return true;
+               // TODO: define multiple handlers perhaps?
             }).toList();
             adder.setItems(FXCollections.observableArrayList(filteredList));
             adder.setCellFactory(new Callback<ListView<Note>, ListCell<Note>>() {
@@ -226,7 +206,7 @@ public class SessionView extends ViewInterface {
             });
 
             adder.getSelectionModel().selectedItemProperty().addListener((observableValue, note, toAdd) -> {
-                activeNote.getNotes().add(toAdd.reference);
+                activeNote.content.getNotes().add(toAdd.reference);
                 updateScroll();
             });
 
@@ -239,13 +219,13 @@ public class SessionView extends ViewInterface {
     public void newSession(ActionEvent actionEvent) {
         SessionNote newNote = new SessionNote();
         newNote.setLabel(i18n.getString("UntitledSession"));
-        FileAccessLayer.getInstance().addSessionNote(0, newNote);
-        notes.setAll(FileAccessLayer.getInstance().getAllSessionNotes());
+        FileAccessLayer.getInstance().addNote(0, newNote);
+        notes.setAll(FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().endsWith("session")).map(note -> (SessionNote) note).toList());
         notesLister.setItems(notes);
     }
 
     public void deleteSession(ActionEvent actionEvent) {
-        if (activeNote != null && !activeNote.getPlayed() && notes.contains(activeNote)) {
+        if (activeNote != null && !activeNote.content.getPlayed() && notes.contains(activeNote)) {
             notes.remove(activeNote);
             activeNote = null;
             notesLister.getSelectionModel().clearSelection();
@@ -255,5 +235,10 @@ public class SessionView extends ViewInterface {
 
     public void startSession(ActionEvent actionEvent) {
         //TODO: only enable when a session is selected and was not played yet
+    }
+
+    @Override
+    public void register(RegistryInterface registry) {
+        registry.registerViewer(this);
     }
 }

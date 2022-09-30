@@ -1,10 +1,9 @@
-package de.macniel.campaignwriter.editors;
+package de.macniel.campaignwriter.types;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class EncounterNote {
+public class Encounter {
 
     List<Combatant> combatants;
 
@@ -18,10 +17,6 @@ public class EncounterNote {
 
     String encounterDifficulty;
 
-    public EncounterNote() {
-        combatants = new ArrayList<>();
-        reference = UUID.randomUUID();
-    }
 
     public void setCircumstances(String circumstances) {
         this.circumstances = circumstances;

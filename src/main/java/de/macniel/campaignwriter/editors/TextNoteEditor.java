@@ -1,7 +1,10 @@
 package de.macniel.campaignwriter.editors;
 
-import de.macniel.campaignwriter.Note;
-import de.macniel.campaignwriter.NoteType;
+import de.macniel.campaignwriter.SDK.Note;
+import de.macniel.campaignwriter.SDK.EditorPlugin;
+import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.types.Text;
+import de.macniel.campaignwriter.types.TextNote;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyEvent;
@@ -14,21 +17,23 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.*;
 
-public class TextNoteEditor implements EditorPlugin<TextNoteDefinition> {
+public class TextNoteEditor extends EditorPlugin<TextNote> {
 
     private boolean contentHasChanged = false;
 
     private TextArea editor;
     private Callback<String, Note> onNoteRequest;
-    private Callback<String, Boolean> onNoteLoadRequest;
+    private TextNote notesStructure;
 
     @Override
-    public NoteType defineHandler() {
-        return NoteType.TEXT_NOTE;
+    public String defineHandler() {
+        return "building/text";
     }
 
     @Override
-    public void prepareToolbar(ToolBar t, Window w) {
+    public void prepareToolbar(Node n, Window w) {
+        ToolBar t = (ToolBar) n;
+
         t.getItems().clear();
 
         Button boldButton = new Button("", new FontIcon("icm-bold"));
@@ -111,51 +116,51 @@ public class TextNoteEditor implements EditorPlugin<TextNoteDefinition> {
     }
 
     @Override
-    public Callback<Note, Boolean> defineSaveCallback() {
-        return new Callback<Note, Boolean>() {
-            @Override
-            public Boolean call(Note note) {
-                if (contentHasChanged) {
-
-                    // TODO: save with style
-                    note.setContent(editor.getText());
-                }
-                return true;
-            }
-        };
+    public Callback<Boolean, TextNote> defineSaveCallback() {
+        return note -> notesStructure;
     }
 
     @Override
-    public Callback<Note, Boolean> defineLoadCallback() {
-        return new Callback<Note, Boolean>() {
-            @Override
-            public Boolean call(Note note) {
-                if (note.getType() == NoteType.TEXT_NOTE) {
-                    editor.clear();
-                    // TODO: load with style
-                    editor.appendText(note.getContent());
-                    contentHasChanged = false;
-                    editor.requestFocus();
-                    return true;
-                }
-                return false;
-            }
+    public Callback<TextNote, Boolean> defineLoadCallback() {
+        return note -> {
+            notesStructure = note;
+            updateView();
+            return true;
         };
     }
+
+    void updateView() {
+        editor.setText(notesStructure.content.getContent());
+    }
+
+    @Override
+    public Node getPreviewVersionOf(TextNote t) {
+        return null;
+    }
+
+    @Override
+    public Node getStandaloneVersion(TextNote t) {
+        return null;
+    }
+
+    @Override
+    public Note createNewNote() {
+        return new TextNote();
+    }
+
+    @Override
+    public void register(RegistryInterface registry) {
+        registry.registerEditor(this);
+    }
+
 
     @Override
     public void setOnNoteRequest(Callback<String, Note> stringNoteCallback) {
-        this.onNoteRequest = stringNoteCallback;
+
     }
 
     @Override
     public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
-        this.onNoteLoadRequest = stringBooleanCallback;
-    }
 
-    @Override
-    public Node getPreviewVersionOf(TextNoteDefinition t) {
-        return null;
     }
-
 }

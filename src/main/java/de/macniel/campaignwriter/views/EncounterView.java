@@ -4,21 +4,20 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
-import de.macniel.campaignwriter.CampaignFile;
 import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.Note;
-import de.macniel.campaignwriter.NoteType;
-import de.macniel.campaignwriter.editors.ActorNoteItem;
-import de.macniel.campaignwriter.editors.Combatant;
-import de.macniel.campaignwriter.editors.EncounterNote;
-import de.macniel.campaignwriter.viewers.CombatantViewer;
+import de.macniel.campaignwriter.SDK.CampaignFileInterface;
+import de.macniel.campaignwriter.SDK.Note;
+import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.SDK.ViewerPlugin;
+import de.macniel.campaignwriter.types.Combatant;
+import de.macniel.campaignwriter.types.Encounter;
+import de.macniel.campaignwriter.types.EncounterNote;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -32,15 +31,13 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.util.Callback;
 
-public class EncounterView  extends ViewInterface {
+public class EncounterView extends ViewerPlugin {
     private final ResourceBundle i18n;
     @FXML
     public TextField encounterNameProp;
@@ -55,7 +52,7 @@ public class EncounterView  extends ViewInterface {
     @FXML
     public ComboBox<Note> addCombatant;
     @FXML
-    private ListView<EncounterNote> notesLister;
+    private ListView<Encounter> notesLister;
 
     @FXML
     private ScrollPane scrollPane;
@@ -65,21 +62,13 @@ public class EncounterView  extends ViewInterface {
 
     private Callback<UUID, Note> requester;
 
-    EncounterNote activeNote;
+    Encounter activeNote;
 
-    List<EncounterNote> encounters;
+    List<Encounter> encounters;
 
     @Override
     public String getPathToFxmlDefinition() {
         return "encounter-view.fxml";
-    }
-
-    public static String getLocalizationBase() {
-        return "i18n.encounters";
-    }
-    
-    public EncounterView() {
-        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
     }
 
     @Override
@@ -88,23 +77,35 @@ public class EncounterView  extends ViewInterface {
     }
 
     @Override
-    public void requestLoad(CampaignFile items) {
-        encounters = items.encounterNotes;
+    public void requestLoad(CampaignFileInterface items) {
+        encounters = items.getNotes().stream().filter(note -> note.getType().endsWith("encounter")).map(note -> ((EncounterNote) note).getContent()).toList();
         notesLister.setItems(FXCollections.observableArrayList(encounters));
 
         String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
         if (lastLoadedNote != null) {
-            FileAccessLayer.getInstance().getAllEncounterNotes().stream().filter(n -> n.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
-                activeNote = note;
+            FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().endsWith("encounter")).filter(n -> n.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
+                activeNote = ((EncounterNote) note).getContent();
                 notesLister.getSelectionModel().select(activeNote);
             });
         }
-
     }
 
     @Override
     public void requestSave() {
 
+    }
+
+    public static String getLocalizationBase() {
+        return "i18n.encounters";
+    }
+
+    @Override
+    public String defineViewerHandlerPrefix() {
+        return "encounter";
+    }
+
+    public EncounterView() {
+        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
     }
 
     @Override
@@ -201,7 +202,7 @@ public class EncounterView  extends ViewInterface {
                     activeNote.getCombatants().remove(combatant);
                     updateCombatantBox();
                 } else if (mouseEvent.getButton() == MouseButton.PRIMARY && mouseEvent.getClickCount() == 2) {
-                    CombatantViewer cv = new CombatantViewer();
+                    /*CombatantViewer cv = new CombatantViewer();
                     final Stage wnd = new Stage();
                     AnchorPane b = new AnchorPane();
                     cv.setChangeCallback(new Callback<ActorNoteItem,Boolean>() {
@@ -216,7 +217,7 @@ public class EncounterView  extends ViewInterface {
                     b.getChildren().add(cv.renderNoteStandalone(combatant, wnd));
                     Scene popoutContent = new Scene(b, 300, 300);
                     wnd.setScene(popoutContent);
-                    wnd.show();
+                    wnd.show();*/
                 }
                 mouseEvent.consume();
             });
@@ -261,8 +262,8 @@ public class EncounterView  extends ViewInterface {
                             currentHP.setText(String.valueOf((opr1 - opr2)));
                             
                         } else if (currentHP.getText().indexOf("+") >= 1) {
-                            int opr1 = Integer.parseInt(currentHP.getText().split("+")[0]);
-                            int opr2 = Integer.parseInt(currentHP.getText().split("+")[1]);
+                            int opr1 = Integer.parseInt(currentHP.getText().split("\\+")[0]);
+                            int opr2 = Integer.parseInt(currentHP.getText().split("\\+")[1]);
                             currentHP.setText(String.valueOf((opr1 + opr2)));
                             
                         }
@@ -333,11 +334,12 @@ public class EncounterView  extends ViewInterface {
         });
     }
 
+    // TODO: move to Encounter Editor
     private void updateScroller() {
         if (activeNote != null) {
             scroller.setVisible(true);
             encounterNameProp.setText(activeNote.getEncounterName());
-            ObservableList<Note> items = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note  -> note.type == NoteType.LOCATION_NOTE).toList());
+            ObservableList<Note> items = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note  -> note.getType().equals("location")).toList());
             encounterLocationProp.setItems(items);
 
 
@@ -347,7 +349,7 @@ public class EncounterView  extends ViewInterface {
             circumstancesProp.setText(activeNote.getCircumstances());
             encounterDifficultyProp.setText(activeNote.getEncounterDifficulty());
 
-            ObservableList<Note> actorItems = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note  -> note.type == NoteType.ACTOR_NOTE).toList());
+            ObservableList<Note> actorItems = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note  -> note.getType().equals("actor")).toList());
             actorItems.add(0, null);
             addCombatant.setItems(actorItems);
             addCombatant.getSelectionModel().clearSelection();
@@ -359,7 +361,7 @@ public class EncounterView  extends ViewInterface {
     }
 
     public void newEncounter(ActionEvent actionEvent) {
-        EncounterNote n = new EncounterNote();
+        Encounter n = new Encounter();
         n.setEncounterName(i18n.getString("UntitledEncounter"));
         encounters.add(n);
         notesLister.setItems(FXCollections.observableArrayList(encounters));
@@ -377,6 +379,11 @@ public class EncounterView  extends ViewInterface {
     }
 
     public void beginEncounter(ActionEvent actionEvent) {
+    }
+
+    @Override
+    public void register(RegistryInterface registry) {
+        registry.registerViewer(this);
     }
 }
 
