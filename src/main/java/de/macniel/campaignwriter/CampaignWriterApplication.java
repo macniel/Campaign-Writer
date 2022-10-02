@@ -1,18 +1,104 @@
 package de.macniel.campaignwriter;
 
+import de.macniel.campaignwriter.SDK.Registrable;
+import de.macniel.campaignwriter.SDK.RegistryInterface;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import org.reflections.Reflections;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ResourceBundle;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class CampaignWriterApplication extends Application {
+
+    private void registerModules(String path) {
+
+        Registry registry = Registry.getInstance();
+
+        Reflections reflections = new Reflections(path);
+        Set<Class<? extends Registrable>> allClasses =
+                reflections.getSubTypesOf(Registrable.class);
+
+        System.out.println("Found " + (allClasses.size()-1) + " registrable classes in path '" + path + "'");
+
+        for ( Class<? extends Registrable> c : allClasses) {
+            if (Modifier.isAbstract(c.getModifiers())) {
+                continue;
+            }
+            try {
+                System.out.print("registering " + c.getSimpleName());
+                Object actualObject = c.getConstructor().newInstance();
+
+                Method registerMethod = c.getMethod("register", RegistryInterface.class);
+                registerMethod.invoke(actualObject, registry);
+                System.out.println(" ... success");
+
+            } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                System.out.println(" ... failure");
+            }
+        }
+    }
+
+    void loadExternalModules() throws MalformedURLException {
+            File[] plugins = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "plugins").toUri()).listFiles(file -> file.getName().endsWith(".jar"));
+            if ( plugins == null ) {
+                return;
+            }
+
+            for (File plugin : plugins) {
+                URL[] arr = new URL[]{plugin.toURI().toURL()};
+
+                try (URLClassLoader loader = new URLClassLoader(arr)) {
+
+
+                    Enumeration<URL> e = loader.getResources("META-INFO/Plugin.properties");
+                    e.asIterator().forEachRemaining(c -> {
+                        Properties pluginProperties = new Properties();
+
+                        try (InputStream in = c.openStream()) {
+                            pluginProperties.load(in);
+
+                            String classPath = (String) pluginProperties.get("entry-point");
+
+                            Class<Registrable> clazz = (Class<Registrable>) loader.loadClass(classPath);
+                            Registrable registrable = clazz.getDeclaredConstructor().newInstance();
+                            registrable.register(Registry.getInstance());
+
+                        } catch (IOException | ClassNotFoundException | InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException ignored) {
+                        }
+
+
+                    });
+                } catch (Exception ignored) {}
+            }
+
+        }
+
     @Override
     public void start(Stage stage) throws IOException {
+
+        loadExternalModules();
+
+        // Built-In Modules
+        registerModules("de.macniel.campaignwriter.editors");
+        registerModules("de.macniel.campaignwriter.modules");
+        registerModules("de.macniel.campaignwriter.providers");
+
+
+
         FXMLLoader fxmlLoader = new FXMLLoader(CampaignWriterApplication.class.getResource("main-view.fxml"));
         fxmlLoader.setResources(ResourceBundle.getBundle("i18n.base"));
 
@@ -57,6 +143,8 @@ public class CampaignWriterApplication extends Application {
                 stage.setTitle("Campaign Writer");
             }
         });
+
+        controller.setStage(stage);
 
         FileAccessLayer.getInstance().getGlobal("lastFilePath").ifPresent(lastFilePath -> {
 

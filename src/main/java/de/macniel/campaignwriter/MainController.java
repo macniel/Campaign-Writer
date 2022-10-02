@@ -1,21 +1,16 @@
 package de.macniel.campaignwriter;
 
-import de.macniel.campaignwriter.views.BuildingView;
-import de.macniel.campaignwriter.views.EncounterView;
-import de.macniel.campaignwriter.views.SessionView;
-import de.macniel.campaignwriter.views.ViewInterface;
+import de.macniel.campaignwriter.SDK.Note;
+import de.macniel.campaignwriter.SDK.ModulePlugin;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Menu;
-import javafx.scene.control.RadioMenuItem;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
-import javafx.util.Callback;
+import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,8 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class MainController {
 
@@ -35,6 +28,9 @@ public class MainController {
     private ArrayList<FileChooser.ExtensionFilter> supportedFileExtensions;
 
     private ObjectProperty<String> title;
+    @FXML
+    private Menu dataProviders;
+    private Stage parentWnd;
 
     public ObjectProperty<String> getTitle() {
         return title;
@@ -45,16 +41,16 @@ public class MainController {
     @FXML
     private BorderPane inset;
 
-    private ViewInterface activeInterface;
+    private ModulePlugin activeInterface;
 
     @FXML
     private Menu views;
 
-    private ArrayList<ViewInterface> viewerPlugins = new ArrayList<>();
+    private ArrayList<ModulePlugin> viewerPlugins = new ArrayList<>();
 
     private ToggleGroup viewMode;
 
-    private HashMap<Toggle, Map.Entry<ViewInterface, Scene>>  mapping;
+    private HashMap<Toggle, Map.Entry<ModulePlugin, Scene>>  mapping;
 
     private ResourceBundle i18n;
 
@@ -72,16 +68,9 @@ public class MainController {
 
         mapping = new HashMap<>();
 
-        ViewInterface bv = new BuildingView();
-        AtomicReference<RadioMenuItem> br = new AtomicReference<>();
-
-        viewerPlugins.add(bv);
-        viewerPlugins.add(new SessionView());
-        viewerPlugins.add(new EncounterView());
-
         viewMode = new ToggleGroup();
 
-        viewerPlugins.forEach( view -> {
+        Registry.getInstance().getAllModules().forEach(view -> {
             try {
 
                 String path = view.getPathToFxmlDefinition();
@@ -89,19 +78,18 @@ public class MainController {
 
                 try {
                     String basePath = (String) view.getClass().getMethod("getLocalizationBase").invoke(null);
+                    System.out.println(path);
                     FXMLLoader fxmlLoader = new FXMLLoader(view.getClass().getResource(path), ResourceBundle.getBundle(basePath));
                     Scene scene = new Scene(fxmlLoader.load(), 480, 240);
 
-                    ViewInterface v = fxmlLoader.getController();
+                    ModulePlugin v = fxmlLoader.getController();
 
                     RadioMenuItem item = new RadioMenuItem();
 
                     item.setText(menuItemLabel);
                     item.setToggleGroup(viewMode);
-                    if (view == bv) {
-                        br.set(item);
-                    }
-                    AbstractMap.SimpleEntry<ViewInterface, Scene> set = new AbstractMap.SimpleEntry<>(v, scene);
+
+                    AbstractMap.SimpleEntry<ModulePlugin, Scene> set = new AbstractMap.SimpleEntry<>(v, scene);
                     mapping.put(item, set);
                     this.views.getItems().add(item);
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
@@ -117,7 +105,19 @@ public class MainController {
         viewMode.selectedToggleProperty().addListener((observableValue, toggle, t1) -> {
            switchViewer(t1);
         });
-        viewMode.selectToggle(viewMode.getToggles().get(0));
+        // viewMode.selectToggle(viewMode.getToggles().get(0));
+        Registry.getInstance().getAllDataProviders().forEach(provider -> {
+            MenuItem tmp = new MenuItem ();
+            provider.setOnFinishedTask(param -> {
+                System.out.println("returned from task with state");
+                return true;
+            });
+            tmp.setText(provider.menuItemLabel());
+            // FIXME: Only provide a copy!
+            tmp.setOnAction(event -> provider.startTask(FileAccessLayer.getInstance().getFile(), parentWnd, FileAccessLayer.getInstance()));
+            this.dataProviders.getItems().add(tmp);
+        });
+        openLastViewer();
     }
 
     void switchViewer(Toggle present) {
@@ -128,18 +128,9 @@ public class MainController {
 
             inset.setCenter(editor.getRoot());
             activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
-            activeInterface.requestNote(new Callback<UUID,Note>() {
-
-             @Override
-             public Note call(UUID param) {
-                 Optional<Note> foundNote = FileAccessLayer.getInstance().findByReference(param);
-                 if (foundNote.isPresent()) {
-                     return foundNote.get();
-                 } else {
-                     return null;
-                 }
-             }
-              
+            activeInterface.requestNote(param -> {
+                Optional<Note> foundNote = FileAccessLayer.getInstance().findByReference(param);
+                return foundNote.orElse(null);
             });
         }
     }
@@ -213,11 +204,16 @@ public class MainController {
             dialog.setTitle(i18n.getString("saveFileDialogTitle"));
             dialog.getExtensionFilters().setAll(supportedFileExtensions);
             this.currentFile = dialog.showSaveDialog(null);
+
         }
         if (this.currentFile != null) {
             FileAccessLayer.getInstance().saveToFile(this.currentFile);
             title.set(this.currentFile.getName());
         }
+    }
+
+    public void setStage(Stage parentWnd) {
+        this.parentWnd = parentWnd;
     }
 
 }

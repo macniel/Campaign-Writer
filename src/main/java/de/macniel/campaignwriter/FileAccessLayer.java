@@ -1,32 +1,34 @@
 package de.macniel.campaignwriter;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
+import de.macniel.campaignwriter.SDK.FileAccessLayerInterface;
+import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.adapters.ColorAdapter;
-import de.macniel.campaignwriter.editors.ActorNoteDefinition;
-import de.macniel.campaignwriter.editors.EncounterNote;
-import de.macniel.campaignwriter.editors.SessionNote;
+import de.macniel.campaignwriter.types.Actor;
+import de.macniel.campaignwriter.types.ActorNoteItem;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
+import org.reflections.serializers.XmlSerializer;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class FileAccessLayer {
+public class FileAccessLayer implements FileAccessLayerInterface {
 
     private CampaignFile file;
 
     private Gson gsonParser;
-    {
-        gsonParser = new GsonBuilder().registerTypeAdapter(Color.class, new ColorAdapter()).create();
-    }
 
     private Properties config;
     private File confFile;
@@ -42,6 +44,10 @@ public class FileAccessLayer {
         file = new CampaignFile();
         file.base64Assets = new HashMap<String, String>();
         file.notes = new ArrayList<>();
+        gsonParser = new GsonBuilder()
+                .registerTypeAdapter(Note.class, new NoteAdapter())
+                .registerTypeAdapter(Color.class, new ColorAdapter())
+                .create();
 
   
         initConfFile();
@@ -53,12 +59,29 @@ public class FileAccessLayer {
 
     private void initConfFile() {
         try {
-            confFile = new File(System.getProperty("user.home") + "/.campaignwriterrc");
+            confFile = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "config").toUri());
             if (!confFile.exists()) {
-                confFile.createNewFile();
+                File configFolder = new File(Paths.get(System.getProperty("user.home", ".campaignwriter")).toUri());
+                //configFolder.createNewFile();
+                boolean created = configFolder.mkdirs();
+                if (created) {
+                    confFile = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "config").toUri());
+                    confFile.createNewFile();
+                    this.config = new Properties();
+                    this.config.load(new FileInputStream(confFile));
+                } else if ( configFolder.exists()) {
+                    System.err.println("Folder already exists");
+                    confFile = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "config").toUri());
+                    confFile.createNewFile();
+                    this.config = new Properties();
+                    this.config.load(new FileInputStream(confFile));
+                } else {
+                    System.err.println("Couldn't create folder " + configFolder.getAbsoluteFile());
+                }
+            } else {
+                this.config = new Properties();
+                this.config.load(new FileInputStream(confFile));
             }
-            this.config = new Properties();
-            this.config.load(new FileInputStream(confFile));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -84,21 +107,7 @@ public class FileAccessLayer {
         return Optional.ofNullable(config.getProperty(key));     
           
     }
-    
 
-    public void loadFromFile(File f) throws IOException {
-        JsonReader reader = null;
-        try {
-            reader = new JsonReader(new FileReader(f));
-            file = gsonParser.fromJson(reader, CampaignFile.class);
-            updateGlobal("lastFilePath", f.getAbsolutePath());
-        } catch (Exception e) {
-            System.err.println(e);
-        } finally {
-            assert reader != null;
-            reader.close();
-        }
-    }
 
     public Properties getSettings() {
         if (file != null) {
@@ -109,7 +118,7 @@ public class FileAccessLayer {
 
     public void updateSetting(String key, String newValue) {
         if (file != null) {
-            file.settings.setProperty(key, newValue);
+            file.getSettings().setProperty(key, newValue);
             if (keepFile != null) {
                 try {
                     saveToFile(keepFile);
@@ -123,40 +132,32 @@ public class FileAccessLayer {
 
     public String getSetting(String key) {
         if (file != null) {
-            return file.settings.getProperty(key);
+            return file.getSettings().getProperty(key);
         }
         return null;
     }
 
-    public HashMap<String, ActorNoteDefinition> getTemplates() {
+    public HashMap<String, Actor> getTemplates() {
     
         File templateDir = Paths.get(System.getProperty("user.home"), ".campaignwriter", "templates").toFile();
         if (templateDir.exists() && templateDir.isDirectory()) {
-            HashMap<String, ActorNoteDefinition> templates = new HashMap<>();
+            HashMap<String, Actor> templates = new HashMap<>();
 
             for (File f : templateDir.listFiles()) {
                 
-                ActorNoteDefinition fromFile;
+                Actor fromFile;
                 try {
-                    fromFile = gsonParser.fromJson(new JsonReader(new FileReader(f)), ActorNoteDefinition.class);
+                    fromFile = gsonParser.fromJson(new JsonReader(new FileReader(f)), Actor.class);
                     templates.put(f.getName(), fromFile);
-                } catch (JsonIOException | JsonSyntaxException | FileNotFoundException e) {
-                    System.err.println("Failure to read template file \"" + f.getAbsolutePath() + "\"");
-                    e.printStackTrace();
-                } 
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
             return templates;
         } else {
-            try {
-                templateDir.createNewFile();
-            
-            templateDir.mkdir();
-            return null;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            templateDir.mkdirs();
+            return new HashMap<>();
         }
-        return null;
     }
 
     public Optional<Map.Entry<String, Image>> getImageFromString(String s) {
@@ -186,19 +187,35 @@ public class FileAccessLayer {
     }
 
     public void saveToFile(File f) throws IOException {
-        JsonWriter writer = null;
         keepFile = f;
-        try {
-            writer = new JsonWriter(new FileWriter(f));
-            // TODO: Count Base64 Refs for Garbage Collecting
-            gsonParser.toJson(file, CampaignFile.class, writer);
+        try (FileWriter writer = new FileWriter((f))){
+            System.out.println("IO write json to file " + f.getAbsoluteFile());
+            System.out.println("  writing " + file.getNotes() + " notes");
 
+            gsonParser.toJson(file, writer);
+            updateGlobal("lastFilePath", f.getAbsolutePath());
+            writer.flush();
         } catch (Exception e) {
             System.err.println(e);
-        } finally {
-            assert writer != null;
-            writer.flush();
-            writer.close();
+        }
+    }
+
+    public void saveToFile() throws IOException {
+        System.out.println("fal requested to save");
+        if (keepFile != null) {
+            saveToFile(keepFile);
+        }
+    }
+
+
+    public void loadFromFile(File f) throws IOException {
+        try {
+            keepFile = f;
+            file = gsonParser.fromJson(new JsonReader(new FileReader(f)), CampaignFile.class);
+            System.out.println("loaded " + file.getNotes().size() + " notes from file");
+            updateGlobal("lastFilePath", f.getAbsolutePath());
+        } catch (Exception e) {
+            System.err.println(e);
         }
     }
 
@@ -212,21 +229,13 @@ public class FileAccessLayer {
 
     public Optional<Note> findByLabel(String label) {
         System.out.println("searching for Note with Label " + label);
-        return file.notes.stream().filter( note -> {
-            System.out.println(note.label);
-            return note.getLabel().equals(label);
-
-        } ).findFirst();
+        return file.notes.stream().filter( note -> note.getLabel().equals(label)).findFirst();
     }
 
 
     public Optional<Note> findByReference(UUID ref) {
         System.out.println("searching for " + ref);
-        return file.notes.stream().filter( note -> {
-            System.out.println(note.reference);
-            return note.getReference().equals(ref);
-
-        } ).findFirst();
+        return file.notes.stream().filter(Objects::nonNull).filter(note ->  note.getReference().equals(ref)).findFirst();
     }
 
     public void removeNote(Note selectedNote) {
@@ -243,14 +252,6 @@ public class FileAccessLayer {
         return file.notes;
     }
 
-    public void removeSessionNote(SessionNote note) {
-        file.sessionNotes.remove(note);
-    }
-
-    public void addSessionNote(int position, SessionNote note) {
-        file.sessionNotes.add(position, note);
-    }
-
     public void addNote(int position, Note note) {
         if (position > file.notes.size()) {
             position = file.notes.size();
@@ -259,11 +260,4 @@ public class FileAccessLayer {
 
     }
 
-    public List<SessionNote> getAllSessionNotes() {
-        return file.sessionNotes;
-    }
-
-    public List<EncounterNote> getAllEncounterNotes() {
-        return file.encounterNotes;
-    }
 }
