@@ -59,12 +59,29 @@ public class FileAccessLayer implements FileAccessLayerInterface {
 
     private void initConfFile() {
         try {
-            confFile = new File(System.getProperty("user.home") + "/.campaignwriterrc");
+            confFile = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "config").toUri());
             if (!confFile.exists()) {
-                confFile.createNewFile();
+                File configFolder = new File(Paths.get(System.getProperty("user.home", ".campaignwriter")).toUri());
+                //configFolder.createNewFile();
+                boolean created = configFolder.mkdirs();
+                if (created) {
+                    confFile = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "config").toUri());
+                    confFile.createNewFile();
+                    this.config = new Properties();
+                    this.config.load(new FileInputStream(confFile));
+                } else if ( configFolder.exists()) {
+                    System.err.println("Folder already exists");
+                    confFile = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "config").toUri());
+                    confFile.createNewFile();
+                    this.config = new Properties();
+                    this.config.load(new FileInputStream(confFile));
+                } else {
+                    System.err.println("Couldn't create folder " + configFolder.getAbsoluteFile());
+                }
+            } else {
+                this.config = new Properties();
+                this.config.load(new FileInputStream(confFile));
             }
-            this.config = new Properties();
-            this.config.load(new FileInputStream(confFile));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -138,16 +155,9 @@ public class FileAccessLayer implements FileAccessLayerInterface {
             }
             return templates;
         } else {
-            try {
-                templateDir.createNewFile();
-            
-            templateDir.mkdir();
-            return null;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            templateDir.mkdirs();
+            return new HashMap<>();
         }
-        return null;
     }
 
     public Optional<Map.Entry<String, Image>> getImageFromString(String s) {

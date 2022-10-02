@@ -53,7 +53,7 @@ public class CampaignWriterApplication extends Application {
     }
 
     void loadExternalModules() throws MalformedURLException {
-            File[] plugins = new File(Paths.get(System.getProperty("user.home"), "campaignwriter", "plugins").toUri()).listFiles(file -> file.getName().endsWith(".jar"));
+            File[] plugins = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "plugins").toUri()).listFiles(file -> file.getName().endsWith(".jar"));
             if ( plugins == null ) {
                 return;
             }

@@ -117,7 +117,7 @@ public class MainController {
             tmp.setOnAction(event -> provider.startTask(FileAccessLayer.getInstance().getFile(), parentWnd, FileAccessLayer.getInstance()));
             this.dataProviders.getItems().add(tmp);
         });
-
+        openLastViewer();
     }
 
     void switchViewer(Toggle present) {
