@@ -1,6 +1,7 @@
 package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.FileAccessLayer;
+import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.Registry;
 import de.macniel.campaignwriter.SDK.EditorPlugin;
 import de.macniel.campaignwriter.SDK.Note;
@@ -37,6 +38,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
         Label addSection = new Label("Neuer Inhalt");
 
         sectionProp = new ComboBox<>();
+        sectionProp.setCellFactory(view -> new NotesRenderer());
         populateSectionProp();
 
         sectionProp.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -122,6 +124,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
     @Override
     public void register(RegistryInterface registry) {
         registry.registerEditor(this);
+        registry.registerType("session", SessionNote.class);
 
     }
 }

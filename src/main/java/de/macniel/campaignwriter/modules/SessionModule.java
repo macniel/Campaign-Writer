@@ -156,14 +156,16 @@ public class SessionModule extends ModulePlugin {
         });
 
         notesLister.getSelectionModel().selectedItemProperty().addListener((observableValue, oldNote, newNote) -> {
-            activeNote = newNote;
-            FileAccessLayer.getInstance().updateSetting("lastNote", newNote.getReference().toString());
+            if (newNote != null && oldNote != newNote) {
+                activeNote = newNote;
+                FileAccessLayer.getInstance().updateSetting("lastNote", newNote.getReference().toString());
 
-            Registry.getInstance().getEditorByFullName("session/session").ifPresent(editorPlugin -> {
-                editorPlugin.prepareToolbar(toolBar, null);
-                scroller.setContent(editorPlugin.defineEditor());
-                editorPlugin.defineLoadCallback().call(newNote);
-            });
+                Registry.getInstance().getEditorByFullName("session/session").ifPresent(editorPlugin -> {
+                    editorPlugin.prepareToolbar(toolBar, null);
+                    scroller.setContent(editorPlugin.defineEditor());
+                    editorPlugin.defineLoadCallback().call(newNote);
+                });
+            }
         });
         scroller.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scroller.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);

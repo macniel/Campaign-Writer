@@ -19,6 +19,7 @@ public class NoteAdapter implements JsonDeserializer<Note>, JsonSerializer<Note>
         if (o.has("type")) {
             Registry.getInstance().getNoteTypes().keySet().forEach(k -> System.out.println("  " + k));
             Class<Note> n = (Class<Note>) Registry.getInstance().getNoteTypes().get(o.get("type").getAsString());
+            System.out.println(o.get("type").getAsString());
             try {
                 Note note = n.getDeclaredConstructor().newInstance();
                 note.setLabel(o.get("label").getAsString());
