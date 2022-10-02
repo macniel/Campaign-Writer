@@ -1,10 +1,7 @@
 package de.macniel.campaignwriter;
 
-import com.google.gson.GsonBuilder;
-import de.macniel.campaignwriter.SDK.EditorPlugin;
 import de.macniel.campaignwriter.SDK.Registrable;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
-import de.macniel.campaignwriter.editors.ActorEditor;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -13,12 +10,17 @@ import javafx.stage.Stage;
 import org.reflections.Reflections;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ResourceBundle;
-import java.util.Set;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class CampaignWriterApplication extends Application {
 
@@ -50,9 +52,47 @@ public class CampaignWriterApplication extends Application {
         }
     }
 
+    void loadExternalModules() throws MalformedURLException {
+            File[] plugins = new File(Paths.get(System.getProperty("user.home"), "campaignwriter", "plugins").toUri()).listFiles(file -> file.getName().endsWith(".jar"));
+            if ( plugins == null ) {
+                return;
+            }
+
+            for (File plugin : plugins) {
+                URL[] arr = new URL[]{plugin.toURI().toURL()};
+
+                try (URLClassLoader loader = new URLClassLoader(arr)) {
+
+
+                    Enumeration<URL> e = loader.getResources("META-INFO/Plugin.properties");
+                    e.asIterator().forEachRemaining(c -> {
+                        Properties pluginProperties = new Properties();
+
+                        try (InputStream in = c.openStream()) {
+                            pluginProperties.load(in);
+
+                            String classPath = (String) pluginProperties.get("entry-point");
+
+                            Class<Registrable> clazz = (Class<Registrable>) loader.loadClass(classPath);
+                            Registrable registrable = clazz.getDeclaredConstructor().newInstance();
+                            registrable.register(Registry.getInstance());
+
+                        } catch (IOException | ClassNotFoundException | InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException ignored) {
+                        }
+
+
+                    });
+                } catch (Exception ignored) {}
+            }
+
+        }
+
     @Override
     public void start(Stage stage) throws IOException {
 
+        loadExternalModules();
+
+        // Built-In Modules
         registerModules("de.macniel.campaignwriter.editors");
         registerModules("de.macniel.campaignwriter.modules");
         registerModules("de.macniel.campaignwriter.providers");

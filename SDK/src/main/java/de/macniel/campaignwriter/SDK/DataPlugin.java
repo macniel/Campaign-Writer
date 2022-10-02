@@ -22,7 +22,7 @@ public interface DataPlugin extends Registrable {
      * @param on the actual campaign file
      * @param parentWnd the parent window, use this reference for modal windows
      */
-    void startTask(CampaignFileInterface on, Stage parentWnd);
+    void startTask(CampaignFileInterface on, Stage parentWnd, FileAccessLayerInterface fileAccessLayer);
 
     /**
      * Callback once the task is terminated regardless of it being a success or failure

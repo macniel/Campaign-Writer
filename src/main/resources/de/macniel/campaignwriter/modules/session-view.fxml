@@ -37,12 +37,17 @@
             </ToolBar>
         </bottom>
     </BorderPane>
-    <AnchorPane>
-        <ScrollPane fx:id="scroller" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="0" AnchorPane.topAnchor="0">
-            <VBox fx:id="scriptBox">
-                <ComboBox promptText="Element Hinzufügen" />
-            </VBox>
+    <BorderPane>
+        <top>
+            <ToolBar fx:id="toolBar"/>
+        </top>
+        <center>
+            <AnchorPane>
+                <ScrollPane fx:id="scroller" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="0" AnchorPane.topAnchor="0">
 
-        </ScrollPane>
-    </AnchorPane>
+                </ScrollPane>
+            </AnchorPane>
+        </center>
+    </BorderPane>
+
 </SplitPane>

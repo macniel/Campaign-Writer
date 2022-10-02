@@ -114,7 +114,7 @@ public class MainController {
             });
             tmp.setText(provider.menuItemLabel());
             // FIXME: Only provide a copy!
-            tmp.setOnAction(event -> provider.startTask(FileAccessLayer.getInstance().getFile(), parentWnd));
+            tmp.setOnAction(event -> provider.startTask(FileAccessLayer.getInstance().getFile(), parentWnd, FileAccessLayer.getInstance()));
             this.dataProviders.getItems().add(tmp);
         });
 

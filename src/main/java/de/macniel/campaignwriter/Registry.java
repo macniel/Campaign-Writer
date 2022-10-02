@@ -68,6 +68,10 @@ public class Registry implements RegistryInterface {
         return viewers.stream().filter(viewerPlugin -> viewerPlugin.defineHandler().equals(fullName)).findFirst();
     }
 
+    public Optional<ViewerPlugin> getViewerBySuffix (String suffix) {
+        return viewers.stream().filter(viewerPlugin -> viewerPlugin.defineHandler().endsWith(suffix)).findFirst();
+    }
+
     public ArrayList<ModulePlugin> getAllModules() {
         System.out.println("Modules " + modules.size());
         return modules;

@@ -7,10 +7,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.*;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
@@ -23,6 +23,7 @@ import java.util.UUID;
 public class SessionModule extends ModulePlugin {
 
     private final ResourceBundle i18n;
+    public ToolBar toolBar;
 
 
     @Override
@@ -45,8 +46,6 @@ public class SessionModule extends ModulePlugin {
 
     @Override
     public void requestLoad(CampaignFileInterface items) {
-        scriptBox.getChildren().clear();
-
         notesLister.setItems(FXCollections.observableArrayList(items.getNotes().stream().filter(note -> note.getType().endsWith("session")).map(note -> ((SessionNote) note)).toList()));
 
         String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
@@ -99,25 +98,20 @@ public class SessionModule extends ModulePlugin {
     private SessionNote activeNote;
 
     @FXML
-    private VBox scriptBox;
-
-    @FXML
     private ScrollPane scroller;
 
     int dragPosition;
 
     SessionNote dragElement;
-    private ArrayList<EditorPlugin> scrollInterpreter;
 
     @FXML
     public void initialize() {
 
         notes = FXCollections.observableArrayList(new ArrayList<>());
         notesLister.setItems(notes);
-        scrollInterpreter = Registry.getInstance().getEditorsByPrefix("");
-/*
+
         notesLister.setCellFactory(listView -> {
-            ListCell<SessionNote> t = new NotesRenderer<SessionNote>();
+            ListCell<SessionNote> t = new SessionNotesRenderer();
 
             t.onDragOverProperty().set(e -> {
                 dragPosition = t.getIndex();
@@ -160,70 +154,19 @@ public class SessionModule extends ModulePlugin {
 
             return t;
         });
-*/
+
         notesLister.getSelectionModel().selectedItemProperty().addListener((observableValue, oldNote, newNote) -> {
             activeNote = newNote;
             FileAccessLayer.getInstance().updateSetting("lastNote", newNote.getReference().toString());
-            updateScroll();
+
+            Registry.getInstance().getEditorByFullName("session/session").ifPresent(editorPlugin -> {
+                editorPlugin.prepareToolbar(toolBar, null);
+                scroller.setContent(editorPlugin.defineEditor());
+                editorPlugin.defineLoadCallback().call(newNote);
+            });
         });
         scroller.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scroller.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-    }
-
-    public void updateScroll() {
-        if (activeNote != null) {
-            scroller.setVisible(true);
-            scriptBox.getChildren().clear();
-
-            activeNote.getContentAsObject().getNotes().forEach(noteUUID -> {
-                /*
-                FileAccessLayer.getInstance().findByReference(noteUUID).ifPresent(note -> {
-                    HBox line = new HBox();
-                    AnchorPane p = new AnchorPane();
-
-                    scrollInterpreter
-                            .stream()
-                            .filter(vp -> vp.defineHandler().equals(note.getType()))
-                            .findFirst()
-                            .ifPresent(viewerPlugin -> {
-                                Node viewNode = viewerPlugin.getPreviewVersionOf(note);
-                                p.getChildren().add(viewNode);
-                                AnchorPane.setBottomAnchor(viewNode, 0.0);
-                                AnchorPane.setTopAnchor(viewNode, 0.0);
-                                AnchorPane.setLeftAnchor(viewNode, 0.0);
-                                AnchorPane.setRightAnchor(viewNode, 0.0);
-
-
-                            });
-
-
-                    line.getChildren().add(p);
-                    scriptBox.getChildren().add(line);
-                });*/
-            });
-
-            ComboBox<Note> adder = new ComboBox<>();
-            List<Note> filteredList = FileAccessLayer.getInstance().getAllNotes().stream().filter(n -> {
-                return true;
-               // TODO: define multiple handlers perhaps?
-            }).toList();
-            adder.setItems(FXCollections.observableArrayList(filteredList));
-            adder.setCellFactory(new Callback<ListView<Note>, ListCell<Note>>() {
-                @Override
-                public ListCell<Note> call(ListView<Note> noteListView) {
-                   return new NotesRenderer();
-                }
-            });
-
-            adder.getSelectionModel().selectedItemProperty().addListener((observableValue, note, toAdd) -> {
-                activeNote.getContentAsObject().getNotes().add(toAdd.getReference());
-                updateScroll();
-            });
-
-            scriptBox.getChildren().add(adder);
-        } else {
-            scroller.setVisible(false);
-        }
     }
 
     public void newSession(ActionEvent actionEvent) {
@@ -239,7 +182,6 @@ public class SessionModule extends ModulePlugin {
             notes.remove(activeNote);
             activeNote = null;
             notesLister.getSelectionModel().clearSelection();
-            updateScroll();
         }
     }
 

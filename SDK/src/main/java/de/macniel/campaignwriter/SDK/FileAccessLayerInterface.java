@@ -21,8 +21,6 @@ public interface FileAccessLayerInterface {
 
     CampaignFileInterface getFile();
 
-
-
     String getSetting(String key);
 
     Optional<Map.Entry<String, Image>> getImageFromString(String s);
