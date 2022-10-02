@@ -130,7 +130,7 @@ public class FileAccessLayer {
 
     public HashMap<String, ActorNoteDefinition> getTemplates() {
     
-        File templateDir = Paths.get(System.getProperty("user.home"), "campaignwriter", "templates").toFile();
+        File templateDir = Paths.get(System.getProperty("user.home"), ".campaignwriter", "templates").toFile();
         if (templateDir.exists() && templateDir.isDirectory()) {
             HashMap<String, ActorNoteDefinition> templates = new HashMap<>();
 
