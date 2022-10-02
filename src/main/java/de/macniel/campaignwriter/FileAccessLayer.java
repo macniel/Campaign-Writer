@@ -101,7 +101,7 @@ public class FileAccessLayer implements FileAccessLayerInterface {
 
     public void updateSetting(String key, String newValue) {
         if (file != null) {
-            file.settings.setProperty(key, newValue);
+            file.getSettings().setProperty(key, newValue);
             if (keepFile != null) {
                 try {
                     saveToFile(keepFile);
@@ -115,7 +115,7 @@ public class FileAccessLayer implements FileAccessLayerInterface {
 
     public String getSetting(String key) {
         if (file != null) {
-            return file.settings.getProperty(key);
+            return file.getSettings().getProperty(key);
         }
         return null;
     }

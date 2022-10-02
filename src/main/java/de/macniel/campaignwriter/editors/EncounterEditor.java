@@ -29,6 +29,7 @@ import javafx.util.Callback;
 
 import java.util.List;
 
+// FIXME: Encounters need to be updated as soon they change to be inline with WorldBuildingModule
 public class EncounterEditor extends EditorPlugin<EncounterNote> {
 
     CombatantNote actualNote;

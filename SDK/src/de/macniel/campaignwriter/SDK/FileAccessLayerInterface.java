@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
+// FIXME: use Factory instead so that plugins can actually call FAL
 public interface FileAccessLayerInterface {
-
 
     void updateGlobal(String key, String value);
 
