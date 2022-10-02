@@ -1,12 +1,13 @@
 package de.macniel.campaignwriter;
 
-import de.macniel.campaignwriter.editors.SessionNote;
+import de.macniel.campaignwriter.types.Session;
+import de.macniel.campaignwriter.types.SessionNote;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 
 public final class SessionNotesRenderer extends ListCell<SessionNote> {
 
-    private final SessionNotesController notesController = new SessionNotesController(null);
+    private final NotesController notesController = new NotesController(null);
     private final Node view = notesController.getView();
 
     @Override
