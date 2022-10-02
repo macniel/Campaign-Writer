@@ -5,7 +5,7 @@ import de.macniel.campaignwriter.SDK.Note;
 import java.util.Date;
 import java.util.UUID;
 
-public class Location extends Note {
+public class Location {
 
     UUID parentLocation;
 

@@ -5,6 +5,7 @@ import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.SDK.EditorPlugin;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.SDK.ViewerPlugin;
 import de.macniel.campaignwriter.types.Map;
 import de.macniel.campaignwriter.types.MapNote;
 import de.macniel.campaignwriter.types.MapPin;
@@ -20,6 +21,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
 import org.controlsfx.control.PropertySheet;
@@ -31,8 +33,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-public class MapNoteEditor extends EditorPlugin<MapNote> {
-    private Callback<String, Note> onNoteRequest;
+public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin<MapNote> {
+    private Callback<String, MapNote> onNoteRequest;
     private Callback<String, Boolean> onNoteLoadRequest;
 
     private ScrollPane viewer;
@@ -41,7 +43,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
 
     private MapPin selectedPin;
 
-    private MapNote noteStructure;
+    private MapNote actualNote;
     private Pane root;
     private PropertySheet mapProperties;
     private TextField labelProp;
@@ -93,13 +95,10 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
         loadButton.onActionProperty().set(e -> {
             try {
                 FileChooser dialog = new FileChooser();
-                File actualFile = dialog.showOpenDialog(w);
-                if (noteStructure == null) {
-                    noteStructure = new MapNote();
-                }
-                FileAccessLayer.getInstance().getImageFromString(actualFile.getAbsolutePath()).ifPresent(entry -> {
-                    noteStructure.content.backgroundPath = entry.getKey();
-                    noteStructure.content.setZoomFactor(1);
+                File file = dialog.showOpenDialog(w);
+                FileAccessLayer.getInstance().getImageFromString(file.getAbsolutePath()).ifPresent(entry -> {
+                    actualNote.getContentAsObject().backgroundPath = entry.getKey();
+                    actualNote.getContentAsObject().setZoomFactor(1);
                     updateView();
                 });
                 
@@ -140,10 +139,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
 
         viewer.setOnDragDropped(e -> {
             if (e.getDragboard().hasFiles()) {
-                if (noteStructure == null) {
-                    noteStructure = new MapNote();
-                }
-                noteStructure.content.backgroundPath = e.getDragboard().getFiles().get(0).getAbsolutePath();
+                actualNote.getContentAsObject().backgroundPath = e.getDragboard().getFiles().get(0).getAbsolutePath();
                 updateView();
             }
         });
@@ -159,12 +155,12 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
     }
 
     void updateView() {
-        if (noteStructure != null) {
+        if (actualNote != null) {
             root.getChildren().clear();
             root.getChildren().add(backgroundLayer);
-            FileAccessLayer.getInstance().getImageFromString(noteStructure.content.backgroundPath).ifPresent(entry -> {
+            FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
                 backgroundLayer.imageProperty().set(entry.getValue());
-                viewer.setScaleZ(noteStructure.content.getZoomFactor());
+                viewer.setScaleZ(actualNote.getContentAsObject().getZoomFactor());
             });
            
             BorderPane bp = (BorderPane) viewer.getParent();
@@ -175,21 +171,21 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
 
             viewer.onScrollProperty().set(scrollEvent -> {
 
-                noteStructure.content.setScrollPositionX(noteStructure.content.getScrollPositionX() + scrollEvent.getDeltaX());
-                noteStructure.content.setScrollPositionY(noteStructure.content.getScrollPositionY() + scrollEvent.getDeltaY());
+                actualNote.getContentAsObject().setScrollPositionX(actualNote.getContentAsObject().getScrollPositionX() + scrollEvent.getDeltaX());
+                actualNote.getContentAsObject().setScrollPositionY(actualNote.getContentAsObject().getScrollPositionY() + scrollEvent.getDeltaY());
             });
             viewer.setPannable(true);
 
-            viewer.setHvalue(noteStructure.content.getScrollPositionX());
-            viewer.setVvalue(noteStructure.content.getScrollPositionY());
+            viewer.setHvalue(actualNote.getContentAsObject().getScrollPositionX());
+            viewer.setVvalue(actualNote.getContentAsObject().getScrollPositionY());
 
             bp.setCenter(viewer);
             refreshDragAndDropHandler();
 
-            if (noteStructure.content.getPins() == null) {
-                noteStructure.content.setPins(new ArrayList<>());
+            if (actualNote.getContentAsObject().getPins() == null) {
+                actualNote.getContentAsObject().setPins(new ArrayList<>());
             }
-            noteStructure.content.getPins().forEach(this::renderPin);
+            actualNote.getContentAsObject().getPins().forEach(this::renderPin);
         }
     }
 
@@ -227,7 +223,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
                     // Skalierungsfaktor = 1 zu X
                     double uniformedFactor = Double.valueOf(result.get());
 
-                    noteStructure.content.scale = uniformedFactor / distance;
+                    actualNote.getContentAsObject().scale = uniformedFactor / distance;
                     root.getChildren().remove(rulerLine);
                     rulerLine = null;
                 }
@@ -260,7 +256,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
                             rulerEndY = e.getY();
                             rulerLine.setEndX(e.getX());
                             rulerLine.setEndY(e.getY());
-                            if (noteStructure.content.scale != 0) {
+                            if (actualNote.getContentAsObject().scale != 0) {
                                 double pixelDistance = getDistance(rulerStartX, rulerStartY, rulerEndX, rulerEndY);
                             }
                         }
@@ -278,7 +274,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
                         n.setY(e.getY());
                         n.setLabel(i18n.getString("NewPin"));
                         n.setNoteReference(null);
-                        noteStructure.content.getPins().add(n);
+                        actualNote.getContentAsObject().getPins().add(n);
                         selectedPin = n;
                         renderPin(n);
                         updateEditor();
@@ -326,7 +322,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
         noteReferenceProp.onActionProperty().set(e -> {
             Note selected = noteReferenceProp.getValue();
             if (selectedPin != null && selected != null) {
-                selectedPin.setNoteReference(selected.reference);
+                selectedPin.setNoteReference(selected.getReference());
                 updateView();
             }
         });
@@ -338,7 +334,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
 
         deletePinButton.onActionProperty().set(e -> {
             if (selectedPin != null) {
-                noteStructure.content.getPins().remove(selectedPin);
+                actualNote.getContentAsObject().getPins().remove(selectedPin);
                 selectedPin = null;
                 updateView();
                 mapPropertiesPane.setVisible(false);
@@ -356,7 +352,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
     }
 
     void populateNoteReferenceProp() {
-        List<Note<?>> notes = FileAccessLayer.getInstance().getAllNotes(); // TODO: this should not be possible, request maincontroller instead
+        List<Note> notes = FileAccessLayer.getInstance().getAllNotes(); // TODO: this should not be possible, request maincontroller instead
         noteReferenceProp.setItems(FXCollections.observableArrayList(notes));
 
         noteReferenceProp.setCellFactory(noteListView -> new NotesRenderer());
@@ -375,7 +371,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
     }
 
     void renderPin(MapPin pin) {
-        double pinSize = 32 * noteStructure.content.getZoomFactor();
+        double pinSize = 32 * actualNote.getContentAsObject().getZoomFactor();
         if (pin.getColor() == null) {
             pin.setColor(Color.RED);
         }
@@ -409,13 +405,13 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
 
     @Override
     public Callback<Boolean, MapNote> defineSaveCallback() {
-        return p -> noteStructure;
+        return p -> actualNote;
     }
 
     @Override
     public Callback<MapNote, Boolean> defineLoadCallback() {
         return param -> {
-            noteStructure = param;
+            actualNote = param;
             updateView();
             return true;
         };
@@ -430,9 +426,9 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
         p.setPannable(true);
         //p.setMaxWidth(width.get());
 
-        if (noteStructure != null) {
+        if (actualNote != null) {
 
-            FileAccessLayer.getInstance().getImageFromString(noteStructure.content.backgroundPath).ifPresent(entry -> {
+            FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
                 ImageView view = new ImageView(entry.getValue());
 
                 view.setPreserveRatio(true);
@@ -459,7 +455,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
     }
 
     @Override
-    public Node getStandaloneVersion(MapNote t) {
+    public Node getStandaloneVersion(MapNote t, Stage wnd) {
         return getPreviewVersionOf(t);
     }
 
@@ -471,6 +467,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> {
     @Override
     public void register(RegistryInterface registry) {
         registry.registerEditor(this);
+        registry.registerType("map", MapNote.class);
     }
 
 

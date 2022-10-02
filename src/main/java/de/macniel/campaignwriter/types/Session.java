@@ -21,6 +21,13 @@ public class Session {
 
     Boolean played;
 
+    public Session() {
+        this.comment = "";
+        this.notes = new ArrayList<>();
+        this.played = false;
+        this.playDate = null;
+    }
+
 
     public String getLabel() {
         return label;

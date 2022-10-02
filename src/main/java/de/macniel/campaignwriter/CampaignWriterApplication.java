@@ -1,5 +1,6 @@
 package de.macniel.campaignwriter;
 
+import com.google.gson.GsonBuilder;
 import de.macniel.campaignwriter.SDK.EditorPlugin;
 import de.macniel.campaignwriter.SDK.Registrable;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
@@ -52,8 +53,9 @@ public class CampaignWriterApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
-            registerModules("de.macniel.campaignwriter.editors");
-            registerModules("de.macniel.campaignwriter.views");
+        registerModules("de.macniel.campaignwriter.editors");
+        registerModules("de.macniel.campaignwriter.modules");
+        registerModules("de.macniel.campaignwriter.providers");
 
 
 
@@ -101,6 +103,8 @@ public class CampaignWriterApplication extends Application {
                 stage.setTitle("Campaign Writer");
             }
         });
+
+        controller.setStage(stage);
 
         FileAccessLayer.getInstance().getGlobal("lastFilePath").ifPresent(lastFilePath -> {
 

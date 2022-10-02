@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<SplitPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="de.macniel.campaignwriter.modules.EncounterModule" prefHeight="400.0" prefWidth="600.0">
+
+    <BorderPane SplitPane.resizableWithParent="false">
+        <center>
+            <ListView fx:id="notesLister" />
+        </center>
+        <bottom>
+            <ToolBar>
+                <Button text="%AddEncounter" onAction="#newEncounter">
+                    <graphic>
+                        <FontIcon iconLiteral="icm-plus"/>
+                    </graphic>
+                </Button>
+                <Button onAction="#beginEncounter">
+                    <graphic>
+                        <FontIcon iconLiteral="icm-play3"/>
+                    </graphic>
+                </Button>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button onAction="#deleteEncounter">
+                    <graphic>
+                        <FontIcon iconLiteral="icm-bin"/>
+                    </graphic>
+                </Button>
+
+            </ToolBar>
+        </bottom>
+    </BorderPane>
+    <BorderPane fx:id="editorWindow">
+        <top>
+            <ToolBar fx:id="editorToolbar">
+            </ToolBar>
+        </top>
+    </BorderPane>
+
+</SplitPane>

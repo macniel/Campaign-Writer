@@ -1,26 +1,13 @@
 package de.macniel.campaignwriter.SDK;
 
-import java.util.UUID;
+import javafx.scene.Node;
+import javafx.stage.Stage;
 
-import javafx.util.Callback;
+public interface ViewerPlugin<NOTE_DEFINITION> extends Registrable {
 
-public abstract class ViewerPlugin implements Registrable {
+    Node getPreviewVersionOf(NOTE_DEFINITION t);
 
+    Node getStandaloneVersion(NOTE_DEFINITION t, Stage wnd);
 
-    public static String getLocalizationBase() {
-        return "";
-    };
-
-    public abstract String defineViewerHandlerPrefix();
-
-    abstract public String getPathToFxmlDefinition();
-
-    abstract public String getMenuItemLabel();
-
-    abstract public void requestLoad(CampaignFileInterface items);
-
-    abstract public void requestSave();
-
-    public abstract void requestNote(Callback<UUID, Note> cb);
-
+    String defineHandler();
 }

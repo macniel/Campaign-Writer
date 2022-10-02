@@ -4,6 +4,7 @@ import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.SDK.EditorPlugin;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.SDK.ViewerPlugin;
 import de.macniel.campaignwriter.types.Location;
 import de.macniel.campaignwriter.types.LocationNote;
 import javafx.collections.FXCollections;
@@ -12,6 +13,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
@@ -20,9 +22,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-public class LocationEditor extends EditorPlugin<LocationNote> {
+public class LocationEditor extends EditorPlugin<LocationNote> implements ViewerPlugin<LocationNote> {
 
-    Location notesStructure;
+    LocationNote actualNote;
+
     private TextField locationNameProp;
     private ComboBox<Note> pictureProp;
     private TextArea historyProp;
@@ -118,30 +121,30 @@ public class LocationEditor extends EditorPlugin<LocationNote> {
 
         parentLocationProp.getSelectionModel().selectedItemProperty().addListener((observableValue, o, newValue) -> {
             if (newValue != null) {
-                notesStructure.setParentLocation(newValue.reference);
+                actualNote.getContentAsObject().setParentLocation(newValue.getReference());
             } else {
-                notesStructure.setParentLocation(null);
+                actualNote.getContentAsObject().setParentLocation(null);
             }
         });
 
         ambianceProp.textProperty().addListener((observableValue, s, newValue) -> {
-            notesStructure.setAmbiance(newValue);
+            actualNote.getContentAsObject().setAmbiance(newValue);
         });
 
         historyProp.textProperty().addListener((observableValue, s, newValue) -> {
-            notesStructure.setHistory(newValue);
+            actualNote.getContentAsObject().setHistory(newValue);
         });
 
         descriptionProp.textProperty().addListener((observableValue, s, newValue) -> {
-            notesStructure.setDescription(newValue);
+            actualNote.getContentAsObject().setDescription(newValue);
         });
 
         locationNameProp.textProperty().addListener((observableValue, s, newValue) -> {
-            notesStructure.setName(newValue);
+            actualNote.getContentAsObject().setName(newValue);
         });
 
         locationCanonicalNameProp.textProperty().addListener((observableValue, s, newValue) -> {
-            notesStructure.setCanonicalName(newValue);
+            actualNote.getContentAsObject().setCanonicalName(newValue);
         });
 
         box.getChildren().addAll(locationNamePropLine, locationCanonicalNamePropLine, parentLocationPropLine, ambiancePropLine, descriptionPropLine, historyPropLine, picturePropLine);
@@ -152,11 +155,7 @@ public class LocationEditor extends EditorPlugin<LocationNote> {
     }
 
     private void updateView() {
-
-        if (notesStructure == null) {
-            notesStructure = new Location();
-        }
-
+        if (actualNote != null) {
             List<Note> locationNotes = new ArrayList<>(FileAccessLayer
                     .getInstance()
                     .getAllNotes()
@@ -165,32 +164,31 @@ public class LocationEditor extends EditorPlugin<LocationNote> {
                     .filter(n -> {
                         return n.getType().equals("location");
                     })
-                    .filter(n -> n != notesStructure)
+                    .filter(n -> n != actualNote)
                     .toList());
-        locationNotes.add(0, null);
+            locationNotes.add(0, null);
             parentLocationProp.setItems(FXCollections.observableArrayList(locationNotes));
-            FileAccessLayer.getInstance().findByReference(notesStructure.getParentLocation()).ifPresent(parentLocation -> {
+            FileAccessLayer.getInstance().findByReference(actualNote.getContentAsObject().getParentLocation()).ifPresent(parentLocation -> {
                 parentLocationProp.getSelectionModel().select(parentLocation);
             });
 
-            locationNameProp.setText(notesStructure.getName());
-            locationCanonicalNameProp.setText(notesStructure.getCanonicalName());
-            ambianceProp.setText(notesStructure.getAmbiance());
-            descriptionProp.setText(notesStructure.getDescription());
-            historyProp.setText(notesStructure.getHistory());
-
-
+            locationNameProp.setText(actualNote.getContentAsObject().getName());
+            locationCanonicalNameProp.setText(actualNote.getContentAsObject().getCanonicalName());
+            ambianceProp.setText(actualNote.getContentAsObject().getAmbiance());
+            descriptionProp.setText(actualNote.getContentAsObject().getDescription());
+            historyProp.setText(actualNote.getContentAsObject().getHistory());
+        }
     }
 
     @Override
-    public Callback<Boolean, Note> defineSaveCallback() {
-        return note -> notesStructure;
+    public Callback<Boolean, LocationNote> defineSaveCallback() {
+        return note -> actualNote;
     }
 
     @Override
-    public Callback<Note, Boolean> defineLoadCallback() {
+    public Callback<LocationNote, Boolean> defineLoadCallback() {
         return note -> {
-            notesStructure = (Location) note;
+            actualNote = note;
             updateView();
             return true;
         };
@@ -198,22 +196,23 @@ public class LocationEditor extends EditorPlugin<LocationNote> {
 
     @Override
     public Node getPreviewVersionOf(LocationNote t) {
-        System.out.println("Rendering Location " + t.content.getCanonicalName() + " as standalone");
-        return new HBox(new Label("Willkommen in " + t.content.getCanonicalName()));
+        System.out.println("Rendering Location " + t.getContentAsObject().getCanonicalName() + " as standalone");
+        return new HBox(new Label("Willkommen in " + t.getContentAsObject().getCanonicalName()));
     }
 
     @Override
-    public Node getStandaloneVersion(LocationNote t) {
+    public Node getStandaloneVersion(LocationNote t, Stage wnd) {
         return getPreviewVersionOf(t);
     }
 
     @Override
     public Note createNewNote() {
-        return new Location();
+        return new LocationNote();
     }
 
     @Override
     public void register(RegistryInterface registry) {
         registry.registerEditor(this);
+        registry.registerType("location", LocationNote.class);
     }
 }

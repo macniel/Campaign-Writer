@@ -1,9 +1,6 @@
 package de.macniel.campaignwriter;
 
-import de.macniel.campaignwriter.SDK.EditorPlugin;
-import de.macniel.campaignwriter.SDK.Note;
-import de.macniel.campaignwriter.SDK.RegistryInterface;
-import de.macniel.campaignwriter.SDK.ViewerPlugin;
+import de.macniel.campaignwriter.SDK.*;
 import javafx.scene.input.KeyCodeCombination;
 
 import java.util.ArrayList;
@@ -14,8 +11,12 @@ import java.util.function.Consumer;
 public class Registry implements RegistryInterface {
 
     private ArrayList<EditorPlugin> editors = new ArrayList<>();
+
     private ArrayList<ViewerPlugin> viewers = new ArrayList<>();
-    private ArrayList<Note> noteTypes = new ArrayList<>();
+
+    private ArrayList<DataPlugin> dataProviders = new ArrayList<>();
+    private ArrayList<ModulePlugin> modules = new ArrayList<>();
+    private HashMap<String, Class<? extends Note>> noteTypes = new HashMap<>();
 
     private HashMap<KeyCodeCombination, Consumer<Note>> shortcuts = new HashMap<>();
 
@@ -31,8 +32,18 @@ public class Registry implements RegistryInterface {
     }
 
     @Override
-    public void registerType(Note type) {
-        noteTypes.add(type);
+    public void registerType(String typeName, Class<? extends Note> type) {
+        noteTypes.put(typeName, type);
+    }
+
+    @Override
+    public void registerDataProvider(DataPlugin dataProvider) {
+        this.dataProviders.add(dataProvider);
+    }
+
+    @Override
+    public void registerViewer(ViewerPlugin viewer) {
+        viewers.add(viewer);
     }
 
     @Override
@@ -41,8 +52,8 @@ public class Registry implements RegistryInterface {
     }
 
     @Override
-    public void registerViewer(ViewerPlugin viewer) {
-        viewers.add(viewer);
+    public void registerModule(ModulePlugin viewer) {
+        modules.add(viewer);
     }
 
     public ArrayList<EditorPlugin> getEditorsByPrefix (String prefix) {
@@ -53,7 +64,20 @@ public class Registry implements RegistryInterface {
         return editors.stream().filter(editorPlugin -> editorPlugin.defineHandler().equals(fullName)).findFirst();
     }
 
-    public ArrayList<ViewerPlugin> getAllViewers() {
-        return viewers;
+    public Optional<ViewerPlugin> getViewerByFullName (String fullName) {
+        return viewers.stream().filter(viewerPlugin -> viewerPlugin.defineHandler().equals(fullName)).findFirst();
+    }
+
+    public ArrayList<ModulePlugin> getAllModules() {
+        System.out.println("Modules " + modules.size());
+        return modules;
+    }
+
+    public HashMap<String, Class<? extends Note>> getNoteTypes() {
+        return noteTypes;
+    }
+
+    public ArrayList<DataPlugin> getAllDataProviders() {
+        return dataProviders;
     }
 }

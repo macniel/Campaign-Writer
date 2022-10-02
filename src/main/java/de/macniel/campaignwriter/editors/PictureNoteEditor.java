@@ -4,6 +4,7 @@ import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.SDK.EditorPlugin;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.SDK.ViewerPlugin;
 import de.macniel.campaignwriter.types.Picture;
 import de.macniel.campaignwriter.types.PictureNote;
 import javafx.geometry.Rectangle2D;
@@ -27,10 +28,10 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.File;
 
-public class PictureNoteEditor extends EditorPlugin<PictureNote> {
+public class PictureNoteEditor extends EditorPlugin<PictureNote> implements ViewerPlugin<PictureNote> {
     private ImageView viewer;
 
-    private PictureNote noteStructure;
+    private PictureNote actualNote;
 
     @Override
     public String defineHandler() {
@@ -58,24 +59,21 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> {
         t.getItems().add(popoutButton);
 
         zoomButton.onActionProperty().set(e -> {
-            noteStructure.content.setZoomFactor(noteStructure.content.getZoomFactor() + 0.25);
+            actualNote.getContentAsObject().setZoomFactor(actualNote.getContentAsObject().getZoomFactor() + 0.25);
             updateView();
         });
 
         zoomOutButton.onActionProperty().set(e -> {
-            noteStructure.content.setZoomFactor(noteStructure.content.getZoomFactor() - 0.25);
+            actualNote.getContentAsObject().setZoomFactor(actualNote.getContentAsObject().getZoomFactor() - 0.25);
             updateView();
         });
         loadButton.onActionProperty().set(e -> {
             try {
                 FileChooser dialog = new FileChooser();
-                File actualFile = dialog.showOpenDialog(w);
-                if (noteStructure == null) {
-                    noteStructure = new PictureNote();
-                }
-                FileAccessLayer.getInstance().getImageFromString(actualFile.getAbsolutePath()).ifPresent(entry -> {
-                    noteStructure.content.setFileName(entry.getKey());
-                    noteStructure.content.setZoomFactor(1);
+                File file = dialog.showOpenDialog(w);
+                FileAccessLayer.getInstance().getImageFromString(file.getAbsolutePath()).ifPresent(entry -> {
+                    actualNote.getContentAsObject().setFileName(entry.getKey());
+                    actualNote.getContentAsObject().setZoomFactor(1);
                 });
                 updateView();
             } catch (Exception ex) {
@@ -84,13 +82,13 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> {
         });
 
         popoutButton.onActionProperty().set(e -> {
-            if (noteStructure != null) {
+            if (actualNote != null) {
                 Rectangle2D rect = Screen.getPrimary().getBounds();
                 Stage s = new Stage();
                 ScrollPane parentNode = new ScrollPane();
 
                 ImageView popoutViewer = new ImageView();
-                FileAccessLayer.getInstance().getImageFromString(noteStructure.content.getFileName()).ifPresent(entry -> {
+                FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().getFileName()).ifPresent(entry -> {
                     popoutViewer.imageProperty().set(entry.getValue());
                     double width = Math.min(rect.getWidth(), popoutViewer.imageProperty().get().getWidth());
                     double height = Math.min(rect.getHeight(), popoutViewer.imageProperty().get().getHeight());
@@ -126,8 +124,6 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> {
     public Node defineEditor() {
         this.viewer = new ImageView();
         this.viewer.preserveRatioProperty().set(true);
-        this.noteStructure = new PictureNote();
-        this.noteStructure.content.setZoomFactor(1);
         ScrollPane p = new ScrollPane(this.viewer);
         p.setPannable(true);
         p.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
@@ -137,15 +133,15 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> {
 
     @Override
     public Callback<Boolean, PictureNote> defineSaveCallback() {
-        return note -> noteStructure;
+        return note -> actualNote;
     }
 
     private void updateView() {
-        if (noteStructure != null) {
-            FileAccessLayer.getInstance().getImageFromString(noteStructure.content.getFileName()).ifPresent(entry -> {
+        if (actualNote != null) {
+            FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().getFileName()).ifPresent(entry -> {
                 viewer.imageProperty().set(entry.getValue());
-                viewer.setFitHeight(noteStructure.content.getZoomFactor() * viewer.imageProperty().get().getHeight());
-                viewer.setFitWidth(noteStructure.content.getZoomFactor() * viewer.imageProperty().get().getWidth());
+                viewer.setFitHeight(actualNote.getContentAsObject().getZoomFactor() * viewer.imageProperty().get().getHeight());
+                viewer.setFitWidth(actualNote.getContentAsObject().getZoomFactor() * viewer.imageProperty().get().getWidth());
             });
         }
     }
@@ -153,7 +149,7 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> {
     @Override
     public Callback<PictureNote, Boolean> defineLoadCallback() {
         return note -> {
-            noteStructure = note;
+            actualNote = note;
             updateView();
             return true;
         };
@@ -165,7 +161,7 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> {
     }
 
     @Override
-    public Node getStandaloneVersion(PictureNote t) {
+    public Node getStandaloneVersion(PictureNote t, Stage wnd) {
         return getPreviewVersionOf(t);
     }
 
@@ -177,6 +173,7 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> {
     @Override
     public void register(RegistryInterface registry) {
         registry.registerEditor(this);
+        registry.registerType("picture", PictureNote.class);
     }
 
 

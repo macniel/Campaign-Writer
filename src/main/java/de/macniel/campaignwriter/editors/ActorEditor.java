@@ -5,6 +5,7 @@ import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.SDK.EditorPlugin;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.SDK.ViewerPlugin;
 import de.macniel.campaignwriter.types.Actor;
 import de.macniel.campaignwriter.types.ActorNote;
 import de.macniel.campaignwriter.types.ActorNoteItem;
@@ -25,6 +26,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -36,9 +38,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ResourceBundle;
-public class ActorEditor extends EditorPlugin<ActorNote> {
+public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin<ActorNote> {
 
-    ActorNote notesStructure;
+    ActorNote actualNote;
+
     private ScrollPane editor;
 
     private ComboBox setTemplateProp;
@@ -89,7 +92,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
 
         viewMode.selectedToggleProperty().addListener( (observableValue, toggle, newValue) -> {
             if (previewMode.equals(newValue)) {
-                editor.setContent(getPreviewVersionOf(notesStructure));
+                editor.setContent(getPreviewVersionOf(actualNote));
                 setTemplateProp.setDisable(true);
                 saveAsTemplateButton.setDisable(true);
             } else {
@@ -127,7 +130,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
 
     void saveTemplate(Window owner) {
         ArrayList<ActorNoteItem> sanitized = new ArrayList<>();
-        notesStructure.content.getItems().forEach(item -> {
+        actualNote.getContentAsObject().getItems().forEach(item -> {
             ActorNoteItem tmp = new ActorNoteItem();
             tmp.setLabel(item.getLabel());
             tmp.setType(item.getType());
@@ -156,7 +159,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
         ArrayList<ActorNoteItem> merged = new ArrayList<>();
 
         template.getItems().forEach(templateItem -> {
-            notesStructure.content.getItems().stream().filter(item ->
+            actualNote.getContentAsObject().getItems().stream().filter(item ->
             templateItem.getLabel().equals(item.getLabel())
             ).findFirst().ifPresentOrElse(previousValue -> {
                 ActorNoteItem tmp = new ActorNoteItem();
@@ -175,7 +178,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
                 merged.add(tmp);
             });
         });
-        notesStructure.content.setItems(merged);
+        actualNote.getContentAsObject().setItems(merged);
         
         editor.setContent(getEditableVersion());
     }
@@ -201,7 +204,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
         HBox line = new HBox();
         Button removeLine = new Button("", new FontIcon("icm-bin"));
         removeLine.onActionProperty().set(e -> {
-            notesStructure.content.getItems().remove(item);
+            actualNote.getContentAsObject().getItems().remove(item);
             editor.setContent(getEditableVersion());
         });
 
@@ -410,10 +413,10 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
         ScrollPane p = new ScrollPane();
         VBox lines = new VBox();
         if (t != null) {
-            System.out.println("Rendering " + notesStructure.content.getItems().size() + " elements");
+            System.out.println("Rendering " + actualNote.getContentAsObject().getItems().size() + " elements");
 
 
-            t.content.getItems().forEach(item -> {
+            t.getContentAsObject().getItems().forEach(item -> {
                 HBox line = renderItem(item, false);
                 lines.getChildren().add(line);
             });
@@ -423,9 +426,9 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
     }
 
     @Override
-    public Node getStandaloneVersion(ActorNote t) {
+    public Node getStandaloneVersion(ActorNote t, Stage wnd) {
         VBox n = new VBox();
-        t.content.getItems().forEach(item -> {
+        t.getContentAsObject().getItems().forEach(item -> {
             HBox line = new HBox();
             switch(item.getType()) {
                 case TEXT -> {
@@ -508,9 +511,9 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
         types.add(ActorNoteItem.ActorNoteItemType.RESOURCE);
         VBox lines = new VBox();
 
-        if (notesStructure != null) {
+        if (actualNote != null) {
 
-            notesStructure.content.getItems().forEach(item -> {
+            actualNote.getContentAsObject().getItems().forEach(item -> {
                 HBox line = renderItem(item);
                 FontIcon fi = new FontIcon("icm-page-break");
                 fi.setIconSize(20);
@@ -540,8 +543,8 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
 
                 dragButton.onDragDroppedProperty().set(e -> {
                     if (dragelement != null) {
-                        notesStructure.content.getItems().remove(dragelement);
-                        notesStructure.content.getItems().add(dragposition, dragelement);
+                        actualNote.getContentAsObject().getItems().remove(dragelement);
+                        actualNote.getContentAsObject().getItems().add(dragposition, dragelement);
                     }
                     editor.setContent(getEditableVersion());
                     e.setDropCompleted(true);
@@ -570,15 +573,9 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
         newType.setPromptText(i18n.getString("AddPropLine"));
         newType.setPrefWidth(120);
         newType.onActionProperty().set(e -> {
-                if (notesStructure == null) {
-                    notesStructure = new ActorNote();
-                }
-                if (notesStructure.content.getItems() == null) {
-                    notesStructure.content.setItems(new ArrayList<>());
-                }
                 ActorNoteItem added = new ActorNoteItem();
                 added.setType(newType.getValue());
-                notesStructure.content.getItems().add(added);
+                actualNote.getContentAsObject().getItems().add(added);
                 editor.setContent(getEditableVersion());
 
         });
@@ -592,13 +589,13 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
 
     @Override
     public Callback<Boolean, ActorNote> defineSaveCallback() {
-        return p -> notesStructure;
+        return p -> actualNote;
     }
 
     @Override
     public Callback<ActorNote, Boolean> defineLoadCallback() {
         return note -> {
-            notesStructure = note;
+            actualNote = note;
             editor.setContent(getEditableVersion());
             return true;
         };
@@ -606,6 +603,9 @@ public class ActorEditor extends EditorPlugin<ActorNote> {
 
     @Override
     public void register(RegistryInterface registry) {
+
         registry.registerEditor(this);
+        registry.registerType("actor", ActorNote.class);
+
     }
 }

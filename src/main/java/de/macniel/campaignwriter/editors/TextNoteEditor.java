@@ -3,12 +3,14 @@ package de.macniel.campaignwriter.editors;
 import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.SDK.EditorPlugin;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.SDK.ViewerPlugin;
 import de.macniel.campaignwriter.types.Text;
 import de.macniel.campaignwriter.types.TextNote;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
@@ -17,13 +19,15 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.*;
 
-public class TextNoteEditor extends EditorPlugin<TextNote> {
+public class TextNoteEditor extends EditorPlugin<TextNote> implements ViewerPlugin<TextNote> {
 
     private boolean contentHasChanged = false;
 
     private TextArea editor;
     private Callback<String, Note> onNoteRequest;
-    private TextNote notesStructure;
+
+    private TextNote actualNote;
+
 
     @Override
     public String defineHandler() {
@@ -112,25 +116,29 @@ public class TextNoteEditor extends EditorPlugin<TextNote> {
             }
         });
 
+        editor.textProperty().addListener((observable, oldValue, newValue) -> {
+            actualNote.getContentAsObject().setContent(newValue);
+        });
+
         return editor;
     }
 
     @Override
     public Callback<Boolean, TextNote> defineSaveCallback() {
-        return note -> notesStructure;
+        return note -> actualNote;
     }
 
     @Override
     public Callback<TextNote, Boolean> defineLoadCallback() {
         return note -> {
-            notesStructure = note;
+            actualNote = note;
             updateView();
             return true;
         };
     }
 
     void updateView() {
-        editor.setText(notesStructure.content.getContent());
+        editor.setText(actualNote.getContentAsObject().getContent());
     }
 
     @Override
@@ -139,7 +147,7 @@ public class TextNoteEditor extends EditorPlugin<TextNote> {
     }
 
     @Override
-    public Node getStandaloneVersion(TextNote t) {
+    public Node getStandaloneVersion(TextNote t, Stage wnd) {
         return null;
     }
 
@@ -151,6 +159,7 @@ public class TextNoteEditor extends EditorPlugin<TextNote> {
     @Override
     public void register(RegistryInterface registry) {
         registry.registerEditor(this);
+        registry.registerType("text", TextNote.class);
     }
 
 

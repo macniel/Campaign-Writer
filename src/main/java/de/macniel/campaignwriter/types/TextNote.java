@@ -1,11 +1,16 @@
 package de.macniel.campaignwriter.types;
 
+import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.SDK.Note;
 
 import java.util.Date;
 import java.util.UUID;
 
 public class TextNote extends Note<Text> {
+
+    private Text content;
+    private Date createdDate;
+    private Date lastModifiedDate;
 
     @Override
     public String getType() {
@@ -16,12 +21,34 @@ public class TextNote extends Note<Text> {
         super();
         this.content = new Text();
 
-        this.label = "Neuer Text";
-        this.reference = UUID.randomUUID();
+        this.setLabel("Neuer Text");
+        this.setReference(UUID.randomUUID());
         this.createdDate = new Date();
         this.lastModifiedDate = new Date();
-        this.type = getType();
-        this.level = 0;
+    }
 
+    @Override
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    @Override
+    public Date getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    @Override
+    public String getContent() {
+        return FileAccessLayer.getInstance().getParser().toJson(content);
+    }
+
+    @Override
+    public Text getContentAsObject() {
+        return content;
+    }
+
+    @Override
+    public void setContent(String content) {
+        this.content = FileAccessLayer.getInstance().getParser().fromJson(content, Text.class);
     }
 }

@@ -7,7 +7,7 @@ import java.util.*;
 
 public class CampaignFile implements CampaignFileInterface {
 
-    public List<Note<?>> notes;
+    public List<Note> notes;
 
     public Map<String, String> base64Assets;
 
@@ -20,7 +20,7 @@ public class CampaignFile implements CampaignFileInterface {
     }
 
     @Override
-    public List<Note<?>> getNotes() {
+    public List<Note> getNotes() {
         return notes;
     }
 

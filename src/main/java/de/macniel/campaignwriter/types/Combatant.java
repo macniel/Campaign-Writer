@@ -23,7 +23,7 @@ public class Combatant {
             Combatant tmp = new Combatant();
             tmp.teamColor = Color.GRAY;
 
-            tmp.items = new ArrayList<>( ((ActorNote)actor).getContent().getItems());
+            tmp.items = new ArrayList<>( ((ActorNote)actor).getContentAsObject().getItems());
             newCombatant.set(tmp);
         });
         return newCombatant.get();

@@ -3,47 +3,34 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
-<VBox alignment="TOP_LEFT" xmlns:fx="http://javafx.com/fxml" fx:controller="de.macniel.campaignwriter.MainController">
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="de.macniel.campaignwriter.MainController">
     <MenuBar>
-        <menus>
-            <Menu text="%FileMenu" accelerator="F">
-                <items>
-                    <MenuItem text="%NewFile" accelerator="Ctrl+N" onAction="#createNewCampaign" />
-                    <MenuItem text="%OpenFile" accelerator="Ctrl+O" onAction="#openCampaign" />
-                    <SeparatorMenuItem />
-                    <MenuItem text="%SaveFile" accelerator="Ctrl+S" onAction="#saveCampaign" />
-                    <SeparatorMenuItem />
-                    <MenuItem text="%Exit" accelerator="Alt+F4" />
-                </items>
-            </Menu>
-            <Menu text="%EditMenu" accelerator="E">
-                <items>
-                    <MenuItem text="%Undo" accelerator="Ctrl+Z" />
-                    <MenuItem text="%Redo" accelerator="Ctrl+Y" />
-                    <SeparatorMenuItem />
-                    <MenuItem text="%Copy" accelerator="Ctrl+C" />
-                    <MenuItem text="%Cut" accelerator="Ctrl+X" />
-                    <MenuItem text="%Paste" accelerator="Ctrl+V" />
-                    <MenuItem text="%PasteWithoutFormat" />
-                    <SeparatorMenuItem />
-                    <MenuItem text="%Settings" accelerator="Ctrl+." />
-                </items>
-            </Menu>
-            <Menu text="%ViewMenu" fx:id="views" accelerator="V"></Menu>
-            <Menu text="%DataMenu" accelerator="D">
-                <items>
-                    <MenuItem text="%Import" />
-                    <MenuItem text="%Export" />
-                </items>
-            </Menu>
-            <Menu text="%PluginsMenu">
-                <items>
-                    <MenuItem text="%NoPluginsLoaded" disable="true" />
-                    <SeparatorMenuItem />
-                </items>
-            </Menu>
+        <Menu text="%FileMenu" accelerator="F">
+            <MenuItem text="%NewFile" accelerator="Ctrl+N" onAction="#createNewCampaign"/>
+            <MenuItem text="%OpenFile" accelerator="Ctrl+O" onAction="#openCampaign"/>
+            <SeparatorMenuItem/>
+            <MenuItem text="%SaveFile" accelerator="Ctrl+S" onAction="#saveCampaign"/>
+            <SeparatorMenuItem/>
+            <MenuItem text="%Exit" accelerator="Alt+F4"/>
+        </Menu>
+        <Menu text="%EditMenu" accelerator="E">
+            <MenuItem text="%Undo" accelerator="Ctrl+Z"/>
+            <MenuItem text="%Redo" accelerator="Ctrl+Y"/>
+            <SeparatorMenuItem/>
+            <MenuItem text="%Copy" accelerator="Ctrl+C"/>
+            <MenuItem text="%Cut" accelerator="Ctrl+X"/>
+            <MenuItem text="%Paste" accelerator="Ctrl+V"/>
+            <MenuItem text="%PasteWithoutFormat"/>
+            <SeparatorMenuItem/>
+            <MenuItem text="%Settings" accelerator="Ctrl+."/>
+        </Menu>
+        <Menu text="%ViewMenu" fx:id="views" accelerator="V"/>
+        <Menu text="%DataMenu" accelerator="D" fx:id="dataProviders"/>
+        <Menu text="%PluginsMenu">
+            <MenuItem text="%NoPluginsLoaded" disable="true"/>
+            <SeparatorMenuItem/>
+        </Menu>
 
-        </menus>
     </MenuBar>
-    <BorderPane fx:id="inset" VBox.vgrow="ALWAYS"></BorderPane>
+    <BorderPane fx:id="inset" VBox.vgrow="ALWAYS"/>
 </VBox>

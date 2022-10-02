@@ -1,4 +1,4 @@
-package de.macniel.campaignwriter.views;
+package de.macniel.campaignwriter.modules;
 
 import de.macniel.campaignwriter.*;
 import de.macniel.campaignwriter.SDK.*;
@@ -17,9 +17,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.io.IOException;
 import java.util.*;
 
-public class BuildingView extends ViewerPlugin {
+public class WorldBuildingModule extends ModulePlugin {
 
     private ObservableList<Note> notes;
 
@@ -69,7 +70,25 @@ public class BuildingView extends ViewerPlugin {
 
     @Override
     public void requestSave() {
+        if (activeNote != null) {
 
+            Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/" + activeNote.getType()).ifPresent(oe -> {
+                Callback<Boolean, Note<?>> saveEditor = oe.defineSaveCallback();
+                Note<?> res = saveEditor.call(true);
+                System.out.println("Saving note as type " + res.getClass().toString());
+                int insertionPoint = FileAccessLayer.getInstance().getAllNotes().indexOf(activeNote);
+                if (insertionPoint >= 0) {
+                    FileAccessLayer.getInstance().getAllNotes().remove(activeNote);
+                    FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
+                } else {
+                    FileAccessLayer.getInstance().getAllNotes().add(res);
+                }
+                try {
+                    FileAccessLayer.getInstance().saveToFile();
+                } catch (IOException e) {
+                }
+            });
+        }
     }
 
     @Override
@@ -79,10 +98,10 @@ public class BuildingView extends ViewerPlugin {
 
     @Override
     public void register(RegistryInterface registry) {
-        registry.registerViewer(this);
+        registry.registerModule(this);
     }
 
-    public BuildingView() {
+    public WorldBuildingModule() {
         super();
         this.i18n = ResourceBundle.getBundle(getLocalizationBase());
     }
@@ -90,7 +109,10 @@ public class BuildingView extends ViewerPlugin {
     @Override
     public void requestLoad(CampaignFileInterface file) {
         if (notesLister != null) {
-            notesLister.setItems(FXCollections.observableArrayList(file.getNotes()));
+
+            notesLister.setItems(FXCollections.observableArrayList(file.getNotes().stream().filter(n -> {
+                return Registry.getInstance().getEditorByFullName("building/" + n.getType()).isPresent();
+            }).toList()));
             String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
             if (lastLoadedNote != null) {
                 FileAccessLayer.getInstance().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
@@ -105,16 +127,16 @@ public class BuildingView extends ViewerPlugin {
 
         plugins = Registry.getInstance().getEditorsByPrefix("building");
 
-        List<Note<?>> listOfBuildingNotes = FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().startsWith("building")).toList();
+        List<Note> listOfBuildingNotes = FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().startsWith("building")).toList();
 
                 System.out.println("reading " + listOfBuildingNotes.size() + " of " + FileAccessLayer.getInstance().getAllNotes().size() + " notes");
 
         notes = FXCollections.observableArrayList(listOfBuildingNotes);
 
         notesLister.setItems(notes);
-/*
+
         notesLister.setCellFactory(listView -> {
-            ListCell<Note> t = new NotesRenderer<Note>();
+            ListCell<Note> t = new NotesRenderer();
 
             t.onDragOverProperty().set(e -> {
                 dragPosition = t.getIndex();
@@ -157,7 +179,7 @@ public class BuildingView extends ViewerPlugin {
 
             return t;
         });
-*/
+
         ContextMenu notesListerMenu = new ContextMenu();
         MenuItem deleteNoteMenuItem = new MenuItem(i18n.getString("DeleteNote"));
         deleteNoteMenuItem.onActionProperty().set( event -> {
@@ -179,13 +201,13 @@ public class BuildingView extends ViewerPlugin {
         MenuItem indentNoteMenuItem = new MenuItem(i18n.getString("IndentNote"));
         indentNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
-            contextedNote.increaseLevel();
+            contextedNote.setLevel(contextedNote.getLevel()+1);
             notesLister.refresh();
         });
         MenuItem deindentNoteMenuItem = new MenuItem(i18n.getString("DeindentNote"));
         deindentNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
-            contextedNote.decreaseLevel();
+            contextedNote.setLevel(contextedNote.getLevel()-1);
             notesLister.refresh();
         });
         notesListerMenu.getItems().add(renameNoteMenuItem);
@@ -233,6 +255,7 @@ public class BuildingView extends ViewerPlugin {
     public void saveAndLoad(final Note<?> oldNote, Note<?> newNote) {
 
         if (oldNote != null) {
+
             Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/" + oldNote.getType()).ifPresent(oe -> {
                 Callback<Boolean, Note<?>> saveEditor = oe.defineSaveCallback();
                 Note<?> res = saveEditor.call(true);
@@ -241,7 +264,12 @@ public class BuildingView extends ViewerPlugin {
                 if (insertionPoint >= 0) {
                     FileAccessLayer.getInstance().getAllNotes().remove(oldNote);
                     FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
+                } else {
+                    FileAccessLayer.getInstance().getAllNotes().add(res);
                 }
+                try {
+                    FileAccessLayer.getInstance().saveToFile();
+                } catch (IOException e) {}
             });
         }
         Optional<EditorPlugin> newEditor = Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/"+ newNote.getType());

@@ -10,22 +10,21 @@ import java.util.Optional;
 
 public interface FileAccessLayerInterface {
 
-    public void registerClass(Class c);
 
-    public Gson getParser();
+    void updateGlobal(String key, String value);
 
-    public void updateGlobal(String key, String value);
+    void loadFromFile(File f) throws IOException;
 
-    public void loadFromFile(File f) throws IOException;
+    void saveToFile(File f) throws IOException;
 
-    public void saveToFile(File f) throws IOException;
+    Gson getParser();
 
-    public CampaignFileInterface getFile();
-
+    CampaignFileInterface getFile();
 
 
-    public String getSetting(String key);
 
-    public Optional<Map.Entry<String, Image>> getImageFromString(String s);
+    String getSetting(String key);
+
+    Optional<Map.Entry<String, Image>> getImageFromString(String s);
 
 }

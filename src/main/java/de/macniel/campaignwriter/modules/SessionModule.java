@@ -1,32 +1,26 @@
-package de.macniel.campaignwriter.views;
+package de.macniel.campaignwriter.modules;
 
 import de.macniel.campaignwriter.*;
 import de.macniel.campaignwriter.SDK.*;
-import de.macniel.campaignwriter.types.Session;
 import de.macniel.campaignwriter.types.SessionNote;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.TransferMode;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
-public class SessionView extends ViewerPlugin {
+public class SessionModule extends ModulePlugin {
 
     private final ResourceBundle i18n;
 
@@ -40,7 +34,7 @@ public class SessionView extends ViewerPlugin {
         return "i18n.sessions";
     }
 
-    public SessionView() {
+    public SessionModule() {
         this.i18n = ResourceBundle.getBundle(getLocalizationBase());
     }
 
@@ -57,7 +51,7 @@ public class SessionView extends ViewerPlugin {
 
         String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
         if (lastLoadedNote != null) {
-            FileAccessLayer.getInstance().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
+            FileAccessLayer.getInstance().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).filter(sn -> sn instanceof SessionNote).findFirst().ifPresent(note -> {
                 activeNote = (SessionNote) note;
                 notesLister.getSelectionModel().select(activeNote);
             });
@@ -67,6 +61,21 @@ public class SessionView extends ViewerPlugin {
     @Override
     public void requestSave() {
 
+        Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/" + activeNote.getType()).ifPresent(oe -> {
+            Callback<Boolean, Note<?>> saveEditor = oe.defineSaveCallback();
+            Note<?> res = saveEditor.call(true);
+            System.out.println("Saving note as type " + res.getClass().toString());
+            int insertionPoint = FileAccessLayer.getInstance().getAllNotes().indexOf(activeNote);
+            if (insertionPoint >= 0) {
+                FileAccessLayer.getInstance().getAllNotes().remove(activeNote);
+                FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
+            } else {
+                FileAccessLayer.getInstance().getAllNotes().add(res);
+            }
+            try {
+                FileAccessLayer.getInstance().saveToFile();
+            } catch (IOException e) {}
+        });
     }
 
     @Override
@@ -166,7 +175,8 @@ public class SessionView extends ViewerPlugin {
             scroller.setVisible(true);
             scriptBox.getChildren().clear();
 
-            activeNote.content.getNotes().forEach(noteUUID -> {
+            activeNote.getContentAsObject().getNotes().forEach(noteUUID -> {
+                /*
                 FileAccessLayer.getInstance().findByReference(noteUUID).ifPresent(note -> {
                     HBox line = new HBox();
                     AnchorPane p = new AnchorPane();
@@ -189,11 +199,11 @@ public class SessionView extends ViewerPlugin {
 
                     line.getChildren().add(p);
                     scriptBox.getChildren().add(line);
-                });
+                });*/
             });
 
             ComboBox<Note> adder = new ComboBox<>();
-            List<Note<?>> filteredList = FileAccessLayer.getInstance().getAllNotes().stream().filter(n -> {
+            List<Note> filteredList = FileAccessLayer.getInstance().getAllNotes().stream().filter(n -> {
                 return true;
                // TODO: define multiple handlers perhaps?
             }).toList();
@@ -206,7 +216,7 @@ public class SessionView extends ViewerPlugin {
             });
 
             adder.getSelectionModel().selectedItemProperty().addListener((observableValue, note, toAdd) -> {
-                activeNote.content.getNotes().add(toAdd.reference);
+                activeNote.getContentAsObject().getNotes().add(toAdd.getReference());
                 updateScroll();
             });
 
@@ -225,7 +235,7 @@ public class SessionView extends ViewerPlugin {
     }
 
     public void deleteSession(ActionEvent actionEvent) {
-        if (activeNote != null && !activeNote.content.getPlayed() && notes.contains(activeNote)) {
+        if (activeNote != null && !activeNote.getContentAsObject().getPlayed() && notes.contains(activeNote)) {
             notes.remove(activeNote);
             activeNote = null;
             notesLister.getSelectionModel().clearSelection();
@@ -239,6 +249,6 @@ public class SessionView extends ViewerPlugin {
 
     @Override
     public void register(RegistryInterface registry) {
-        registry.registerViewer(this);
+        registry.registerModule(this);
     }
 }

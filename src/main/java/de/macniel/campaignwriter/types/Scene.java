@@ -10,9 +10,16 @@ import java.util.UUID;
 public class Scene {
 
     UUID location;
-    List<UUID> actors;
+    List<UUID> actors = new ArrayList<>();
     String shortDescription;
     String longDescription;
+
+    public Scene() {
+        this.location = null;
+        this.shortDescription = "";
+        this.longDescription = "";
+        System.out.println("Recovered Scene" + getActors().size());
+    }
 
 
     public List<UUID> getActors() {

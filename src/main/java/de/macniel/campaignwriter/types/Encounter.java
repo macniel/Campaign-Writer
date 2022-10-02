@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public class Encounter {
 
-    List<Combatant> combatants;
+    List<CombatantNote> combatants;
 
     UUID encounterLocation;
 
@@ -22,7 +22,7 @@ public class Encounter {
         this.circumstances = circumstances;
     }
 
-    public void setCombatants(List<Combatant> combatants) {
+    public void setCombatants(List<CombatantNote> combatants) {
         this.combatants = combatants;
     }
 
@@ -38,7 +38,7 @@ public class Encounter {
         this.encounterName = encounterName;
     }
 
-    public List<Combatant> getCombatants() {
+    public List<CombatantNote> getCombatants() {
         return combatants;
     }
 
