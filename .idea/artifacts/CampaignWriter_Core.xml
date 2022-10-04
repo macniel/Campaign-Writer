@@ -1,0 +1,25 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="CampaignWriter.Core">
+    <output-path>$PROJECT_DIR$/out/artifacts/CampaignWriter_Core</output-path>
+    <properties id="javafx-properties">
+      <options>
+        <option name="appClass" value="de.macniel.campaignwriter.CampaignWriterApplication" />
+        <option name="description" value="" />
+        <option name="htmlPlaceholderId" value="" />
+        <option name="icons">
+          <JavaFxApplicationIcons>
+            <option name="linuxIcon" value="$PROJECT_DIR$/../CW/App/src/main/resources/de/macniel/campaignwriter/paint_the_world_512.png" />
+          </JavaFxApplicationIcons>
+        </option>
+        <option name="title" value="Campaign Writer" />
+        <option name="vendor" value="de.macniel" />
+        <option name="version" value="" />
+      </options>
+    </properties>
+    <root id="root">
+      <element id="archive" name="CampaignWriter_Core.jar">
+        <element id="module-output" name="CampaignWriter.Core" />
+      </element>
+    </root>
+  </artifact>
+</component>

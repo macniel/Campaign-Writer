@@ -1,11 +1,7 @@
-module SDK {
-
-    requires javafx.base;
+module CampaignWriter.SDK {
     requires javafx.graphics;
-    requires javafx.controls;
-    requires javafx.fxml;
     requires com.google.gson;
 
     exports de.macniel.campaignwriter.SDK;
-
+    opens de.macniel.campaignwriter.SDK to com.google.gson;
 }

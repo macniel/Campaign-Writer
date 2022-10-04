@@ -1,0 +1,78 @@
+.bold {
+    -fx-font-weight: bold;
+}
+
+.italic {
+    -fx-font-style: italic;
+}
+
+.underline {
+    -fx-text-decoration: underline;
+}
+
+.strikethrough {
+    -fx-text-decoration: strikethrough;
+}
+
+.highlighted {
+    -fx-background-color: lightblue;
+}
+
+.combatants {
+    -fx-spacing: 10;
+}
+
+.combatant {
+    -fx-spacing: 10;
+    -fx-background-color: rgba(0, 0, 0, 0.1);
+    -fx-background-radius: 4;
+}
+
+.combatant__image {
+    -fx-background-color: black;
+}
+
+.combatant--red {
+    -fx-border-width: 5;
+    -fx-border-color: red;
+
+}
+
+.combatant--green {
+    -fx-border-width: 5;
+    -fx-border-color: green;
+
+}
+
+.scroll-item {
+-fx-background-color: -fx-body-color;
+    -fx-background-radius: 5px;
+
+    -fx-border-radius: 5px;
+    -fx-border-width: 1px;
+    -fx-border-color: -fx-outer-border;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 1, 0, 0, 0);
+}
+
+.scroll-button {
+    -fx-background-color: transparent;
+    -fx-border: none;
+    -fx-text-fill: blue;
+    -fx-cursor: default;
+}
+
+
+.scroll-link, .link {
+    -fx-background-color: transparent;
+    -fx-border: none;
+    -fx-text-decoration: underline;
+    -fx-text-fill: blue;
+    -fx-cursor: default;
+}
+
+
+.combatant--blue {
+    -fx-border-width: 5;
+    -fx-border-color: blue;
+
+}

@@ -45,12 +45,6 @@ public abstract class EditorPlugin<NOTE_DEFINITION> implements Registrable {
     public abstract Note createNewNote();
 
     /**
-     * Callback will be used to get a new note e.g. to display it inside a tooltip
-     * @param stringNoteCallback
-     */
-    public abstract void setOnNoteRequest(Callback<String, Note> stringNoteCallback);
-
-    /**
      * Callback will be used to trigger to load a note either in the same editor or a different one
      * @param stringBooleanCallback
      */

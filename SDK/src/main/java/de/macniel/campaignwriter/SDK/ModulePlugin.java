@@ -49,4 +49,6 @@ public abstract class ModulePlugin implements Registrable {
      */
     public abstract void requestNote(Callback<UUID, Note> cb);
 
+    public abstract void requestLoadNote(Callback<UUID, Boolean> cb);
+
 }

@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="CampaignWriter.SDK">
+    <output-path>$PROJECT_DIR$/out/artifacts/CampaignWriter_SDK</output-path>
+    <root id="archive" name="CampaignWriter.SDK.jar">
+      <element id="module-output" name="CampaignWriter.SDK" />
+    </root>
+  </artifact>
+</component>
