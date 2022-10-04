@@ -20,6 +20,8 @@ import javafx.scene.paint.Color;
 import org.reflections.serializers.XmlSerializer;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -176,6 +178,23 @@ public class FileAccessLayer implements FileAccessLayerInterface {
             file.base64Assets.put(uuid, base64Asset);
             return Optional.ofNullable(new AbstractMap.SimpleEntry<>(uuid, image));
             } catch (Exception e) {}
+        }
+        try {
+            URL url = new URL(s);
+
+                try (InputStream reader = url.openStream()){
+                    String uuid = UUID.randomUUID().toString();
+                    byte[] input = reader.readAllBytes();
+                    String base64Asset = new String(Base64.getEncoder().encode(input));
+                    InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes("UTF-8")));
+                    Image image = new Image(in);
+                    System.out.println("Storing Image from path " + s + " as UUID " + uuid);
+                    file.base64Assets.put(uuid, base64Asset);
+                    return Optional.ofNullable(new AbstractMap.SimpleEntry<>(uuid, image));
+                } catch (Exception ignored) {}
+
+        } catch (MalformedURLException ignored) {
+
         }
         try {
             String base64Asset = file.base64Assets.get(s);
