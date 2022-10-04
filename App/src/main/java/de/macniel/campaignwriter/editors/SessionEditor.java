@@ -21,6 +21,7 @@ import javafx.stage.Window;
 import javafx.util.Callback;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -61,6 +62,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
         sectionProp.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && oldValue != newValue) {
                 actualNote.getContentAsObject().getNotes().add(newValue.getReference());
+                sectionProp.getSelectionModel().select(null);
                 updateView();
             }
         });
@@ -121,10 +123,21 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
                     HBox controls = new HBox();
                     HBox.setMargin(preview, new Insets(0, 20, 5, 20));
 
+                    Button deleteNote = new Button(i18n.getString("DeleteNote"));
                     Button openFullNote = new Button(i18n.getString("OpenNote"));
                     FontIcon shareIcon =new FontIcon("icm-share");
                     shareIcon.setIconColor(Color.BLUE);
                     Button popoutNote = new Button(i18n.getString("PopoutNote"), shareIcon);
+
+                    deleteNote.onActionProperty().set(e -> {
+                        try {
+                            actualNote.getContentAsObject().getNotes().remove(uuid);
+                            FileAccessLayer.getInstance().saveToFile();
+                            updateView();
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    });
 
                     openFullNote.onActionProperty().set(e -> {
                         if (requester != null) {
@@ -154,7 +167,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
                     openFullNote.getStyleClass().add("scroll-link");
                     popoutNote.getStyleClass().add("scroll-button");
 
-                    controls.getChildren().addAll(spacer, openFullNote, popoutNote);
+                    controls.getChildren().addAll(deleteNote, spacer, openFullNote, popoutNote);
                     content.getChildren().addAll(preview, controls);
                     HBox.setHgrow(content, Priority.ALWAYS);
                     scroll.getChildren().add(content);

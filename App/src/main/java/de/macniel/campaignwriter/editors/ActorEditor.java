@@ -136,7 +136,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
 
         FileChooser saveDialog = new FileChooser();
         saveDialog.setTitle(i18n.getString("SaveTemplateDialogTitle"));
-        saveDialog.setInitialDirectory(Paths.get(System.getProperty("user.home"), "campaignwriter", "templates").toFile());
+        saveDialog.setInitialDirectory(Paths.get(System.getProperty("user.home"), ".campaignwriter", "templates").toFile());
         File f = saveDialog.showSaveDialog(owner);
         try (JsonWriter writer = new JsonWriter(new FileWriter(f))) {
             
@@ -195,6 +195,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
             editor.setContent(getEditableVersion());
         });
 
+
         switch(item.getType()) {
             case TEXT -> {
                 if (editable) {
@@ -204,6 +205,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
                     TextArea texteditor = new TextArea(item.getContent());
                     texteditor.setWrapText(true);
                     texteditor.setPrefRowCount(3);
+
                     HBox.setHgrow(texteditor, Priority.ALWAYS);
 
                     label.textProperty().addListener( (editor, oldText, newText) -> {
@@ -270,7 +272,8 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
 
                     if (item.getContent() != null) {
                         FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(imgEntry -> {
-                                v.setImage(imgEntry.getValue());
+                            item.setContent(imgEntry.getKey());
+                            v.setImage(imgEntry.getValue());
                         });
                     }
 
@@ -307,7 +310,10 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
                     v.setFitHeight(250);
 
                     if (item.getContent() != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> v.setImage(value.getValue()));
+                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> {
+                            item.setContent(value.getKey());
+                            v.setImage(value.getValue());
+                        });
                     }
 
                     line.getChildren().add(label);
@@ -399,12 +405,14 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
 
         ScrollPane p = new ScrollPane();
         VBox lines = new VBox();
+        lines.setFillWidth(true);
         if (t != null) {
             System.out.println("Rendering " + actualNote.getContentAsObject().getItems().size() + " elements");
 
 
             t.getContentAsObject().getItems().forEach(item -> {
                 HBox line = renderItem(item, false);
+                HBox.setHgrow(line, Priority.ALWAYS);
                 lines.getChildren().add(line);
             });
         }
@@ -415,8 +423,11 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
     @Override
     public Node getStandaloneVersion(ActorNote t, Stage wnd) {
         VBox n = new VBox();
+
+        n.setFillWidth(true);
         t.getContentAsObject().getItems().forEach(item -> {
             HBox line = new HBox();
+            HBox.setHgrow(line, Priority.ALWAYS);
             switch(item.getType()) {
                 case TEXT -> {
                     Label label = new Label();
@@ -447,7 +458,10 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
                     v.setFitHeight(250);
 
                     if (item.getClass() != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> v.setImage(value.getValue()));
+                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> {
+                            item.setContent(value.getKey());
+                            v.setImage(value.getValue());
+                        });
                     }
 
                     line.getChildren().add(label);

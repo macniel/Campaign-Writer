@@ -276,17 +276,20 @@ public class WorldBuildingModule extends ModulePlugin {
             Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/" + oldNote.getType()).ifPresent(oe -> {
                 Callback<Boolean, Note<?>> saveEditor = oe.defineSaveCallback();
                 Note<?> res = saveEditor.call(true);
-                System.out.println("Saving note as type " + res.getClass().toString());
-                int insertionPoint = FileAccessLayer.getInstance().getAllNotes().indexOf(oldNote);
-                if (insertionPoint >= 0) {
-                    FileAccessLayer.getInstance().getAllNotes().remove(oldNote);
-                    FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
-                } else {
-                    FileAccessLayer.getInstance().getAllNotes().add(res);
+                if (res != null) {
+                    System.out.println("Saving note as type " + res.getClass().toString());
+                    int insertionPoint = FileAccessLayer.getInstance().getAllNotes().indexOf(oldNote);
+                    if (insertionPoint >= 0) {
+                        FileAccessLayer.getInstance().getAllNotes().remove(oldNote);
+                        FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
+                    } else {
+                        FileAccessLayer.getInstance().getAllNotes().add(res);
+                    }
+                    try {
+                        FileAccessLayer.getInstance().saveToFile();
+                    } catch (IOException e) {
+                    }
                 }
-                try {
-                    FileAccessLayer.getInstance().saveToFile();
-                } catch (IOException e) {}
             });
         }
         Optional<EditorPlugin> newEditor = Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/"+ newNote.getType());

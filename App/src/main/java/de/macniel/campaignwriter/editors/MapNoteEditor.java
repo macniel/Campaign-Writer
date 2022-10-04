@@ -466,6 +466,8 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         if (actualNote != null) {
 
             FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
+
+                actualNote.getContentAsObject().setBackgroundPath(entry.getKey());
                 ImageView view = new ImageView(entry.getValue());
 
                 view.setPreserveRatio(true);

@@ -89,6 +89,7 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> implements View
 
                 ImageView popoutViewer = new ImageView();
                 FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().getFileName()).ifPresent(entry -> {
+                    actualNote.getContentAsObject().setFileName(entry.getKey());
                     popoutViewer.imageProperty().set(entry.getValue());
                     double width = Math.min(rect.getWidth(), popoutViewer.imageProperty().get().getWidth());
                     double height = Math.min(rect.getHeight(), popoutViewer.imageProperty().get().getHeight());
@@ -139,6 +140,7 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> implements View
     private void updateView() {
         if (actualNote != null) {
             FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().getFileName()).ifPresent(entry -> {
+                actualNote.getContentAsObject().setFileName(entry.getKey());
                 viewer.imageProperty().set(entry.getValue());
                 viewer.setFitHeight(actualNote.getContentAsObject().getZoomFactor() * viewer.imageProperty().get().getHeight());
                 viewer.setFitWidth(actualNote.getContentAsObject().getZoomFactor() * viewer.imageProperty().get().getWidth());

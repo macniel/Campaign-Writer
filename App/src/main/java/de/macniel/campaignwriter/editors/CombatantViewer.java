@@ -88,7 +88,10 @@ public class CombatantViewer implements ViewerPlugin<CombatantNote> {
                     v.setFitHeight(250);
 
                     if (item.getClass() != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> v.setImage(value.getValue()));
+                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> {
+                            item.setContent(value.getKey());
+                            v.setImage(value.getValue());
+                        });
                     }
 
                     line.getChildren().add(label);
@@ -188,7 +191,10 @@ public class CombatantViewer implements ViewerPlugin<CombatantNote> {
                     v.setFitHeight(250);
 
                     if (item.getClass() != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> v.setImage(value.getValue()));
+                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> {
+                            item.setContent(value.getKey());
+                            v.setImage(value.getValue());
+                        });
                     }
 
                     line.getChildren().add(label);

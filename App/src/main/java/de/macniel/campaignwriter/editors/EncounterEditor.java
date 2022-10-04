@@ -10,6 +10,7 @@ import de.macniel.campaignwriter.SDK.ViewerPlugin;
 import de.macniel.campaignwriter.types.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -226,8 +227,12 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
             // FIXME: dynamic field in encounterdef
             combatant.getContentAsObject().getItems().stream().filter(actorNoteItem ->
                     "Portrait".equals(actorNoteItem.getLabel())
-            ).findFirst().flatMap(text -> FileAccessLayer.getInstance().getImageFromString(text.getContent())).ifPresent(entry -> {
-                combatantPortrait.setImage(entry.getValue());
+            ).findFirst().ifPresent(ani -> {
+
+                FileAccessLayer.getInstance().getImageFromString(ani.getContent()).ifPresent(entry -> {
+                    ani.setContent(entry.getKey());
+                    combatantPortrait.setImage(entry.getValue());
+                });
             });
 
             HBox hitpoints = new HBox();
@@ -404,8 +409,37 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
            Location l = ((LocationNote) locationNote).getContentAsObject();
            location.setText(l.getName());
        });
+        ScrollPane p = new ScrollPane();
+        HBox boxes = new HBox();
+        boxes.setSpacing(10);
+        Registry.getInstance().getViewerBySuffix("combatant").ifPresent(viewer -> {
+            t.getContentAsObject().getCombatants().forEach(combatantNote -> { // FIXME: make it ref!
 
-        box.getChildren().addAll(name, location);
+                VBox combatant = new VBox();
+                combatantNote.getContentAsObject().getItems().stream().filter(i -> "Name".equals(i.getLabel())).findFirst().ifPresent(nameProp -> {
+                    combatant.getChildren().add(new Label(nameProp.getContent()));
+                });
+                combatantNote.getContentAsObject().getItems().stream().filter(i -> "Portrait".equals(i.getLabel())).findFirst().ifPresent(ani -> {
+                    FileAccessLayer.getInstance().getImageFromString(ani.getContent()).ifPresent(entry -> {
+                        ani.setContent(entry.getKey());
+                        ImageView image = new ImageView(entry.getValue());
+                        image.setFitWidth(80);
+                        image.setPreserveRatio(true);
+                        image.setFitHeight(80);
+                        combatant.getChildren().add(image);
+                    });
+
+                });
+                combatant.setMaxWidth(80);
+                Border b = new Border(new BorderStroke(combatantNote.getContentAsObject().getTeamColor(), BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(5)));
+
+                combatant.setBorder(b);
+                boxes.getChildren().add(combatant);
+            });
+        });
+
+        p.setContent(boxes);
+        box.getChildren().addAll(name, location, p);
 
        return box;
     }
@@ -435,9 +469,10 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
                     portrait.setPreserveRatio(true);
 
 
-                        item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals("Portrait")).findFirst().ifPresent(imageUUID -> {
+                        item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals("Portrait")).findFirst().ifPresent(ani -> {
 
-                            FileAccessLayer.getInstance().getImageFromString(imageUUID.getContent()).ifPresent(actualImage -> {
+                            FileAccessLayer.getInstance().getImageFromString(ani.getContent()).ifPresent(actualImage -> {
+                                ani.setContent(actualImage.getKey());
                                 portrait.setImage(actualImage.getValue());
                             });
 

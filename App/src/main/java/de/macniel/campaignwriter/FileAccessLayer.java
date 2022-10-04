@@ -162,7 +162,7 @@ public class FileAccessLayer implements FileAccessLayerInterface {
         }
     }
 
-    public Optional<Map.Entry<String, Image>> getImageFromString(String s) {
+    public Optional<Map.Entry<String, Image>> getImageFromString(String s) { // FIXME: Images arent saved
         if (s == null) {
             return Optional.empty();
         }
@@ -179,6 +179,14 @@ public class FileAccessLayer implements FileAccessLayerInterface {
             return Optional.ofNullable(new AbstractMap.SimpleEntry<>(uuid, image));
             } catch (Exception e) {}
         }
+
+        try {
+        String base64Asset = file.base64Assets.get(s);
+        InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes("UTF-8")));
+        Image image = new Image(in);
+        return Optional.ofNullable(new AbstractMap.SimpleEntry<>(s, image));
+        } catch (Exception e) {}
+
         try {
             URL url = new URL(s);
 
@@ -193,16 +201,11 @@ public class FileAccessLayer implements FileAccessLayerInterface {
                     return Optional.ofNullable(new AbstractMap.SimpleEntry<>(uuid, image));
                 } catch (Exception ignored) {}
 
-        } catch (MalformedURLException ignored) {
+        } catch (MalformedURLException ignored) {}
 
-        }
-        try {
-            String base64Asset = file.base64Assets.get(s);
-            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes("UTF-8")));
-            Image image = new Image(in);
-            return Optional.ofNullable(new AbstractMap.SimpleEntry<>(s, image));
-        } catch (Exception e) {}
-        return Optional.empty();
+
+            return Optional.empty();
+
     }
 
     public void saveToFile(File f) throws IOException {

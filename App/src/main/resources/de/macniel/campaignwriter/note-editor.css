@@ -32,16 +32,15 @@
     -fx-background-color: black;
 }
 
-.combatant--red {
-    -fx-border-width: 5;
+.combatant--RED {
+    -fx-border-width: 5px;
     -fx-border-color: red;
 
 }
 
-.combatant--green {
-    -fx-border-width: 5;
+.combatant--GREEN {
+    -fx-border-width: 5px;
     -fx-border-color: green;
-
 }
 
 .scroll-item {
@@ -71,8 +70,8 @@
 }
 
 
-.combatant--blue {
-    -fx-border-width: 5;
+.combatant--BLUE {
+    -fx-border-width: 5px;
     -fx-border-color: blue;
 
 }
