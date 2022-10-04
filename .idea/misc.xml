@@ -6,6 +6,8 @@
       <list>
         <option value="$PROJECT_DIR$/../CW/SDK/pom.xml" />
         <option value="$PROJECT_DIR$/../CW/App/pom.xml" />
+        <option value="$PROJECT_DIR$/App/pom.xml" />
+        <option value="$PROJECT_DIR$/SDK/pom.xml" />
       </list>
     </option>
   </component>

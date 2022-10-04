@@ -18,6 +18,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class WorldBuildingModule extends ModulePlugin {
@@ -46,6 +47,7 @@ public class WorldBuildingModule extends ModulePlugin {
     private Callback<UUID, Boolean> requester;
 
     private ResourceBundle i18n;
+    private int lastNote;
 
 
     @Override
@@ -116,9 +118,7 @@ public class WorldBuildingModule extends ModulePlugin {
     public void requestLoad(CampaignFileInterface file) {
         if (notesLister != null) {
 
-            notesLister.setItems(FXCollections.observableArrayList(file.getNotes().stream().filter(n -> {
-                return Registry.getInstance().getEditorByFullName("building/" + n.getType()).isPresent();
-            }).toList()));
+            updateLister();
             String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
             if (lastLoadedNote != null) {
                 FileAccessLayer.getInstance().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
@@ -164,7 +164,7 @@ public class WorldBuildingModule extends ModulePlugin {
                 if (dragElement != null) {
                     FileAccessLayer.getInstance().removeNote(dragElement);
                     FileAccessLayer.getInstance().addNote(dragPosition, dragElement);
-                    notesLister.setItems(FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(n -> Registry.getInstance().getEditorByFullName("building/" + n.getType()).isPresent()).toList()));
+                    updateLister();
                 }
                 e.setDropCompleted(true);
                 e.consume();
@@ -190,13 +190,20 @@ public class WorldBuildingModule extends ModulePlugin {
         MenuItem deleteNoteMenuItem = new MenuItem(i18n.getString("DeleteNote"));
         deleteNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+            lastNote = notesLister.getSelectionModel().getSelectedIndex();
             FileAccessLayer.getInstance().removeNote(contextedNote);
-            notesLister.getItems().remove(contextedNote);
+            try {
+                FileAccessLayer.getInstance().saveToFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            updateLister();
             notesLister.refresh();
         });
         MenuItem renameNoteMenuItem = new MenuItem(i18n.getString("RenameNote"));
         renameNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+            lastNote = notesLister.getSelectionModel().getSelectedIndex();
 
             TextInputDialog input = new TextInputDialog();
             input.setTitle(String.format(i18n.getString("RenameDialogTitle"), contextedNote.getLabel()));
@@ -207,12 +214,14 @@ public class WorldBuildingModule extends ModulePlugin {
         MenuItem indentNoteMenuItem = new MenuItem(i18n.getString("IndentNote"));
         indentNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+            lastNote = notesLister.getSelectionModel().getSelectedIndex();
             contextedNote.setLevel(contextedNote.getLevel()+1);
             notesLister.refresh();
         });
         MenuItem deindentNoteMenuItem = new MenuItem(i18n.getString("DeindentNote"));
         deindentNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+            lastNote = notesLister.getSelectionModel().getSelectedIndex();
             contextedNote.setLevel(contextedNote.getLevel()-1);
             notesLister.refresh();
         });
@@ -228,6 +237,8 @@ public class WorldBuildingModule extends ModulePlugin {
             @Override
             public void changed(ObservableValue observableValue, Note old, Note selected) {
                 if (old != selected && selected != null) {
+                    lastNote = notesLister.getSelectionModel().getSelectedIndex();
+
                     FileAccessLayer.getInstance().updateSetting("lastNote", selected.getReference().toString());
                     saveAndLoad(old, selected);
                 }
@@ -319,8 +330,19 @@ public class WorldBuildingModule extends ModulePlugin {
         Note selectedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
         if (selectedNote != null) {
             FileAccessLayer.getInstance().removeNote(selectedNote);
-            notesLister.getItems().remove(selectedNote);
+            updateLister();
+            try {
+                FileAccessLayer.getInstance().saveToFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
+    }
+
+    void updateLister() {
+        notesLister.setItems(FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(n -> Registry.getInstance().getEditorByFullName("building/" + n.getType()).isPresent()).toList()));
+
+        notesLister.getSelectionModel().select(Math.min(lastNote, notesLister.getItems().size()-1));
     }
 
     void setStage(Stage stage) {

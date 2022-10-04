@@ -3,6 +3,7 @@ package de.macniel.campaignwriter;
 import de.macniel.campaignwriter.SDK.*;
 import javafx.scene.input.KeyCodeCombination;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
@@ -33,7 +34,19 @@ public class Registry implements RegistryInterface {
 
     @Override
     public void registerType(String typeName, Class<? extends Note> type) {
-        noteTypes.put(typeName, type);
+        try {
+            type.getDeclaredConstructor().newInstance();
+            noteTypes.put(typeName, type);
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @Override

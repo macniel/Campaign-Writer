@@ -114,6 +114,15 @@ public class MainController {
                 System.out.println("returned from task with state");
                 return true;
             });
+            provider.setOnGenerateNote(note -> {
+                FileAccessLayer.getInstance().getAllNotes().add(note);
+                try {
+                    reloadCampaign();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return true;
+            });
             tmp.setText(provider.menuItemLabel());
             // FIXME: Only provide a copy!
             tmp.setOnAction(event -> provider.startTask(FileAccessLayer.getInstance().getFile(), parentWnd, FileAccessLayer.getInstance()));
@@ -194,7 +203,16 @@ public class MainController {
             }
             title.set(this.currentFile.getName());
 
-            openLastViewer();
+            openLastViewer();        }
+    }
+
+    public void reloadCampaign() throws IOException {
+        // save current note just in case
+        if (activeInterface != null) {
+            activeInterface.requestSave();
+            FileAccessLayer.getInstance().saveToFile();
+            FileAccessLayer.getInstance().loadFromFile(this.currentFile);
+            activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
         }
     }
 

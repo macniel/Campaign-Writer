@@ -16,6 +16,8 @@ public interface DataPlugin extends Registrable {
      * @return
      */
     String menuItemLabel();
+    public void setOnGenerateNote(Callback<Note, Boolean> callback);
+
 
     /**
      * The MainController calls this plugin do start the task
