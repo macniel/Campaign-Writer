@@ -119,13 +119,12 @@ public class WorldBuildingModule extends ModulePlugin {
         if (notesLister != null) {
 
             updateLister();
-            String lastLoadedNote = new FileAccessLayerFactory().get().getSetting("lastNote");
-            if (lastLoadedNote != null) {
+            new FileAccessLayerFactory().get().getSetting("lastNote").ifPresent(lastLoadedNote -> {
                 new FileAccessLayerFactory().get().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
                     activeNote = note;
                     notesLister.getSelectionModel().select(activeNote);
                 });
-            }
+            });
         }
     }
     @FXML

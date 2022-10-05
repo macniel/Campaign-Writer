@@ -1,5 +1,6 @@
 package de.macniel.campaignwriter;
 
+import de.macniel.campaignwriter.SDK.Configurable;
 import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
 import de.macniel.campaignwriter.SDK.Registrable;
 import de.macniel.campaignwriter.SDK.RegistryInterface;

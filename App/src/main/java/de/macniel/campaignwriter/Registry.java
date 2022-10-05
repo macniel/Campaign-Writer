@@ -4,9 +4,7 @@ import de.macniel.campaignwriter.SDK.*;
 import javafx.scene.input.KeyCodeCombination;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class Registry implements RegistryInterface {
@@ -96,5 +94,19 @@ public class Registry implements RegistryInterface {
 
     public ArrayList<DataPlugin> getAllDataProviders() {
         return dataProviders;
+    }
+
+    public ArrayList<EditorPlugin> getAllEditors() { return editors; }
+
+    public ArrayList<ViewerPlugin> getAllViewers() { return viewers; }
+
+    public ArrayList<Configurable> getAllConfigurables() {
+        HashSet<Configurable> returnValue = new HashSet<>();
+        returnValue.addAll(getAllDataProviders().stream().filter(c -> c instanceof Configurable).map(c -> (Configurable) c).toList());
+        returnValue.addAll(getAllModules().stream().filter(c -> c instanceof Configurable).map(c -> (Configurable) c).toList());
+        returnValue.addAll(getAllEditors().stream().filter(c -> c instanceof Configurable).map(c -> (Configurable) c).toList());
+        returnValue.addAll(getAllViewers().stream().filter(c -> c instanceof Configurable).map(c -> (Configurable) c).toList());
+
+        return new ArrayList<Configurable>(returnValue);
     }
 }

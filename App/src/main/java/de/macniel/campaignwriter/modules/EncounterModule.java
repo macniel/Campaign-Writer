@@ -53,13 +53,11 @@ public class EncounterModule extends ModulePlugin {
             encounters = items.getNotes().stream().filter(note -> note.getType().endsWith("encounter")).map(e -> (EncounterNote) e).toList();
             notesLister.setItems(FXCollections.observableArrayList(encounters));
 
-            String lastLoadedNote = new FileAccessLayerFactory().get().getSetting("lastNote");
-            if (lastLoadedNote != null) {
-                new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().endsWith("encounter")).filter(n -> n.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
-                    activeNote = (EncounterNote) note;
-                    notesLister.getSelectionModel().select(activeNote);
-                });
-            }
+            new FileAccessLayerFactory().get().getSetting("lastNote").ifPresent(lastLoadedNote ->
+                    new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().endsWith("encounter")).filter(n -> n.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
+                        activeNote = (EncounterNote) note;
+                        notesLister.getSelectionModel().select(activeNote);
+                    }));
         }
     }
 

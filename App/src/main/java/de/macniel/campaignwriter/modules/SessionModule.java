@@ -52,13 +52,12 @@ public class SessionModule extends ModulePlugin {
     public void requestLoad(CampaignFileInterface items) {
         notesLister.setItems(FXCollections.observableArrayList(items.getNotes().stream().filter(note -> note.getType().endsWith("session")).map(note -> ((SessionNote) note)).toList()));
 
-        String lastLoadedNote = new FileAccessLayerFactory().get().getSetting("lastNote");
-        if (lastLoadedNote != null) {
+        new FileAccessLayerFactory().get().getSetting("lastNote").ifPresent(lastLoadedNote -> {
             new FileAccessLayerFactory().get().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).filter(sn -> sn instanceof SessionNote).findFirst().ifPresent(note -> {
                 activeNote = (SessionNote) note;
                 notesLister.getSelectionModel().select(activeNote);
             });
-        }
+        });
     }
 
     @Override

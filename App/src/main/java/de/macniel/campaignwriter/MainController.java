@@ -1,7 +1,6 @@
 package de.macniel.campaignwriter;
 
 import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
-import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.SDK.ModulePlugin;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -9,54 +8,36 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class MainController {
 
-
+    public Menu pluginMenu;
     private ArrayList<FileChooser.ExtensionFilter> supportedFileExtensions;
-
     private ObjectProperty<String> title;
     @FXML
     private Menu dataProviders;
     private Stage parentWnd;
+    private File currentFile;
+    @FXML
+    private BorderPane inset;
+    private ModulePlugin activeInterface;
+    @FXML
+    private Menu views;
+    private ToggleGroup viewMode;
+    private HashMap<Toggle, Map.Entry<ModulePlugin, Scene>> mapping;
+    private ResourceBundle i18n;
 
     public ObjectProperty<String> getTitle() {
         return title;
     }
-
-    private File currentFile;
-
-    @FXML
-    private BorderPane inset;
-
-    private ModulePlugin activeInterface;
-
-    @FXML
-    private Menu views;
-
-    private ArrayList<ModulePlugin> viewerPlugins = new ArrayList<>();
-
-    private ToggleGroup viewMode;
-
-    private HashMap<Toggle, Map.Entry<ModulePlugin, Scene>>  mapping;
-
-    private ResourceBundle i18n;
-
 
     @FXML
     public void initialize() {
@@ -66,8 +47,8 @@ public class MainController {
 
         supportedFileExtensions = new ArrayList<>();
         supportedFileExtensions.add(new FileChooser.ExtensionFilter(
-            i18n.getString("fileFormatName")
-            , "*.campaign"));
+                i18n.getString("fileFormatName")
+                , "*.campaign"));
 
         mapping = new HashMap<>();
 
@@ -106,11 +87,11 @@ public class MainController {
         });
 
         viewMode.selectedToggleProperty().addListener((observableValue, toggle, t1) -> {
-           switchViewer(t1);
+            switchViewer(t1);
         });
         // viewMode.selectToggle(viewMode.getToggles().get(0));
         Registry.getInstance().getAllDataProviders().forEach(provider -> {
-            MenuItem tmp = new MenuItem ();
+            MenuItem tmp = new MenuItem();
             provider.setOnFinishedTask(param -> {
                 System.out.println("returned from task with state");
                 return true;
@@ -129,6 +110,27 @@ public class MainController {
             tmp.setOnAction(event -> provider.startTask(new FileAccessLayerFactory().get().getFile(), parentWnd, new FileAccessLayerFactory().get()));
             this.dataProviders.getItems().add(tmp);
         });
+
+        if (Registry.getInstance().getAllConfigurables().size() == 0) {
+            this.pluginMenu.getItems().clear();
+            MenuItem no = new MenuItem(i18n.getString("NoPluginsLoaded"));
+            no.setDisable(true);
+            this.pluginMenu.getItems().add(no);
+        } else {
+            this.pluginMenu.getItems().clear();
+            Registry.getInstance().getAllConfigurables().forEach(configurable -> {
+
+                MenuItem tmp = new MenuItem();
+                tmp.setText(configurable.getConfigMenuItem());
+
+                tmp.onActionProperty().set(e -> {
+                    configurable.startConfigureTask(FileAccessLayer.getInstance(), Registry.getInstance());
+                });
+
+                this.pluginMenu.getItems().add(tmp);
+
+            });
+        }
         openLastViewer();
     }
 
@@ -151,7 +153,8 @@ public class MainController {
     }
 
 
-    @FXML public void createNewCampaign() {
+    @FXML
+    public void createNewCampaign() {
         // unsaved data check
         this.currentFile = null;
         new FileAccessLayerFactory().get().newCampaign();
@@ -160,15 +163,16 @@ public class MainController {
     }
 
     private void openLastViewer() {
-        String campaignSettingLastViewer = new FileAccessLayerFactory().get().getSetting("lastModule");
-        if (campaignSettingLastViewer != null) {
-            viewMode.getToggles().stream().filter(t -> ((RadioMenuItem) t).getText().equals(campaignSettingLastViewer)).findFirst().ifPresent(toggle -> {
+        new FileAccessLayerFactory().get().getSetting("lastModule").ifPresentOrElse(compaignSettingLastViewer -> {
+            viewMode.getToggles().stream().filter(t -> ((RadioMenuItem) t).getText().equals(compaignSettingLastViewer)).findFirst().ifPresent(toggle -> {
                 switchViewer(toggle);
                 viewMode.selectToggle(toggle);
-        });
-        } else {
+            });
+        }, () -> {
             viewMode.selectToggle(viewMode.getToggles().get(0));
-        }
+
+        });
+
     }
 
     public void openCampaign(File newFile) {
@@ -176,21 +180,21 @@ public class MainController {
         if (newFile != null && newFile.exists()) {
             try {
                 new FileAccessLayerFactory().get().loadFromFile(this.currentFile);
-            
-            if(activeInterface != null) {
-                activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
+
+                if (activeInterface != null) {
+                    activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
+                }
+                title.set(this.currentFile.getName());
+
+                openLastViewer();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            title.set(this.currentFile.getName());
-        
-            openLastViewer();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
         }
     }
 
-    @FXML public void openCampaign() throws IOException {
+    @FXML
+    public void openCampaign() throws IOException {
         FileChooser dialog = new FileChooser();
         dialog.setTitle(i18n.getString("openFileDialogTitle"));
 
@@ -199,12 +203,13 @@ public class MainController {
         this.currentFile = newFile;
         if (newFile != null) {
             new FileAccessLayerFactory().get().loadFromFile(this.currentFile);
-            if(activeInterface != null) {
+            if (activeInterface != null) {
                 activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
             }
             title.set(this.currentFile.getName());
 
-            openLastViewer();        }
+            openLastViewer();
+        }
     }
 
     public void reloadCampaign() throws IOException {
@@ -217,7 +222,8 @@ public class MainController {
         }
     }
 
-    @FXML public void saveCampaign() throws IOException {
+    @FXML
+    public void saveCampaign() throws IOException {
         // save current note just in case
         if (activeInterface != null) {
             activeInterface.requestSave();

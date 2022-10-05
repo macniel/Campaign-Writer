@@ -1,9 +1,7 @@
 package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
-import de.macniel.campaignwriter.SDK.RegistryInterface;
-import de.macniel.campaignwriter.SDK.ViewerPlugin;
+import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.SDK.types.CombatantNote;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -248,4 +246,5 @@ public class CombatantViewer implements ViewerPlugin<CombatantNote> {
         });
         return box;
     }
+
 }

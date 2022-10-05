@@ -123,11 +123,8 @@ public class FileAccessLayer implements FileAccessLayerInterface {
         }
     }
 
-    public String getSetting(String key) {
-        if (file != null) {
-            return file.getSettings().getProperty(key);
-        }
-        return null;
+    public Optional<String> getSetting(String key) {
+        return Optional.ofNullable(file.getSettings().getProperty(key));
     }
 
     public HashMap<String, Actor> getTemplates() {

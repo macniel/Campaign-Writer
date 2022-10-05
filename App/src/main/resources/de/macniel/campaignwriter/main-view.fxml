@@ -26,7 +26,7 @@
         </Menu>
         <Menu text="%ViewMenu" fx:id="views" accelerator="V"/>
         <Menu text="%DataMenu" accelerator="D" fx:id="dataProviders"/>
-        <Menu text="%PluginsMenu">
+        <Menu text="%PluginsMenu" fx:id="pluginMenu">
             <MenuItem text="%NoPluginsLoaded" disable="true"/>
             <SeparatorMenuItem/>
         </Menu>

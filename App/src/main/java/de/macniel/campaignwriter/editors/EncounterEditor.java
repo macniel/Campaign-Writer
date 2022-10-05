@@ -7,6 +7,7 @@ import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.SDK.types.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -21,11 +22,18 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
 
-// FIXME: Encounters need to be updated as soon they change to be inline with WorldBuildingModule
-public class EncounterEditor extends EditorPlugin<EncounterNote> implements ViewerPlugin<EncounterNote> {
+public class EncounterEditor extends EditorPlugin<EncounterNote> implements ViewerPlugin<EncounterNote>, Configurable {
+
+
+
+    final String HITPOINTS_FIELD_NAME = "Hit Points";
+    final String PORTRAIT_FIELD_NAME = "Portrait";
+    final String NAME_FIELD_NAME = "Name";
 
     private final ResourceBundle i18n;
     CombatantNote actualNote;
@@ -210,14 +218,14 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
             // FIXME: dynamic field in encounterdef
             combatant.getContentAsObject().getItems().stream().filter(actorNoteItem ->
-                    "Name".equals(actorNoteItem.getLabel())
+                    NAME_FIELD_NAME.equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent( text -> {
                 combatantName.setText(text.getContent());
             });
 
             // FIXME: dynamic field in encounterdef
             combatant.getContentAsObject().getItems().stream().filter(actorNoteItem ->
-                    "Portrait".equals(actorNoteItem.getLabel())
+                    PORTRAIT_FIELD_NAME.equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent(ani -> {
 
                 new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(entry -> {
@@ -238,7 +246,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
             // FIXME: dynamic field in encounterdef, also allow to display multiple resources
             combatant.getContentAsObject().getItems().stream().filter(actorNoteItem ->
-                    "Hitpoints".equals(actorNoteItem.getLabel())
+                    HITPOINTS_FIELD_NAME.equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent( resource -> {
                 currentHP.setText(""+resource.getValue());
                 maxHP.setText(""+resource.getMax());
@@ -407,10 +415,10 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
             t.getContentAsObject().getCombatants().forEach(combatantNote -> { // FIXME: make it ref!
 
                 VBox combatant = new VBox();
-                combatantNote.getContentAsObject().getItems().stream().filter(i -> "Name".equals(i.getLabel())).findFirst().ifPresent(nameProp -> {
+                combatantNote.getContentAsObject().getItems().stream().filter(i -> NAME_FIELD_NAME.equals(i.getLabel())).findFirst().ifPresent(nameProp -> {
                     combatant.getChildren().add(new Label(nameProp.getContent()));
                 });
-                combatantNote.getContentAsObject().getItems().stream().filter(i -> "Portrait".equals(i.getLabel())).findFirst().ifPresent(ani -> {
+                combatantNote.getContentAsObject().getItems().stream().filter(i -> PORTRAIT_FIELD_NAME.equals(i.getLabel())).findFirst().ifPresent(ani -> {
                     new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(entry -> {
                         ani.setContent(entry.getKey());
                         ImageView image = new ImageView(entry.getValue());
@@ -460,7 +468,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
                     portrait.setPreserveRatio(true);
 
 
-                        item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals("Portrait")).findFirst().ifPresent(ani -> {
+                        item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals(PORTRAIT_FIELD_NAME)).findFirst().ifPresent(ani -> {
 
                             new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(actualImage -> {
                                 ani.setContent(actualImage.getKey());
@@ -507,5 +515,72 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
         });
 
         return bp;
+    }
+
+    @Override
+    public String getConfigMenuItem() {
+        return "Encounter Editor...";
+    }
+
+    @Override
+    public void startConfigureTask(FileAccessLayerInterface fileAccessLayer, RegistryInterface registry) {
+        Stage wnd = new Stage();
+
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put("Name Field: ", NAME_FIELD_NAME);
+        properties.put("Hit Points Field: ", HITPOINTS_FIELD_NAME);
+        properties.put("Portrait Field: ", PORTRAIT_FIELD_NAME);
+        HashMap<String, TextField> fields = new HashMap<>();
+
+
+        VBox settings = new VBox();
+        settings.setFillWidth(true);
+        settings.setPadding(new Insets(5));
+
+        properties.entrySet().forEach(setting -> {
+
+            HBox line = new HBox();
+            HBox.setHgrow(line, Priority.ALWAYS);
+
+            Label label = new Label(setting.getKey());
+            label.setPrefWidth(120);
+            TextField prop = new TextField();
+            fileAccessLayer.getSetting(setting.getValue()).ifPresentOrElse(prop::setText, () -> {
+                prop.setText(setting.getValue());
+            });
+
+            HBox.setHgrow(prop, Priority.ALWAYS);
+            fields.put(setting.getKey(), prop);
+            line.getChildren().addAll(label, prop);
+            settings.getChildren().add(line);
+        });
+
+        ButtonBar controls = new ButtonBar();
+        controls.setPadding(new Insets(5));
+
+        Button close = new Button("Close");
+
+        Button ok = new Button("Save");
+
+        close.onActionProperty().set(e -> {
+            wnd.close();
+        });
+
+        ok.onActionProperty().set(e -> {
+            fields.forEach((key, value) -> fileAccessLayer.updateGlobal(key, value.getText()));
+            wnd.close();
+        });
+
+        controls.getButtons().addAll(ok, close);
+
+        BorderPane bp = new BorderPane();
+
+        bp.setCenter(settings);
+        bp.setBottom(controls);
+
+        wnd.setScene(new Scene(bp, 200, 200));
+        wnd.setTitle("Encounter Editor");
+
+        wnd.showAndWait();
     }
 }
