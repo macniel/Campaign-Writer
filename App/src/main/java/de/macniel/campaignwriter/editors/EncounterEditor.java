@@ -521,9 +521,9 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
     @Override
     public Consumer<Boolean> startConfigureTask(FileAccessLayerInterface fileAccessLayer, RegistryInterface registry, Tab tab) {
         HashMap<String, String> properties = new HashMap<>();
-        properties.put("Name Field: ", NAME_FIELD_NAME);
-        properties.put("Hit Points Field: ", HITPOINTS_FIELD_NAME);
-        properties.put("Portrait Field: ", PORTRAIT_FIELD_NAME);
+        properties.put(NAME_FIELD_NAME, NAME_FIELD_NAME);
+        properties.put(HITPOINTS_FIELD_NAME, HITPOINTS_FIELD_NAME);
+        properties.put(PORTRAIT_FIELD_NAME, PORTRAIT_FIELD_NAME);
         HashMap<String, TextField> fields = new HashMap<>();
 
 
@@ -555,7 +555,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
         return aBoolean -> {
             if (aBoolean) {
-                fields.forEach((key, value) -> fileAccessLayer.updateGlobal(key, value.getText()));
+                fields.forEach((key, value) -> fileAccessLayer.updateSetting(key, value.getText()));
             }
         };
     }
