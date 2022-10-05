@@ -25,6 +25,10 @@ import java.util.jar.JarInputStream;
 
 public class CampaignWriterApplication extends Application {
 
+    public static void main(String[] args) {
+        launch();
+    }
+
     // Returns an arraylist of class names in a JarInputStream
     private ArrayList<String> getClassNamesFromJar(JarInputStream jarFile) throws Exception {
         ArrayList<String> classNames = new ArrayList<>();
@@ -65,9 +69,9 @@ public class CampaignWriterApplication extends Application {
         Set<Class<? extends Registrable>> allClasses =
                 reflections.getSubTypesOf(Registrable.class);
 
-        System.out.println("Found " + (allClasses.size()-1) + " registrable classes in path '" + path + "'");
+        System.out.println("Found " + (allClasses.size() - 1) + " registrable classes in path '" + path + "'");
 
-        for ( Class<? extends Registrable> c : allClasses) {
+        for (Class<? extends Registrable> c : allClasses) {
             if (Modifier.isAbstract(c.getModifiers())) {
                 continue;
             }
@@ -79,60 +83,63 @@ public class CampaignWriterApplication extends Application {
                 registerMethod.invoke(actualObject, registry);
                 System.out.println(" ... success");
 
-            } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            } catch (InstantiationException | NoSuchMethodException | InvocationTargetException |
+                     IllegalAccessException e) {
                 System.out.println(" ... failure");
             }
         }
     }
 
     void loadExternalModules() throws MalformedURLException {
-            File[] plugins = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "plugins").toUri()).listFiles(file -> file.getName().endsWith(".jar"));
-            if ( plugins == null ) {
-                return;
-            }
+        File[] plugins = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "plugins").toUri()).listFiles(file -> file.getName().endsWith(".jar"));
+        if (plugins == null) {
+            return;
+        }
 
-            for (File plugin : plugins) {
-                URL[] arr = new URL[]{plugin.toURI().toURL()};
+        for (File plugin : plugins) {
+            URL[] arr = new URL[]{plugin.toURI().toURL()};
 
-                try (URLClassLoader loader = new URLClassLoader(arr)) {
+            try (URLClassLoader loader = new URLClassLoader(arr)) {
 
-                    ArrayList<String> classNames = getClassNamesFromJar(plugin);
+                ArrayList<String> classNames = getClassNamesFromJar(plugin);
 
-                    for (String className : classNames) {
-                        if (className.startsWith("module-info")) {
-                            continue;
-                        }
-                        try {
-                            Class cc = loader.loadClass(className);
-                            System.out.println(cc.toString());
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
+                for (String className : classNames) {
+                    if (className.startsWith("module-info")) {
+                        continue;
+                    }
+                    try {
+                        Class cc = loader.loadClass(className);
+                        System.out.println(cc.toString());
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                Enumeration<URL> e = loader.getResources("META-INFO/Plugin.properties");
+                e.asIterator().forEachRemaining(c -> {
+                    Properties pluginProperties = new Properties();
+
+                    try (InputStream in = c.openStream()) {
+                        pluginProperties.load(in);
+
+                        String classPath = (String) pluginProperties.get("entry-point");
+
+
+                        Class<Registrable> clazz = (Class<Registrable>) loader.loadClass(classPath);
+                        Registrable registrable = clazz.getDeclaredConstructor().newInstance();
+                        registrable.register(Registry.getInstance());
+
+                    } catch (IOException | ClassNotFoundException | InvocationTargetException | InstantiationException |
+                             IllegalAccessException | NoSuchMethodException ignored) {
                     }
 
-                    Enumeration<URL> e = loader.getResources("META-INFO/Plugin.properties");
-                    e.asIterator().forEachRemaining(c -> {
-                        Properties pluginProperties = new Properties();
 
-                        try (InputStream in = c.openStream()) {
-                            pluginProperties.load(in);
-
-                            String classPath = (String) pluginProperties.get("entry-point");
-
-
-                            Class<Registrable> clazz = (Class<Registrable>) loader.loadClass(classPath);
-                            Registrable registrable = clazz.getDeclaredConstructor().newInstance();
-                            registrable.register(Registry.getInstance());
-
-                        } catch (IOException | ClassNotFoundException | InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException ignored) {
-                        }
-
-
-                    });
-                } catch (Exception ignored) {}
+                });
+            } catch (Exception ignored) {
             }
-
         }
+
+    }
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -147,7 +154,7 @@ public class CampaignWriterApplication extends Application {
         registerModules("de.macniel.campaignwriter.modules");
         registerModules("de.macniel.campaignwriter.providers");
 
-
+        FileAccessLayer.getInstance().setHostServices(getHostServices());
 
         FXMLLoader fxmlLoader = new FXMLLoader(CampaignWriterApplication.class.getResource("main-view.fxml"));
         fxmlLoader.setResources(ResourceBundle.getBundle("i18n.base"));
@@ -158,20 +165,20 @@ public class CampaignWriterApplication extends Application {
         new FileAccessLayerFactory().get().getGlobal("height").ifPresent(loadedHeight -> {
             stage.setHeight(Double.valueOf(loadedHeight));
         });
-    
+
         Scene scene = new Scene(fxmlLoader.load());
 
-        
-        stage.heightProperty().addListener( (observable, oldHeight, newHeight) -> {
+
+        stage.heightProperty().addListener((observable, oldHeight, newHeight) -> {
             new FileAccessLayerFactory().get().updateGlobal("height", newHeight.toString());
         });
-        stage.widthProperty().addListener( (observable, oldWidth, newWidth) -> {
+        stage.widthProperty().addListener((observable, oldWidth, newWidth) -> {
             new FileAccessLayerFactory().get().updateGlobal("width", newWidth.toString());
         });
-        stage.xProperty().addListener( (observable, oldX, newX) -> {
+        stage.xProperty().addListener((observable, oldX, newX) -> {
             new FileAccessLayerFactory().get().updateGlobal("x", newX.toString());
         });
-        stage.yProperty().addListener( (observable, oldY, newY) -> {
+        stage.yProperty().addListener((observable, oldY, newY) -> {
             new FileAccessLayerFactory().get().updateGlobal("y", newY.toString());
         });
 
@@ -186,7 +193,7 @@ public class CampaignWriterApplication extends Application {
         MainController controller = fxmlLoader.getController();
         scene.getStylesheets().add(CampaignWriterApplication.class.getResource("note-editor.css").toExternalForm());
 
-        controller.getTitle().addListener( (change, oldValue, newValue) -> {
+        controller.getTitle().addListener((change, oldValue, newValue) -> {
             if (newValue != null && newValue.isEmpty()) {
                 stage.setTitle("Campaign Writer - " + newValue);
             } else {
@@ -198,8 +205,8 @@ public class CampaignWriterApplication extends Application {
 
         new FileAccessLayerFactory().get().getGlobal("lastFilePath").ifPresent(lastFilePath -> {
 
-                controller.openCampaign(new File(lastFilePath));
-            
+            controller.openCampaign(new File(lastFilePath));
+
         });
 
         System.out.println(new FileAccessLayerFactory().get().getTemplates().size() + " actor templates loaded");
@@ -215,9 +222,5 @@ public class CampaignWriterApplication extends Application {
 
         stage.setScene(scene);
         stage.show();
-    }
-
-    public static void main(String[] args) {
-        launch();
     }
 }

@@ -22,14 +22,10 @@
             <MenuItem text="%Paste" accelerator="Ctrl+V"/>
             <MenuItem text="%PasteWithoutFormat"/>
             <SeparatorMenuItem/>
-            <MenuItem text="%Settings" accelerator="Ctrl+."/>
+            <MenuItem text="%Settings" fx:id="openSettingsMenuItem" accelerator="Ctrl+."/>
         </Menu>
         <Menu text="%ViewMenu" fx:id="views" accelerator="V"/>
         <Menu text="%DataMenu" accelerator="D" fx:id="dataProviders"/>
-        <Menu text="%PluginsMenu" fx:id="pluginMenu">
-            <MenuItem text="%NoPluginsLoaded" disable="true"/>
-            <SeparatorMenuItem/>
-        </Menu>
 
     </MenuBar>
     <BorderPane fx:id="inset" VBox.vgrow="ALWAYS"/>

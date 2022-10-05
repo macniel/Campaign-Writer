@@ -7,31 +7,27 @@ import de.macniel.campaignwriter.SDK.FileAccessLayerInterface;
 import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.adapters.ColorAdapter;
 import de.macniel.campaignwriter.SDK.types.Actor;
+import javafx.application.HostServices;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
 public class FileAccessLayer implements FileAccessLayerInterface {
 
+    private static final FileAccessLayer instance = new FileAccessLayer();
+    private final Gson gsonParser;
     private CampaignFile file;
-
-    private Gson gsonParser;
-
     private Properties config;
     private File confFile;
-
     private File keepFile;
-
-    private static FileAccessLayer instance = new FileAccessLayer();
-    public static FileAccessLayer getInstance() {
-        return instance;
-    }
+    private HostServices hostServices;
 
     private FileAccessLayer() {
         file = new CampaignFile();
@@ -42,8 +38,20 @@ public class FileAccessLayer implements FileAccessLayerInterface {
                 .registerTypeAdapter(Color.class, new ColorAdapter())
                 .create();
 
-  
+
         initConfFile();
+    }
+
+    public static FileAccessLayer getInstance() {
+        return instance;
+    }
+
+    public HostServices getHostServices() {
+        return hostServices;
+    }
+
+    public void setHostServices(HostServices hostServices) {
+        this.hostServices = hostServices;
     }
 
     public Gson getParser() {
@@ -62,7 +70,7 @@ public class FileAccessLayer implements FileAccessLayerInterface {
                     confFile.createNewFile();
                     this.config = new Properties();
                     this.config.load(new FileInputStream(confFile));
-                } else if ( configFolder.exists()) {
+                } else if (configFolder.exists()) {
                     System.err.println("Folder already exists");
                     confFile = new File(Paths.get(System.getProperty("user.home"), ".campaignwriter", "config").toUri());
                     confFile.createNewFile();
@@ -81,7 +89,7 @@ public class FileAccessLayer implements FileAccessLayerInterface {
     }
 
     public void updateGlobal(String key, String value) {
-        if( config == null ) {
+        if (config == null) {
             initConfFile();
         }
         try {
@@ -93,14 +101,13 @@ public class FileAccessLayer implements FileAccessLayerInterface {
     }
 
     public Optional<String> getGlobal(String key) {
-        if( config == null ) {
+        if (config == null) {
             initConfFile();
         }
 
-        return Optional.ofNullable(config.getProperty(key));     
-          
-    }
+        return Optional.ofNullable(config.getProperty(key));
 
+    }
 
     public Properties getSettings() {
         if (file != null) {
@@ -128,13 +135,13 @@ public class FileAccessLayer implements FileAccessLayerInterface {
     }
 
     public HashMap<String, Actor> getTemplates() {
-    
+
         File templateDir = Paths.get(System.getProperty("user.home"), ".campaignwriter", "templates").toFile();
         if (templateDir.exists() && templateDir.isDirectory()) {
             HashMap<String, Actor> templates = new HashMap<>();
 
             for (File f : templateDir.listFiles()) {
-                
+
                 Actor fromFile;
                 try {
                     fromFile = gsonParser.fromJson(new JsonReader(new FileReader(f)), Actor.class);
@@ -157,48 +164,52 @@ public class FileAccessLayer implements FileAccessLayerInterface {
 
         if (new File(s).exists()) {
             try {
-            String uuid = UUID.randomUUID().toString();
-            byte[] input = Files.readAllBytes(Paths.get(s));
-            String base64Asset = new String(Base64.getEncoder().encode(input));
-            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes("UTF-8")));
-            Image image = new Image(in);
-            System.out.println("Storing Image from path " + s + " as UUID " + uuid);
-            file.base64Assets.put(uuid, base64Asset);
-            return Optional.ofNullable(new AbstractMap.SimpleEntry<>(uuid, image));
-            } catch (Exception e) {}
+                String uuid = UUID.randomUUID().toString();
+                byte[] input = Files.readAllBytes(Paths.get(s));
+                String base64Asset = new String(Base64.getEncoder().encode(input));
+                InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes(StandardCharsets.UTF_8)));
+                Image image = new Image(in);
+                System.out.println("Storing Image from path " + s + " as UUID " + uuid);
+                file.base64Assets.put(uuid, base64Asset);
+                return Optional.ofNullable(new AbstractMap.SimpleEntry<>(uuid, image));
+            } catch (Exception e) {
+            }
         }
 
         try {
-        String base64Asset = file.base64Assets.get(s);
-        InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes("UTF-8")));
-        Image image = new Image(in);
-        return Optional.ofNullable(new AbstractMap.SimpleEntry<>(s, image));
-        } catch (Exception e) {}
+            String base64Asset = file.base64Assets.get(s);
+            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes(StandardCharsets.UTF_8)));
+            Image image = new Image(in);
+            return Optional.ofNullable(new AbstractMap.SimpleEntry<>(s, image));
+        } catch (Exception e) {
+        }
 
         try {
             URL url = new URL(s);
 
-                try (InputStream reader = url.openStream()){
-                    String uuid = UUID.randomUUID().toString();
-                    byte[] input = reader.readAllBytes();
-                    String base64Asset = new String(Base64.getEncoder().encode(input));
-                    InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes("UTF-8")));
-                    Image image = new Image(in);
-                    System.out.println("Storing Image from path " + s + " as UUID " + uuid);
-                    file.base64Assets.put(uuid, base64Asset);
-                    return Optional.ofNullable(new AbstractMap.SimpleEntry<>(uuid, image));
-                } catch (Exception ignored) {}
+            try (InputStream reader = url.openStream()) {
+                String uuid = UUID.randomUUID().toString();
+                byte[] input = reader.readAllBytes();
+                String base64Asset = new String(Base64.getEncoder().encode(input));
+                InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(base64Asset.getBytes(StandardCharsets.UTF_8)));
+                Image image = new Image(in);
+                System.out.println("Storing Image from path " + s + " as UUID " + uuid);
+                file.base64Assets.put(uuid, base64Asset);
+                return Optional.ofNullable(new AbstractMap.SimpleEntry<>(uuid, image));
+            } catch (Exception ignored) {
+            }
 
-        } catch (MalformedURLException ignored) {}
+        } catch (MalformedURLException ignored) {
+        }
 
 
-            return Optional.empty();
+        return Optional.empty();
 
     }
 
     public void saveToFile(File f) throws IOException {
         keepFile = f;
-        try (FileWriter writer = new FileWriter((f))){
+        try (FileWriter writer = new FileWriter((f))) {
             System.out.println("IO write json to file " + f.getAbsoluteFile());
             System.out.println("  writing " + file.getNotes() + " notes");
 
@@ -216,7 +227,6 @@ public class FileAccessLayer implements FileAccessLayerInterface {
             saveToFile(keepFile);
         }
     }
-
 
     public void loadFromFile(File f) throws IOException {
         try {
@@ -239,17 +249,16 @@ public class FileAccessLayer implements FileAccessLayerInterface {
 
     public Optional<Note> findByLabel(String label) {
         System.out.println("searching for Note with Label " + label);
-        return file.notes.stream().filter( note -> note.getLabel().equals(label)).findFirst();
+        return file.notes.stream().filter(note -> note.getLabel().equals(label)).findFirst();
     }
-
 
     public Optional<Note> findByReference(UUID ref) {
         System.out.println("searching for " + ref);
-        return file.notes.stream().filter(Objects::nonNull).filter(note ->  note.getReference().equals(ref)).findFirst();
+        return file.notes.stream().filter(Objects::nonNull).filter(note -> note.getReference().equals(ref)).findFirst();
     }
 
     public void removeNote(Note selectedNote) {
-        findByReference(selectedNote.getReference()).ifPresent( note -> {
+        findByReference(selectedNote.getReference()).ifPresent(note -> {
             file.notes.remove(selectedNote);
         });
     }
@@ -270,4 +279,7 @@ public class FileAccessLayer implements FileAccessLayerInterface {
 
     }
 
+    public String getPluginFolderPath() {
+        return Paths.get(System.getProperty("user.home"), ".campaignwriter", "templates").toFile().getAbsolutePath();
+    }
 }

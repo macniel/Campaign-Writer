@@ -22,6 +22,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class SessionEditor extends EditorPlugin<SessionNote> {
@@ -33,14 +34,13 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
     private Callback<String, Boolean> requester;
 
 
-    public static String getLocalizationBase() {
-        return "i18n.sessions";
-    }
-
     public SessionEditor() {
         this.i18n = ResourceBundle.getBundle(getLocalizationBase());
     }
 
+    public static String getLocalizationBase() {
+        return "i18n.sessions";
+    }
 
     @Override
     public String defineHandler() {
@@ -124,7 +124,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
 
                     Button deleteNote = new Button(i18n.getString("DeleteNote"));
                     Button openFullNote = new Button(i18n.getString("OpenNote"));
-                    FontIcon shareIcon =new FontIcon("icm-share");
+                    FontIcon shareIcon = new FontIcon("icm-share");
                     shareIcon.setIconColor(Color.BLUE);
                     Button popoutNote = new Button(i18n.getString("PopoutNote"), shareIcon);
 
@@ -146,7 +146,6 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
 
                     popoutNote.onActionProperty().set(e -> {
                         Stage popout = new Stage();
-
 
 
                         Node standalone = viewer.getStandaloneVersion(note, null);
@@ -171,7 +170,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
                     HBox.setHgrow(content, Priority.ALWAYS);
                     scroll.getChildren().add(content);
                 }, () -> {
-                    scroll.getChildren().add(new Label("No renderer found for " + note.getLabel() + "[" + uuid.toString() +"] of type " + note.getType()));
+                    scroll.getChildren().add(new Label("No renderer found for " + note.getLabel() + "[" + uuid.toString() + "] of type " + note.getType()));
 
                 });
 

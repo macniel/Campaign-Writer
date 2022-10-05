@@ -26,9 +26,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 public class EncounterEditor extends EditorPlugin<EncounterNote> implements ViewerPlugin<EncounterNote>, Configurable {
-
 
 
     final String HITPOINTS_FIELD_NAME = "Hit Points";
@@ -36,21 +36,23 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
     final String NAME_FIELD_NAME = "Name";
 
     private final ResourceBundle i18n;
+    private final ComboBox<ActorNote> addCombatant = new ComboBox<>();
     CombatantNote actualNote;
+    CombatantNote dragItem;
+    int dragPosition = 0;
     private ListView<Note> notesLister;
     private EncounterNote activeNote;
     private TextField encounterNameProp;
     private ComboBox<LocationNote> encounterLocationProp;
     private TextArea circumstancesProp;
     private TextField encounterDifficultyProp;
-    private ComboBox<ActorNote> addCombatant = new ComboBox<>();
     private FlowPane combatantsPropLine;
     private VBox scroller;
+    private Callback<ActorNoteItem, Boolean> changeCallback;
 
     public EncounterEditor() {
         this.i18n = ResourceBundle.getBundle("i18n.encounters");
     }
-
 
     @Override
     public String defineHandler() {
@@ -122,7 +124,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
         encounterDifficultyPropLineLabel.setPrefWidth(120);
 
 
-        encounterDifficultyProp  =new TextField();
+        encounterDifficultyProp = new TextField();
         encounterDifficultyProp.textProperty().addListener((observableValue, s, newValue) -> {
             if (newValue != null) {
                 activeNote.getContentAsObject().setEncounterDifficulty(newValue);
@@ -131,7 +133,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
         encounterDifficultyPropLine.getChildren().addAll(encounterDifficultyPropLineLabel, encounterDifficultyProp);
 
-        addCombatant.getSelectionModel().selectedItemProperty().addListener( (observableValue, note, newValue) -> {
+        addCombatant.getSelectionModel().selectedItemProperty().addListener((observableValue, note, newValue) -> {
             if (newValue != null) {
                 CombatantNote cn = new CombatantNote();
                 cn.setContentFromObject(Combatant.fromActor(newValue.getReference()));
@@ -219,7 +221,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
             // FIXME: dynamic field in encounterdef
             combatant.getContentAsObject().getItems().stream().filter(actorNoteItem ->
                     NAME_FIELD_NAME.equals(actorNoteItem.getLabel())
-            ).findFirst().ifPresent( text -> {
+            ).findFirst().ifPresent(text -> {
                 combatantName.setText(text.getContent());
             });
 
@@ -247,12 +249,12 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
             // FIXME: dynamic field in encounterdef, also allow to display multiple resources
             combatant.getContentAsObject().getItems().stream().filter(actorNoteItem ->
                     HITPOINTS_FIELD_NAME.equals(actorNoteItem.getLabel())
-            ).findFirst().ifPresent( resource -> {
-                currentHP.setText(""+resource.getValue());
-                maxHP.setText(""+resource.getMax());
+            ).findFirst().ifPresent(resource -> {
+                currentHP.setText("" + resource.getValue());
+                maxHP.setText("" + resource.getMax());
 
 
-                currentHP.onKeyReleasedProperty().set( event -> {
+                currentHP.onKeyReleasedProperty().set(event -> {
                     if (event.getCode() == KeyCode.ENTER) {
                         if (currentHP.getText().indexOf("-") >= 1) {
                             int opr1 = Integer.parseInt(currentHP.getText().split("-")[0]);
@@ -286,9 +288,6 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
             combatantsPropLine.getChildren().addAll(box);
         });
     }
-
-    CombatantNote dragItem;
-    int dragPosition = 0;
 
     void enableDragandDrop(List<CombatantNote> parentList, CombatantNote dragElement, Node dragHandler) {
 
@@ -337,7 +336,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
         if (activeNote != null) {
             scroller.setVisible(true);
             encounterNameProp.setText(activeNote.getContentAsObject().getEncounterName());
-            ObservableList<LocationNote> items = FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note  -> note.getType().equals("location")).map(note -> (LocationNote) note).toList());
+            ObservableList<LocationNote> items = FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().equals("location")).map(note -> (LocationNote) note).toList());
             encounterLocationProp.setItems(items);
 
 
@@ -347,7 +346,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
             circumstancesProp.setText(activeNote.getContentAsObject().getCircumstances());
             encounterDifficultyProp.setText(activeNote.getContentAsObject().getEncounterDifficulty());
 
-            ObservableList<ActorNote> actorItems = FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note  -> note.getType().equals("actor")).map(note -> (ActorNote) note).toList());
+            ObservableList<ActorNote> actorItems = FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().equals("actor")).map(note -> (ActorNote) note).toList());
             actorItems.add(0, null);
             addCombatant.setItems(actorItems);
             addCombatant.getSelectionModel().clearSelection();
@@ -357,7 +356,6 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
             scroller.setVisible(false);
         }
     }
-
 
     @Override
     public Callback<Boolean, EncounterNote> defineSaveCallback() {
@@ -372,8 +370,6 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
             return true;
         };
     }
-
-    private Callback<ActorNoteItem, Boolean> changeCallback;
 
     public void setChangeCallback(Callback<ActorNoteItem, Boolean> changeCallback) {
         this.changeCallback = changeCallback;
@@ -399,15 +395,15 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
     @Override
     public Node getPreviewVersionOf(EncounterNote t) {
-       VBox box = new VBox();
+        VBox box = new VBox();
 
-       Label name = new Label(t.getContentAsObject().getEncounterName());
+        Label name = new Label(t.getContentAsObject().getEncounterName());
         Label location = new Label();
 
         new FileAccessLayerFactory().get().findByReference(t.getContentAsObject().getEncounterLocation()).ifPresent(locationNote -> {
-           Location l = ((LocationNote) locationNote).getContentAsObject();
-           location.setText(l.getName());
-       });
+            Location l = ((LocationNote) locationNote).getContentAsObject();
+            location.setText(l.getName());
+        });
         ScrollPane p = new ScrollPane();
         HBox boxes = new HBox();
         boxes.setSpacing(10);
@@ -440,7 +436,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
         p.setContent(boxes);
         box.getChildren().addAll(name, location, p);
 
-       return box;
+        return box;
     }
 
     @Override
@@ -468,14 +464,14 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
                     portrait.setPreserveRatio(true);
 
 
-                        item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals(PORTRAIT_FIELD_NAME)).findFirst().ifPresent(ani -> {
+                    item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals(PORTRAIT_FIELD_NAME)).findFirst().ifPresent(ani -> {
 
-                            new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(actualImage -> {
-                                ani.setContent(actualImage.getKey());
-                                portrait.setImage(actualImage.getValue());
-                            });
-
+                        new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(actualImage -> {
+                            ani.setContent(actualImage.getKey());
+                            portrait.setImage(actualImage.getValue());
                         });
+
+                    });
 
                     portrait.setFitWidth(80);
                     portrait.setFitHeight(40);
@@ -485,11 +481,11 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
                     initiative.setText(item.getContentAsObject().getInitiative());
 
                     Label name = new Label();
-                        item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals("Name")).findFirst().ifPresentOrElse(combatantName -> {
-                            name.setText(combatantName.getContent());
-                        }, () -> {
-                            name.setText("Unbenannt");
-                        });
+                    item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals("Name")).findFirst().ifPresentOrElse(combatantName -> {
+                        name.setText(combatantName.getContent());
+                    }, () -> {
+                        name.setText("Unbenannt");
+                    });
 
 
                     HBox stretcher = new HBox();
@@ -519,13 +515,11 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
     @Override
     public String getConfigMenuItem() {
-        return "Encounter Editor...";
+        return "Encounter Editor";
     }
 
     @Override
-    public void startConfigureTask(FileAccessLayerInterface fileAccessLayer, RegistryInterface registry) {
-        Stage wnd = new Stage();
-
+    public Consumer<Boolean> startConfigureTask(FileAccessLayerInterface fileAccessLayer, RegistryInterface registry, Tab tab) {
         HashMap<String, String> properties = new HashMap<>();
         properties.put("Name Field: ", NAME_FIELD_NAME);
         properties.put("Hit Points Field: ", HITPOINTS_FIELD_NAME);
@@ -534,8 +528,9 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
 
         VBox settings = new VBox();
+        settings.setSpacing(5);
         settings.setFillWidth(true);
-        settings.setPadding(new Insets(5));
+        settings.setPadding(new Insets(10));
 
         properties.entrySet().forEach(setting -> {
 
@@ -555,32 +550,13 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
             settings.getChildren().add(line);
         });
 
-        ButtonBar controls = new ButtonBar();
-        controls.setPadding(new Insets(5));
+        tab.setContent(settings);
 
-        Button close = new Button("Close");
 
-        Button ok = new Button("Save");
-
-        close.onActionProperty().set(e -> {
-            wnd.close();
-        });
-
-        ok.onActionProperty().set(e -> {
-            fields.forEach((key, value) -> fileAccessLayer.updateGlobal(key, value.getText()));
-            wnd.close();
-        });
-
-        controls.getButtons().addAll(ok, close);
-
-        BorderPane bp = new BorderPane();
-
-        bp.setCenter(settings);
-        bp.setBottom(controls);
-
-        wnd.setScene(new Scene(bp, 200, 200));
-        wnd.setTitle("Encounter Editor");
-
-        wnd.showAndWait();
+        return aBoolean -> {
+            if (aBoolean) {
+                fields.forEach((key, value) -> fileAccessLayer.updateGlobal(key, value.getText()));
+            }
+        };
     }
 }

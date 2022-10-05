@@ -16,10 +16,11 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class MainController {
 
-    public Menu pluginMenu;
+    public MenuItem openSettingsMenuItem;
     private ArrayList<FileChooser.ExtensionFilter> supportedFileExtensions;
     private ObjectProperty<String> title;
     @FXML
@@ -111,26 +112,11 @@ public class MainController {
             this.dataProviders.getItems().add(tmp);
         });
 
-        if (Registry.getInstance().getAllConfigurables().size() == 0) {
-            this.pluginMenu.getItems().clear();
-            MenuItem no = new MenuItem(i18n.getString("NoPluginsLoaded"));
-            no.setDisable(true);
-            this.pluginMenu.getItems().add(no);
-        } else {
-            this.pluginMenu.getItems().clear();
-            Registry.getInstance().getAllConfigurables().forEach(configurable -> {
+        SettingsDialog dialog = new SettingsDialog();
+        openSettingsMenuItem.onActionProperty().set(e -> {
+            dialog.show(parentWnd);
+        });
 
-                MenuItem tmp = new MenuItem();
-                tmp.setText(configurable.getConfigMenuItem());
-
-                tmp.onActionProperty().set(e -> {
-                    configurable.startConfigureTask(FileAccessLayer.getInstance(), Registry.getInstance());
-                });
-
-                this.pluginMenu.getItems().add(tmp);
-
-            });
-        }
         openLastViewer();
     }
 
