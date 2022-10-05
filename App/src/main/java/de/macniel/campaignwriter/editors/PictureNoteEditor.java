@@ -1,12 +1,8 @@
 package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.SDK.Note;
-import de.macniel.campaignwriter.SDK.EditorPlugin;
-import de.macniel.campaignwriter.SDK.RegistryInterface;
-import de.macniel.campaignwriter.SDK.ViewerPlugin;
-import de.macniel.campaignwriter.types.Picture;
-import de.macniel.campaignwriter.types.PictureNote;
+import de.macniel.campaignwriter.SDK.*;
+import de.macniel.campaignwriter.SDK.types.PictureNote;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -71,7 +67,7 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> implements View
             try {
                 FileChooser dialog = new FileChooser();
                 File file = dialog.showOpenDialog(w);
-                FileAccessLayer.getInstance().getImageFromString(file.getAbsolutePath()).ifPresent(entry -> {
+                new FileAccessLayerFactory().get().getImageFromString(file.getAbsolutePath()).ifPresent(entry -> {
                     actualNote.getContentAsObject().setFileName(entry.getKey());
                     actualNote.getContentAsObject().setZoomFactor(1);
                 });
@@ -88,7 +84,7 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> implements View
                 ScrollPane parentNode = new ScrollPane();
 
                 ImageView popoutViewer = new ImageView();
-                FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().getFileName()).ifPresent(entry -> {
+                new FileAccessLayerFactory().get().getImageFromString(actualNote.getContentAsObject().getFileName()).ifPresent(entry -> {
                     actualNote.getContentAsObject().setFileName(entry.getKey());
                     popoutViewer.imageProperty().set(entry.getValue());
                     double width = Math.min(rect.getWidth(), popoutViewer.imageProperty().get().getWidth());
@@ -139,7 +135,7 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> implements View
 
     private void updateView() {
         if (actualNote != null) {
-            FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().getFileName()).ifPresent(entry -> {
+            new FileAccessLayerFactory().get().getImageFromString(actualNote.getContentAsObject().getFileName()).ifPresent(entry -> {
                 actualNote.getContentAsObject().setFileName(entry.getKey());
                 viewer.imageProperty().set(entry.getValue());
                 viewer.setFitHeight(actualNote.getContentAsObject().getZoomFactor() * viewer.imageProperty().get().getHeight());

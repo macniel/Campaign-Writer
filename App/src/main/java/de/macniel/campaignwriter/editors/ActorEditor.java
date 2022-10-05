@@ -2,13 +2,10 @@ package de.macniel.campaignwriter.editors;
 
 import com.google.gson.stream.JsonWriter;
 import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.SDK.Note;
-import de.macniel.campaignwriter.SDK.EditorPlugin;
-import de.macniel.campaignwriter.SDK.RegistryInterface;
-import de.macniel.campaignwriter.SDK.ViewerPlugin;
-import de.macniel.campaignwriter.types.Actor;
-import de.macniel.campaignwriter.types.ActorNote;
-import de.macniel.campaignwriter.types.ActorNoteItem;
+import de.macniel.campaignwriter.SDK.*;
+import de.macniel.campaignwriter.SDK.types.Actor;
+import de.macniel.campaignwriter.SDK.types.ActorNote;
+import de.macniel.campaignwriter.SDK.types.ActorNoteItem;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -102,7 +99,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
         t.getItems().add(previewMode);
         t.getItems().add(editMode);
 
-        actorTemplates = FileAccessLayer.getInstance().getTemplates();
+        actorTemplates = new FileAccessLayerFactory().get().getTemplates();
         setTemplateProp.getItems().clear();
         setTemplateProp.getItems().add("");
         actorTemplates.keySet().forEach(actorTemplateName -> setTemplateProp.getItems().add(actorTemplateName));
@@ -140,7 +137,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
         File f = saveDialog.showSaveDialog(owner);
         try (JsonWriter writer = new JsonWriter(new FileWriter(f))) {
             
-            FileAccessLayer.getInstance().getParser().toJson(def, Actor.class, writer);
+            new FileAccessLayerFactory().get().getParser().toJson(def, Actor.class, writer);
             writer.flush();
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -271,7 +268,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
                     v.setFitHeight(250);
 
                     if (item.getContent() != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(imgEntry -> {
+                        new FileAccessLayerFactory().get().getImageFromString(item.getContent()).ifPresent(imgEntry -> {
                             item.setContent(imgEntry.getKey());
                             v.setImage(imgEntry.getValue());
                         });
@@ -288,7 +285,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
                         File selectedFile = chooser.showOpenDialog(null);
                         if (selectedFile != null) {
                             item.setContent(selectedFile.getAbsolutePath());
-                            FileAccessLayer.getInstance().getImageFromString(selectedFile.getAbsolutePath()).ifPresent(entry -> {
+                            new FileAccessLayerFactory().get().getImageFromString(selectedFile.getAbsolutePath()).ifPresent(entry -> {
                                 item.setContent(entry.getKey());
                                 v.setImage(entry.getValue());
                             });
@@ -310,7 +307,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
                     v.setFitHeight(250);
 
                     if (item.getContent() != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> {
+                        new FileAccessLayerFactory().get().getImageFromString(item.getContent()).ifPresent(value -> {
                             item.setContent(value.getKey());
                             v.setImage(value.getValue());
                         });
@@ -458,7 +455,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
                     v.setFitHeight(250);
 
                     if (item.getClass() != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> {
+                        new FileAccessLayerFactory().get().getImageFromString(item.getContent()).ifPresent(value -> {
                             item.setContent(value.getKey());
                             v.setImage(value.getValue());
                         });

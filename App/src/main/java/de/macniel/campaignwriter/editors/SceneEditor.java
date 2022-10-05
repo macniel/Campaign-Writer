@@ -3,12 +3,11 @@ package de.macniel.campaignwriter.editors;
 import de.macniel.campaignwriter.ActorNoteRenderer;
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.LocationNoteRenderer;
-import de.macniel.campaignwriter.SDK.Note;
-import de.macniel.campaignwriter.NotesRenderer;
-import de.macniel.campaignwriter.SDK.EditorPlugin;
-import de.macniel.campaignwriter.SDK.RegistryInterface;
-import de.macniel.campaignwriter.SDK.ViewerPlugin;
-import de.macniel.campaignwriter.types.*;
+import de.macniel.campaignwriter.SDK.*;
+import de.macniel.campaignwriter.SDK.types.Actor;
+import de.macniel.campaignwriter.SDK.types.ActorNote;
+import de.macniel.campaignwriter.SDK.types.LocationNote;
+import de.macniel.campaignwriter.SDK.types.SceneNote;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
@@ -23,7 +22,6 @@ import javafx.util.Callback;
 
 import java.util.Objects;
 import java.util.ResourceBundle;
-import java.util.UUID;
 
 public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin<SceneNote> {
 
@@ -75,7 +73,7 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
         locationPropLine.getChildren().add(locationPropLineLabel);
 
 
-        ObservableList<LocationNote> locations = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(Objects::nonNull).filter(note -> note.getType().equals("location")).map(note -> (LocationNote) note).toList());
+        ObservableList<LocationNote> locations = FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(Objects::nonNull).filter(note -> note.getType().equals("location")).map(note -> (LocationNote) note).toList());
 
         locationProp = new ComboBox<>(locations);
         locationProp.getSelectionModel().clearSelection();
@@ -94,7 +92,7 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
         actorListPropLineLabel.setPrefWidth(120);
         actorListPropLine.getChildren().add(actorListPropLineLabel);
 
-        ObservableList<ActorNote> actors = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().equals("actor")).map(note -> (ActorNote) note).toList());
+        ObservableList<ActorNote> actors = FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().equals("actor")).map(note -> (ActorNote) note).toList());
 
         actorListProp = new ListView<>(actors);
         actorListProp.setCellFactory(noteListView -> new ActorNoteRenderer());
@@ -146,14 +144,14 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
             shortDescriptionProp.setText(actualNote.getContentAsObject().getShortDescription());
 
             if (actualNote.getContentAsObject().getLocation() != null) {
-                FileAccessLayer.getInstance().findByReference(actualNote.getContentAsObject().getLocation()).ifPresent(location -> {
+                new FileAccessLayerFactory().get().findByReference(actualNote.getContentAsObject().getLocation()).ifPresent(location -> {
                         locationProp.getSelectionModel().clearSelection();
                         locationProp.getSelectionModel().select((LocationNote) location);
                 });
             }
             MultipleSelectionModel<ActorNote> selectionModel = actorListProp.getSelectionModel();
             actualNote.getContentAsObject().getActors().forEach(actorReference -> {
-                FileAccessLayer.getInstance().findByReference(actorReference).ifPresent(actor -> {
+                new FileAccessLayerFactory().get().findByReference(actorReference).ifPresent(actor -> {
                     selectionModel.select(actorListProp.getItems().indexOf(actor));
                 });
             });
@@ -172,7 +170,7 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
         HBox actors = new HBox();
         actors.setSpacing(20);
 
-        FileAccessLayer.getInstance().findByReference(t.getContentAsObject().getLocation()).ifPresent(locationNote -> {
+        new FileAccessLayerFactory().get().findByReference(t.getContentAsObject().getLocation()).ifPresent(locationNote -> {
             locationLabel.setText(((LocationNote) locationNote).getContentAsObject().getName());
         });
 
@@ -181,7 +179,7 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
         introductionLabel.setText(t.getContentAsObject().getShortDescription());
 
         t.getContentAsObject().getActors().forEach(actorRef -> {
-            FileAccessLayer.getInstance().findByReference(actorRef).ifPresent(actor -> {
+            new FileAccessLayerFactory().get().findByReference(actorRef).ifPresent(actor -> {
                 Actor a = (Actor) actor.getContentAsObject();
                 a.getItems().stream().filter(e -> e.getLabel() != null && e.getLabel().equals("Name")).findFirst().ifPresent(name -> {
                     Label actorLink = new Label(name.getContent());

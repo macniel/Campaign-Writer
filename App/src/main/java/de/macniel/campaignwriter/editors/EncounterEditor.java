@@ -3,14 +3,10 @@ package de.macniel.campaignwriter.editors;
 import de.macniel.campaignwriter.ActorNoteRenderer;
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.Registry;
-import de.macniel.campaignwriter.SDK.EditorPlugin;
-import de.macniel.campaignwriter.SDK.Note;
-import de.macniel.campaignwriter.SDK.RegistryInterface;
-import de.macniel.campaignwriter.SDK.ViewerPlugin;
-import de.macniel.campaignwriter.types.*;
+import de.macniel.campaignwriter.SDK.*;
+import de.macniel.campaignwriter.SDK.types.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -21,15 +17,10 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
-import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -229,7 +220,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
                     "Portrait".equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent(ani -> {
 
-                FileAccessLayer.getInstance().getImageFromString(ani.getContent()).ifPresent(entry -> {
+                new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(entry -> {
                     ani.setContent(entry.getKey());
                     combatantPortrait.setImage(entry.getValue());
                 });
@@ -338,17 +329,17 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
         if (activeNote != null) {
             scroller.setVisible(true);
             encounterNameProp.setText(activeNote.getContentAsObject().getEncounterName());
-            ObservableList<LocationNote> items = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note  -> note.getType().equals("location")).map(note -> (LocationNote) note).toList());
+            ObservableList<LocationNote> items = FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note  -> note.getType().equals("location")).map(note -> (LocationNote) note).toList());
             encounterLocationProp.setItems(items);
 
 
-            FileAccessLayer.getInstance().findByReference(activeNote.getContentAsObject().getEncounterLocation()).ifPresent(selectedNote -> {
+            new FileAccessLayerFactory().get().findByReference(activeNote.getContentAsObject().getEncounterLocation()).ifPresent(selectedNote -> {
                 encounterLocationProp.getSelectionModel().select((LocationNote) selectedNote);
             });
             circumstancesProp.setText(activeNote.getContentAsObject().getCircumstances());
             encounterDifficultyProp.setText(activeNote.getContentAsObject().getEncounterDifficulty());
 
-            ObservableList<ActorNote> actorItems = FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note  -> note.getType().equals("actor")).map(note -> (ActorNote) note).toList());
+            ObservableList<ActorNote> actorItems = FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note  -> note.getType().equals("actor")).map(note -> (ActorNote) note).toList());
             actorItems.add(0, null);
             addCombatant.setItems(actorItems);
             addCombatant.getSelectionModel().clearSelection();
@@ -405,7 +396,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
        Label name = new Label(t.getContentAsObject().getEncounterName());
         Label location = new Label();
 
-        FileAccessLayer.getInstance().findByReference(t.getContentAsObject().getEncounterLocation()).ifPresent(locationNote -> {
+        new FileAccessLayerFactory().get().findByReference(t.getContentAsObject().getEncounterLocation()).ifPresent(locationNote -> {
            Location l = ((LocationNote) locationNote).getContentAsObject();
            location.setText(l.getName());
        });
@@ -420,7 +411,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
                     combatant.getChildren().add(new Label(nameProp.getContent()));
                 });
                 combatantNote.getContentAsObject().getItems().stream().filter(i -> "Portrait".equals(i.getLabel())).findFirst().ifPresent(ani -> {
-                    FileAccessLayer.getInstance().getImageFromString(ani.getContent()).ifPresent(entry -> {
+                    new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(entry -> {
                         ani.setContent(entry.getKey());
                         ImageView image = new ImageView(entry.getValue());
                         image.setFitWidth(80);
@@ -471,7 +462,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
                         item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals("Portrait")).findFirst().ifPresent(ani -> {
 
-                            FileAccessLayer.getInstance().getImageFromString(ani.getContent()).ifPresent(actualImage -> {
+                            new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(actualImage -> {
                                 ani.setContent(actualImage.getKey());
                                 portrait.setImage(actualImage.getValue());
                             });

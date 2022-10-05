@@ -4,7 +4,7 @@ import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.SDK.EditorPlugin;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
 import de.macniel.campaignwriter.SDK.ViewerPlugin;
-import de.macniel.campaignwriter.types.TextNote;
+import de.macniel.campaignwriter.SDK.types.TextNote;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyEvent;

@@ -1,5 +1,6 @@
 package de.macniel.campaignwriter;
 
+import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
 import de.macniel.campaignwriter.SDK.Registrable;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
 import javafx.application.Application;
@@ -135,6 +136,9 @@ public class CampaignWriterApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
+        // setting up factory
+        new FileAccessLayerFactory().register(FileAccessLayer.getInstance());
+
         loadExternalModules();
 
         // Built-In Modules
@@ -147,10 +151,10 @@ public class CampaignWriterApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(CampaignWriterApplication.class.getResource("main-view.fxml"));
         fxmlLoader.setResources(ResourceBundle.getBundle("i18n.base"));
 
-        FileAccessLayer.getInstance().getGlobal("width").ifPresent(loadedWidth -> {
+        new FileAccessLayerFactory().get().getGlobal("width").ifPresent(loadedWidth -> {
             stage.setWidth(Double.valueOf(loadedWidth));
         });
-        FileAccessLayer.getInstance().getGlobal("height").ifPresent(loadedHeight -> {
+        new FileAccessLayerFactory().get().getGlobal("height").ifPresent(loadedHeight -> {
             stage.setHeight(Double.valueOf(loadedHeight));
         });
     
@@ -158,23 +162,23 @@ public class CampaignWriterApplication extends Application {
 
         
         stage.heightProperty().addListener( (observable, oldHeight, newHeight) -> {
-            FileAccessLayer.getInstance().updateGlobal("height", newHeight.toString());
+            new FileAccessLayerFactory().get().updateGlobal("height", newHeight.toString());
         });
         stage.widthProperty().addListener( (observable, oldWidth, newWidth) -> {
-            FileAccessLayer.getInstance().updateGlobal("width", newWidth.toString());
+            new FileAccessLayerFactory().get().updateGlobal("width", newWidth.toString());
         });
         stage.xProperty().addListener( (observable, oldX, newX) -> {
-            FileAccessLayer.getInstance().updateGlobal("x", newX.toString());
+            new FileAccessLayerFactory().get().updateGlobal("x", newX.toString());
         });
         stage.yProperty().addListener( (observable, oldY, newY) -> {
-            FileAccessLayer.getInstance().updateGlobal("y", newY.toString());
+            new FileAccessLayerFactory().get().updateGlobal("y", newY.toString());
         });
 
-        FileAccessLayer.getInstance().getGlobal("x").ifPresent(x -> {
+        new FileAccessLayerFactory().get().getGlobal("x").ifPresent(x -> {
             stage.setX(Double.valueOf(x));
         });
 
-        FileAccessLayer.getInstance().getGlobal("y").ifPresent(y -> {
+        new FileAccessLayerFactory().get().getGlobal("y").ifPresent(y -> {
             stage.setY(Double.valueOf(y));
         });
 
@@ -191,13 +195,13 @@ public class CampaignWriterApplication extends Application {
 
         controller.setStage(stage);
 
-        FileAccessLayer.getInstance().getGlobal("lastFilePath").ifPresent(lastFilePath -> {
+        new FileAccessLayerFactory().get().getGlobal("lastFilePath").ifPresent(lastFilePath -> {
 
                 controller.openCampaign(new File(lastFilePath));
             
         });
 
-        System.out.println(FileAccessLayer.getInstance().getTemplates().size() + " actor templates loaded");
+        System.out.println(new FileAccessLayerFactory().get().getTemplates().size() + " actor templates loaded");
 
 
         stage.getIcons().add(new Image(CampaignWriterApplication.class.getResourceAsStream("paint_the_world_512.png")));

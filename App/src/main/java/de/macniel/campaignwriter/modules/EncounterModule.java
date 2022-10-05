@@ -10,7 +10,7 @@ import de.macniel.campaignwriter.EncounterNoteRenderer;
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.Registry;
 import de.macniel.campaignwriter.SDK.*;
-import de.macniel.campaignwriter.types.EncounterNote;
+import de.macniel.campaignwriter.SDK.types.EncounterNote;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -53,9 +53,9 @@ public class EncounterModule extends ModulePlugin {
             encounters = items.getNotes().stream().filter(note -> note.getType().endsWith("encounter")).map(e -> (EncounterNote) e).toList();
             notesLister.setItems(FXCollections.observableArrayList(encounters));
 
-            String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
+            String lastLoadedNote = new FileAccessLayerFactory().get().getSetting("lastNote");
             if (lastLoadedNote != null) {
-                FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().endsWith("encounter")).filter(n -> n.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
+                new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().endsWith("encounter")).filter(n -> n.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
                     activeNote = (EncounterNote) note;
                     notesLister.getSelectionModel().select(activeNote);
                 });
@@ -70,15 +70,15 @@ public class EncounterModule extends ModulePlugin {
                 Callback<Boolean, Note<?>> saveEditor = oe.defineSaveCallback();
                 Note<?> res = saveEditor.call(true);
                 System.out.println("Saving note as type " + res.getClass().toString());
-                int insertionPoint = FileAccessLayer.getInstance().getAllNotes().indexOf(activeNote);
+                int insertionPoint = new FileAccessLayerFactory().get().getAllNotes().indexOf(activeNote);
                 if (insertionPoint >= 0) {
-                    FileAccessLayer.getInstance().getAllNotes().remove(activeNote);
-                    FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
+                    new FileAccessLayerFactory().get().getAllNotes().remove(activeNote);
+                    new FileAccessLayerFactory().get().getAllNotes().add(insertionPoint, res);
                 } else {
-                    FileAccessLayer.getInstance().getAllNotes().add(res);
+                    new FileAccessLayerFactory().get().getAllNotes().add(res);
                 }
                 try {
-                    FileAccessLayer.getInstance().saveToFile();
+                    new FileAccessLayerFactory().get().saveToFile();
                 } catch (IOException e) {
                 }
             });
@@ -118,7 +118,7 @@ public class EncounterModule extends ModulePlugin {
         notesLister.getSelectionModel().selectedItemProperty().addListener( (observableValue, oldNote, newNote) -> {
             if (newNote != null) {
                 activeNote = newNote;
-                FileAccessLayer.getInstance().updateSetting("lastNote", newNote.getReference().toString());
+                new FileAccessLayerFactory().get().updateSetting("lastNote", newNote.getReference().toString());
                 saveAndLoad(oldNote, newNote);
             }
         });
@@ -132,15 +132,15 @@ public class EncounterModule extends ModulePlugin {
                 Callback<Boolean, Note<?>> saveEditor = oe.defineSaveCallback();
                 Note<?> res = saveEditor.call(true);
                 System.out.println("Saving note as type " + res.getClass().toString());
-                int insertionPoint = FileAccessLayer.getInstance().getAllNotes().indexOf(oldNote);
+                int insertionPoint = new FileAccessLayerFactory().get().getAllNotes().indexOf(oldNote);
                 if (insertionPoint >= 0) {
-                    FileAccessLayer.getInstance().getAllNotes().remove(oldNote);
-                    FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
+                    new FileAccessLayerFactory().get().getAllNotes().remove(oldNote);
+                    new FileAccessLayerFactory().get().getAllNotes().add(insertionPoint, res);
                 } else {
-                    FileAccessLayer.getInstance().getAllNotes().add(res);
+                    new FileAccessLayerFactory().get().getAllNotes().add(res);
                 }
                 try {
-                    FileAccessLayer.getInstance().saveToFile();
+                    new FileAccessLayerFactory().get().saveToFile();
                 } catch (IOException e) {}
             });
         }
@@ -171,8 +171,8 @@ public class EncounterModule extends ModulePlugin {
     public void newEncounter(ActionEvent actionEvent) {
         EncounterNote n = new EncounterNote();
         n.getContentAsObject().setEncounterName(i18n.getString("UntitledEncounter"));
-        FileAccessLayer.getInstance().getAllNotes().add(n);
-        encounters = FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().endsWith("encounter")).map(e -> (EncounterNote) e).toList();
+        new FileAccessLayerFactory().get().getAllNotes().add(n);
+        encounters = new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().endsWith("encounter")).map(e -> (EncounterNote) e).toList();
         requestSave();
         notesLister.setItems(FXCollections.observableArrayList(encounters));
         activeNote = n;
@@ -180,10 +180,10 @@ public class EncounterModule extends ModulePlugin {
 
     public void deleteEncounter(ActionEvent actionEvent) {
         if (activeNote != null && encounters.contains(activeNote)) {
-            FileAccessLayer.getInstance().getAllNotes().remove(activeNote);
+            new FileAccessLayerFactory().get().getAllNotes().remove(activeNote);
             encounters.remove(activeNote);
             activeNote = null;
-            encounters = FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().endsWith("encounter")).map(e -> (EncounterNote) e).toList();
+            encounters = new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().endsWith("encounter")).map(e -> (EncounterNote) e).toList();
             notesLister.setItems(FXCollections.observableArrayList(encounters));
 
             notesLister.getSelectionModel().clearSelection();

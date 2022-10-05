@@ -2,20 +2,18 @@ package de.macniel.campaignwriter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.UUID;
-
-import de.macniel.campaignwriter.SDK.Note;
-import de.macniel.campaignwriter.types.TextNote;
+import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
+import de.macniel.campaignwriter.SDK.FileAccessLayerInterface;
 import org.junit.jupiter.api.Test;
 
 public class FileAccessLayerTest {
     
     @Test
     public void doCreateSingletonInstance() {
-        FileAccessLayer fal = FileAccessLayer.getInstance();
+        FileAccessLayerInterface fal = new FileAccessLayerFactory().get();
 
-        assertNotNull(FileAccessLayer.getInstance());
-        assertEquals(FileAccessLayer.getInstance(), fal);
+        assertNotNull(new FileAccessLayerFactory().get());
+        assertEquals(new FileAccessLayerFactory().get(), fal);
         assertNotNull(fal.getFile());
         assertEquals(0, fal.getAllNotes().size());
     }

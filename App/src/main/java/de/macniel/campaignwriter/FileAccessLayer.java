@@ -1,23 +1,14 @@
 package de.macniel.campaignwriter;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.databind.DatabindException;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import de.macniel.campaignwriter.SDK.FileAccessLayerInterface;
 import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.adapters.ColorAdapter;
-import de.macniel.campaignwriter.types.Actor;
-import de.macniel.campaignwriter.types.ActorNoteItem;
+import de.macniel.campaignwriter.SDK.types.Actor;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
-import org.reflections.serializers.XmlSerializer;
 
 import java.io.*;
 import java.net.MalformedURLException;

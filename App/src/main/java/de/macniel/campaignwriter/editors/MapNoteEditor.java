@@ -1,14 +1,10 @@
 package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.SDK.Note;
+import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.NotesRenderer;
-import de.macniel.campaignwriter.SDK.EditorPlugin;
-import de.macniel.campaignwriter.SDK.RegistryInterface;
-import de.macniel.campaignwriter.SDK.ViewerPlugin;
-import de.macniel.campaignwriter.types.Map;
-import de.macniel.campaignwriter.types.MapNote;
-import de.macniel.campaignwriter.types.MapPin;
+import de.macniel.campaignwriter.SDK.types.MapNote;
+import de.macniel.campaignwriter.SDK.types.MapPin;
 import javafx.collections.FXCollections;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
@@ -99,7 +95,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
             try {
                 FileChooser dialog = new FileChooser();
                 File file = dialog.showOpenDialog(w);
-                FileAccessLayer.getInstance().getImageFromString(file.getAbsolutePath()).ifPresent(entry -> {
+                new FileAccessLayerFactory().get().getImageFromString(file.getAbsolutePath()).ifPresent(entry -> {
                     actualNote.getContentAsObject().backgroundPath = entry.getKey();
                     actualNote.getContentAsObject().setZoomFactor(1);
                     updateView();
@@ -166,7 +162,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         if (actualNote != null) {
             root.getChildren().clear();
             root.getChildren().add(backgroundLayer);
-            FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
+            new FileAccessLayerFactory().get().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
                 WritableImage image = new WritableImage(entry.getValue().getPixelReader(), (int)entry.getValue().getWidth(), (int)entry.getValue().getHeight());
                 if (actualNote.getContentAsObject().getFog() == null) {
                     actualNote.getContentAsObject().setFog(new ArrayList<>());
@@ -389,7 +385,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
     }
 
     void populateNoteReferenceProp() {
-        List<Note> notes = FileAccessLayer.getInstance().getAllNotes(); // TODO: this should not be possible, request maincontroller instead
+        List<Note> notes = new FileAccessLayerFactory().get().getAllNotes(); // TODO: this should not be possible, request maincontroller instead
         noteReferenceProp.setItems(FXCollections.observableArrayList(notes));
 
         noteReferenceProp.setCellFactory(noteListView -> new NotesRenderer());
@@ -465,7 +461,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
 
         if (actualNote != null) {
 
-            FileAccessLayer.getInstance().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
+            new FileAccessLayerFactory().get().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
 
                 actualNote.getContentAsObject().setBackgroundPath(entry.getKey());
                 ImageView view = new ImageView(entry.getValue());

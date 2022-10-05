@@ -13,7 +13,6 @@ module CampaignWriter.Core {
     requires org.controlsfx.controls;
     requires org.reflections;
 
-    opens de.macniel.campaignwriter.types to com.google.gson;
     opens de.macniel.campaignwriter;
 
     exports de.macniel.campaignwriter to javafx.graphics;

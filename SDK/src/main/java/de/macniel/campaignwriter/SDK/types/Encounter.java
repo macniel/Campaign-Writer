@@ -1,4 +1,4 @@
-package de.macniel.campaignwriter.types;
+package de.macniel.campaignwriter.SDK.types;
 
 import java.util.List;
 import java.util.UUID;

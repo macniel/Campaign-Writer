@@ -1,12 +1,8 @@
 package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.SDK.Note;
-import de.macniel.campaignwriter.SDK.EditorPlugin;
-import de.macniel.campaignwriter.SDK.RegistryInterface;
-import de.macniel.campaignwriter.SDK.ViewerPlugin;
-import de.macniel.campaignwriter.types.Location;
-import de.macniel.campaignwriter.types.LocationNote;
+import de.macniel.campaignwriter.SDK.*;
+import de.macniel.campaignwriter.SDK.types.LocationNote;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -162,7 +158,7 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
                     .toList());
             locationNotes.add(0, null);
             parentLocationProp.setItems(FXCollections.observableArrayList(locationNotes));
-            FileAccessLayer.getInstance().findByReference(actualNote.getContentAsObject().getParentLocation()).ifPresent(parentLocation -> {
+            new FileAccessLayerFactory().get().findByReference(actualNote.getContentAsObject().getParentLocation()).ifPresent(parentLocation -> {
                 parentLocationProp.getSelectionModel().select(parentLocation);
             });
 

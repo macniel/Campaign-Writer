@@ -1,32 +1,28 @@
-package de.macniel.campaignwriter.types;
+package de.macniel.campaignwriter.SDK.types;
 
-import de.macniel.campaignwriter.FileAccessLayer;
+import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
 import de.macniel.campaignwriter.SDK.Note;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
-public class SessionNote extends Note<Session> {
+public class EncounterNote extends Note<Encounter> {
 
-    private Session content;
+
+    private Encounter content;
     private Date createdDate;
     private Date lastModifiedDate;
 
-    @Override
-    public String getType() {
-        return "session";
-    }
 
-    public SessionNote() {
-        super();
+    public EncounterNote() {
+        this.content = new Encounter();
+        this.setLabel("Neue Begegnung");
 
-        this.content = new Session();
         this.setReference(UUID.randomUUID());
-
-        this.setLabel("Neue Sitzung");
         this.createdDate = new Date();
         this.lastModifiedDate = new Date();
+        this.content.combatants = new ArrayList<>();
     }
 
     @Override
@@ -39,20 +35,23 @@ public class SessionNote extends Note<Session> {
         return createdDate;
     }
 
-
     @Override
     public String getContent() {
-        return FileAccessLayer.getInstance().getParser().toJson(content);
+        return new FileAccessLayerFactory().get().getParser().toJson(content);
     }
 
+    @Override
+    public String getType() {
+        return "encounter";
+    }
 
     @Override
     public void setContent(String content) {
-        this.content = FileAccessLayer.getInstance().getParser().fromJson(content, Session.class);
+        this.content = new FileAccessLayerFactory().get().getParser().fromJson(content, Encounter.class);
     }
 
     @Override
-    public Session getContentAsObject() {
+    public Encounter getContentAsObject() {
         return content;
     }
 

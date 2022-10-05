@@ -1,7 +1,6 @@
 package de.macniel.campaignwriter;
 
-import de.macniel.campaignwriter.types.Session;
-import de.macniel.campaignwriter.types.SessionNote;
+import de.macniel.campaignwriter.SDK.types.SessionNote;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 

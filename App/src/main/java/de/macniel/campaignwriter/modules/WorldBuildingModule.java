@@ -84,15 +84,15 @@ public class WorldBuildingModule extends ModulePlugin {
                 Callback<Boolean, Note<?>> saveEditor = oe.defineSaveCallback();
                 Note<?> res = saveEditor.call(true);
                 System.out.println("Saving note as type " + res.getClass().toString());
-                int insertionPoint = FileAccessLayer.getInstance().getAllNotes().indexOf(activeNote);
+                int insertionPoint = new FileAccessLayerFactory().get().getAllNotes().indexOf(activeNote);
                 if (insertionPoint >= 0) {
-                    FileAccessLayer.getInstance().getAllNotes().remove(activeNote);
-                    FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
+                    new FileAccessLayerFactory().get().getAllNotes().remove(activeNote);
+                    new FileAccessLayerFactory().get().getAllNotes().add(insertionPoint, res);
                 } else {
-                    FileAccessLayer.getInstance().getAllNotes().add(res);
+                    new FileAccessLayerFactory().get().getAllNotes().add(res);
                 }
                 try {
-                    FileAccessLayer.getInstance().saveToFile();
+                    new FileAccessLayerFactory().get().saveToFile();
                 } catch (IOException e) {
                 }
             });
@@ -119,9 +119,9 @@ public class WorldBuildingModule extends ModulePlugin {
         if (notesLister != null) {
 
             updateLister();
-            String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
+            String lastLoadedNote = new FileAccessLayerFactory().get().getSetting("lastNote");
             if (lastLoadedNote != null) {
-                FileAccessLayer.getInstance().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
+                new FileAccessLayerFactory().get().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
                     activeNote = note;
                     notesLister.getSelectionModel().select(activeNote);
                 });
@@ -133,9 +133,9 @@ public class WorldBuildingModule extends ModulePlugin {
 
         plugins = Registry.getInstance().getEditorsByPrefix("building");
 
-        List<Note> listOfBuildingNotes = FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().startsWith("building")).toList();
+        List<Note> listOfBuildingNotes = new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().startsWith("building")).toList();
 
-                System.out.println("reading " + listOfBuildingNotes.size() + " of " + FileAccessLayer.getInstance().getAllNotes().size() + " notes");
+                System.out.println("reading " + listOfBuildingNotes.size() + " of " + new FileAccessLayerFactory().get().getAllNotes().size() + " notes");
 
         notes = FXCollections.observableArrayList(listOfBuildingNotes);
 
@@ -162,8 +162,8 @@ public class WorldBuildingModule extends ModulePlugin {
 
             t.onDragDroppedProperty().set(e -> {
                 if (dragElement != null) {
-                    FileAccessLayer.getInstance().removeNote(dragElement);
-                    FileAccessLayer.getInstance().addNote(dragPosition, dragElement);
+                    new FileAccessLayerFactory().get().removeNote(dragElement);
+                    new FileAccessLayerFactory().get().addNote(dragPosition, dragElement);
                     updateLister();
                 }
                 e.setDropCompleted(true);
@@ -191,9 +191,9 @@ public class WorldBuildingModule extends ModulePlugin {
         deleteNoteMenuItem.onActionProperty().set( event -> {
             Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
             lastNote = notesLister.getSelectionModel().getSelectedIndex();
-            FileAccessLayer.getInstance().removeNote(contextedNote);
+            new FileAccessLayerFactory().get().removeNote(contextedNote);
             try {
-                FileAccessLayer.getInstance().saveToFile();
+                new FileAccessLayerFactory().get().saveToFile();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -239,7 +239,7 @@ public class WorldBuildingModule extends ModulePlugin {
                 if (old != selected && selected != null) {
                     lastNote = notesLister.getSelectionModel().getSelectedIndex();
 
-                    FileAccessLayer.getInstance().updateSetting("lastNote", selected.getReference().toString());
+                    new FileAccessLayerFactory().get().updateSetting("lastNote", selected.getReference().toString());
                     saveAndLoad(old, selected);
                 }
             }
@@ -261,7 +261,7 @@ public class WorldBuildingModule extends ModulePlugin {
 
         Note newNote = editor.createNewNote();
 
-        FileAccessLayer.getInstance().getAllNotes().add(newNote);
+        new FileAccessLayerFactory().get().getAllNotes().add(newNote);
         notesLister.getItems().add(newNote);
         notesLister.getSelectionModel().select(newNote);
         saveAndLoad(activeNote, newNote);
@@ -278,15 +278,15 @@ public class WorldBuildingModule extends ModulePlugin {
                 Note<?> res = saveEditor.call(true);
                 if (res != null) {
                     System.out.println("Saving note as type " + res.getClass().toString());
-                    int insertionPoint = FileAccessLayer.getInstance().getAllNotes().indexOf(oldNote);
+                    int insertionPoint = new FileAccessLayerFactory().get().getAllNotes().indexOf(oldNote);
                     if (insertionPoint >= 0) {
-                        FileAccessLayer.getInstance().getAllNotes().remove(oldNote);
-                        FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
+                        new FileAccessLayerFactory().get().getAllNotes().remove(oldNote);
+                        new FileAccessLayerFactory().get().getAllNotes().add(insertionPoint, res);
                     } else {
-                        FileAccessLayer.getInstance().getAllNotes().add(res);
+                        new FileAccessLayerFactory().get().getAllNotes().add(res);
                     }
                     try {
-                        FileAccessLayer.getInstance().saveToFile();
+                        new FileAccessLayerFactory().get().saveToFile();
                     } catch (IOException e) {
                     }
                 }
@@ -332,10 +332,10 @@ public class WorldBuildingModule extends ModulePlugin {
     @FXML public void deleteCurrentNote() {
         Note selectedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
         if (selectedNote != null) {
-            FileAccessLayer.getInstance().removeNote(selectedNote);
+            new FileAccessLayerFactory().get().removeNote(selectedNote);
             updateLister();
             try {
-                FileAccessLayer.getInstance().saveToFile();
+                new FileAccessLayerFactory().get().saveToFile();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -343,7 +343,7 @@ public class WorldBuildingModule extends ModulePlugin {
     }
 
     void updateLister() {
-        notesLister.setItems(FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(n -> Registry.getInstance().getEditorByFullName("building/" + n.getType()).isPresent()).toList()));
+        notesLister.setItems(FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(n -> Registry.getInstance().getEditorByFullName("building/" + n.getType()).isPresent()).toList()));
 
         notesLister.getSelectionModel().select(Math.min(lastNote, notesLister.getItems().size()-1));
     }

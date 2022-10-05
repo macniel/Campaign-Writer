@@ -1,11 +1,7 @@
-package de.macniel.campaignwriter.types;
-
-import de.macniel.campaignwriter.SDK.Note;
+package de.macniel.campaignwriter.SDK.types;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 public class Actor {
 

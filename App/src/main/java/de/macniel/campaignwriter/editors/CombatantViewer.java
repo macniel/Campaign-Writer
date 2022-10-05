@@ -1,9 +1,10 @@
 package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.FileAccessLayer;
+import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
 import de.macniel.campaignwriter.SDK.ViewerPlugin;
-import de.macniel.campaignwriter.types.CombatantNote;
+import de.macniel.campaignwriter.SDK.types.CombatantNote;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -88,7 +89,7 @@ public class CombatantViewer implements ViewerPlugin<CombatantNote> {
                     v.setFitHeight(250);
 
                     if (item.getClass() != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> {
+                        new FileAccessLayerFactory().get().getImageFromString(item.getContent()).ifPresent(value -> {
                             item.setContent(value.getKey());
                             v.setImage(value.getValue());
                         });
@@ -191,7 +192,7 @@ public class CombatantViewer implements ViewerPlugin<CombatantNote> {
                     v.setFitHeight(250);
 
                     if (item.getClass() != null) {
-                        FileAccessLayer.getInstance().getImageFromString(item.getContent()).ifPresent(value -> {
+                        new FileAccessLayerFactory().get().getImageFromString(item.getContent()).ifPresent(value -> {
                             item.setContent(value.getKey());
                             v.setImage(value.getValue());
                         });

@@ -2,7 +2,7 @@ package de.macniel.campaignwriter.modules;
 
 import de.macniel.campaignwriter.*;
 import de.macniel.campaignwriter.SDK.*;
-import de.macniel.campaignwriter.types.SessionNote;
+import de.macniel.campaignwriter.SDK.types.SessionNote;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -12,12 +12,10 @@ import javafx.scene.control.*;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
@@ -54,9 +52,9 @@ public class SessionModule extends ModulePlugin {
     public void requestLoad(CampaignFileInterface items) {
         notesLister.setItems(FXCollections.observableArrayList(items.getNotes().stream().filter(note -> note.getType().endsWith("session")).map(note -> ((SessionNote) note)).toList()));
 
-        String lastLoadedNote = FileAccessLayer.getInstance().getSetting("lastNote");
+        String lastLoadedNote = new FileAccessLayerFactory().get().getSetting("lastNote");
         if (lastLoadedNote != null) {
-            FileAccessLayer.getInstance().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).filter(sn -> sn instanceof SessionNote).findFirst().ifPresent(note -> {
+            new FileAccessLayerFactory().get().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).filter(sn -> sn instanceof SessionNote).findFirst().ifPresent(note -> {
                 activeNote = (SessionNote) note;
                 notesLister.getSelectionModel().select(activeNote);
             });
@@ -70,15 +68,15 @@ public class SessionModule extends ModulePlugin {
             Callback<Boolean, Note<?>> saveEditor = oe.defineSaveCallback();
             Note<?> res = saveEditor.call(true);
             System.out.println("Saving note as type " + res.getClass().toString());
-            int insertionPoint = FileAccessLayer.getInstance().getAllNotes().indexOf(activeNote);
+            int insertionPoint = new FileAccessLayerFactory().get().getAllNotes().indexOf(activeNote);
             if (insertionPoint >= 0) {
-                FileAccessLayer.getInstance().getAllNotes().remove(activeNote);
-                FileAccessLayer.getInstance().getAllNotes().add(insertionPoint, res);
+                new FileAccessLayerFactory().get().getAllNotes().remove(activeNote);
+                new FileAccessLayerFactory().get().getAllNotes().add(insertionPoint, res);
             } else {
-                FileAccessLayer.getInstance().getAllNotes().add(res);
+                new FileAccessLayerFactory().get().getAllNotes().add(res);
             }
             try {
-                FileAccessLayer.getInstance().saveToFile();
+                new FileAccessLayerFactory().get().saveToFile();
             } catch (IOException e) {}
         });
     }
@@ -137,9 +135,9 @@ public class SessionModule extends ModulePlugin {
 
             t.onDragDroppedProperty().set(e -> {
                 if (dragElement != null) {
-                    FileAccessLayer.getInstance().removeNote(dragElement);
-                    FileAccessLayer.getInstance().addNote(dragPosition, dragElement);
-                    notesLister.setItems(FXCollections.observableArrayList(FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().endsWith("session")).map(note -> (SessionNote) note).toList()));
+                    new FileAccessLayerFactory().get().removeNote(dragElement);
+                    new FileAccessLayerFactory().get().addNote(dragPosition, dragElement);
+                    notesLister.setItems(FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().endsWith("session")).map(note -> (SessionNote) note).toList()));
                 }
                 e.setDropCompleted(true);
                 e.consume();
@@ -164,7 +162,7 @@ public class SessionModule extends ModulePlugin {
         notesLister.getSelectionModel().selectedItemProperty().addListener((observableValue, oldNote, newNote) -> {
             if (newNote != null && oldNote != newNote) {
                 activeNote = newNote;
-                FileAccessLayer.getInstance().updateSetting("lastNote", newNote.getReference().toString());
+                new FileAccessLayerFactory().get().updateSetting("lastNote", newNote.getReference().toString());
 
                 Registry.getInstance().getEditorByFullName("session/session").ifPresent(editorPlugin -> {
                     editorPlugin.prepareToolbar(toolBar, null);
@@ -184,8 +182,8 @@ public class SessionModule extends ModulePlugin {
     public void newSession(ActionEvent actionEvent) {
         SessionNote newNote = new SessionNote();
         newNote.setLabel(i18n.getString("UntitledSession"));
-        FileAccessLayer.getInstance().addNote(0, newNote);
-        notes.setAll(FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> note.getType().endsWith("session")).map(note -> (SessionNote) note).toList());
+        new FileAccessLayerFactory().get().addNote(0, newNote);
+        notes.setAll(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().endsWith("session")).map(note -> (SessionNote) note).toList());
         notesLister.setItems(notes);
     }
 

@@ -1,6 +1,6 @@
-package de.macniel.campaignwriter.types;
+package de.macniel.campaignwriter.SDK.types;
 
-import de.macniel.campaignwriter.FileAccessLayer;
+import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
 import de.macniel.campaignwriter.SDK.Note;
 
 import java.util.ArrayList;
@@ -20,11 +20,11 @@ public class CombatantNote extends Note<Combatant> {
 
     @Override
     public void setContent(String content) {
-        this.content = FileAccessLayer.getInstance().getParser().fromJson(content, Combatant.class);
+        this.content = new FileAccessLayerFactory().get().getParser().fromJson(content, Combatant.class);
     }
 
     public String getContent() {
-        return FileAccessLayer.getInstance().getParser().toJson(content);
+        return new FileAccessLayerFactory().get().getParser().toJson(content);
     }
 
     @Override

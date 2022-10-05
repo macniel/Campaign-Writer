@@ -1,11 +1,9 @@
-package de.macniel.campaignwriter.types;
+package de.macniel.campaignwriter.SDK.types;
 
-import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.SDK.Note;
+import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
 import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -19,7 +17,7 @@ public class Combatant {
 
     public static Combatant fromActor(UUID actorRef) {
         AtomicReference<Combatant> newCombatant = new AtomicReference<>();
-        FileAccessLayer.getInstance().findByReference(actorRef).ifPresent( actor -> {
+        new FileAccessLayerFactory().get().findByReference(actorRef).ifPresent( actor -> {
             Combatant tmp = new Combatant();
             tmp.teamColor = Color.GRAY;
 

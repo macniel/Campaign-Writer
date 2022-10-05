@@ -4,13 +4,12 @@ import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.Registry;
 import de.macniel.campaignwriter.SDK.EditorPlugin;
+import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
 import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
-import de.macniel.campaignwriter.types.SessionNote;
+import de.macniel.campaignwriter.SDK.types.SessionNote;
 import javafx.collections.FXCollections;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -95,7 +94,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
     }
 
     void populateSectionProp() {
-        List<Note> notes = FileAccessLayer.getInstance().getAllNotes().stream().filter(note -> !note.getType().equals("session")).filter(note -> Registry.getInstance().getViewerBySuffix(note.getType()).isPresent()).toList();
+        List<Note> notes = new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> !note.getType().equals("session")).filter(note -> Registry.getInstance().getViewerBySuffix(note.getType()).isPresent()).toList();
         sectionProp.setItems(FXCollections.observableArrayList(notes));
         sectionProp.getSelectionModel().select(null);
     }
@@ -105,7 +104,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
         scroll.getChildren().clear();
 
         actualNote.getContentAsObject().getNotes().forEach(uuid -> {
-            FileAccessLayer.getInstance().findByReference(uuid).ifPresent(note -> {
+            new FileAccessLayerFactory().get().findByReference(uuid).ifPresent(note -> {
 
                 Registry.getInstance().getViewerBySuffix(note.getType()).ifPresentOrElse(viewer -> {
 
@@ -132,7 +131,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
                     deleteNote.onActionProperty().set(e -> {
                         try {
                             actualNote.getContentAsObject().getNotes().remove(uuid);
-                            FileAccessLayer.getInstance().saveToFile();
+                            new FileAccessLayerFactory().get().saveToFile();
                             updateView();
                         } catch (IOException ex) {
                             throw new RuntimeException(ex);

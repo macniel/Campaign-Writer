@@ -1,32 +1,31 @@
-package de.macniel.campaignwriter.types;
+package de.macniel.campaignwriter.SDK.types;
 
-import de.macniel.campaignwriter.FileAccessLayer;
+import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
 import de.macniel.campaignwriter.SDK.Note;
 
 import java.util.Date;
 import java.util.UUID;
 
-public class PictureNote extends Note<Picture> {
+public class TextNote extends Note<Text> {
 
-    private Picture content;
+    private Text content;
     private Date createdDate;
     private Date lastModifiedDate;
 
     @Override
     public String getType() {
-        return "picture";
+        return "text";
     }
 
-    public PictureNote() {
+    public TextNote() {
         super();
+        this.content = new Text();
 
-        this.content = new Picture();
-        this.setLabel("Neues Bild");
+        this.setLabel("Neuer Text");
         this.setReference(UUID.randomUUID());
         this.createdDate = new Date();
         this.lastModifiedDate = new Date();
     }
-
 
     @Override
     public Date getCreatedDate() {
@@ -38,19 +37,18 @@ public class PictureNote extends Note<Picture> {
         return lastModifiedDate;
     }
 
-
     @Override
     public String getContent() {
-        return FileAccessLayer.getInstance().getParser().toJson(content);
+        return new FileAccessLayerFactory().get().getParser().toJson(content);
     }
 
     @Override
-    public Picture getContentAsObject() {
+    public Text getContentAsObject() {
         return content;
     }
 
     @Override
     public void setContent(String content) {
-        this.content = FileAccessLayer.getInstance().getParser().fromJson(content, Picture.class);
+        this.content = new FileAccessLayerFactory().get().getParser().fromJson(content, Text.class);
     }
 }

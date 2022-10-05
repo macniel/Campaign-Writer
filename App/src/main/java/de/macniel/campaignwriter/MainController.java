@@ -1,5 +1,6 @@
 package de.macniel.campaignwriter;
 
+import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
 import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.SDK.ModulePlugin;
 import javafx.beans.property.ObjectProperty;
@@ -115,7 +116,7 @@ public class MainController {
                 return true;
             });
             provider.setOnGenerateNote(note -> {
-                FileAccessLayer.getInstance().getAllNotes().add(note);
+                new FileAccessLayerFactory().get().getAllNotes().add(note);
                 try {
                     reloadCampaign();
                 } catch (IOException e) {
@@ -125,7 +126,7 @@ public class MainController {
             });
             tmp.setText(provider.menuItemLabel());
             // FIXME: Only provide a copy!
-            tmp.setOnAction(event -> provider.startTask(FileAccessLayer.getInstance().getFile(), parentWnd, FileAccessLayer.getInstance()));
+            tmp.setOnAction(event -> provider.startTask(new FileAccessLayerFactory().get().getFile(), parentWnd, new FileAccessLayerFactory().get()));
             this.dataProviders.getItems().add(tmp);
         });
         openLastViewer();
@@ -135,13 +136,13 @@ public class MainController {
         Scene editor = mapping.get(present).getValue();
         if (editor != null) {
             activeInterface = mapping.get(present).getKey();
-            FileAccessLayer.getInstance().updateSetting("lastModule", activeInterface.getMenuItemLabel());
+            new FileAccessLayerFactory().get().updateSetting("lastModule", activeInterface.getMenuItemLabel());
 
             inset.setCenter(editor.getRoot());
-            activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
+            activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
             activeInterface.requestLoadNote(param -> {
 
-                FileAccessLayer.getInstance().findByReference(param).ifPresent(foundNote -> {
+                new FileAccessLayerFactory().get().findByReference(param).ifPresent(foundNote -> {
                     System.out.println("request to open " + foundNote + " as type " + foundNote.getType());
                 });
                 return true;
@@ -153,13 +154,13 @@ public class MainController {
     @FXML public void createNewCampaign() {
         // unsaved data check
         this.currentFile = null;
-        FileAccessLayer.getInstance().newCampaign();
+        new FileAccessLayerFactory().get().newCampaign();
 
-        activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
+        activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
     }
 
     private void openLastViewer() {
-        String campaignSettingLastViewer = FileAccessLayer.getInstance().getSetting("lastModule");
+        String campaignSettingLastViewer = new FileAccessLayerFactory().get().getSetting("lastModule");
         if (campaignSettingLastViewer != null) {
             viewMode.getToggles().stream().filter(t -> ((RadioMenuItem) t).getText().equals(campaignSettingLastViewer)).findFirst().ifPresent(toggle -> {
                 switchViewer(toggle);
@@ -174,10 +175,10 @@ public class MainController {
         this.currentFile = newFile;
         if (newFile != null && newFile.exists()) {
             try {
-                FileAccessLayer.getInstance().loadFromFile(this.currentFile);
+                new FileAccessLayerFactory().get().loadFromFile(this.currentFile);
             
             if(activeInterface != null) {
-                activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
+                activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
             }
             title.set(this.currentFile.getName());
         
@@ -197,9 +198,9 @@ public class MainController {
         File newFile = dialog.showOpenDialog(null);
         this.currentFile = newFile;
         if (newFile != null) {
-            FileAccessLayer.getInstance().loadFromFile(this.currentFile);
+            new FileAccessLayerFactory().get().loadFromFile(this.currentFile);
             if(activeInterface != null) {
-                activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
+                activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
             }
             title.set(this.currentFile.getName());
 
@@ -210,9 +211,9 @@ public class MainController {
         // save current note just in case
         if (activeInterface != null) {
             activeInterface.requestSave();
-            FileAccessLayer.getInstance().saveToFile();
-            FileAccessLayer.getInstance().loadFromFile(this.currentFile);
-            activeInterface.requestLoad(FileAccessLayer.getInstance().getFile());
+            new FileAccessLayerFactory().get().saveToFile();
+            new FileAccessLayerFactory().get().loadFromFile(this.currentFile);
+            activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
         }
     }
 
@@ -230,7 +231,7 @@ public class MainController {
 
         }
         if (this.currentFile != null) {
-            FileAccessLayer.getInstance().saveToFile(this.currentFile);
+            new FileAccessLayerFactory().get().saveToFile(this.currentFile);
             title.set(this.currentFile.getName());
         }
     }

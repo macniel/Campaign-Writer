@@ -1,7 +1,6 @@
 package de.macniel.campaignwriter;
 
-import de.macniel.campaignwriter.SDK.Note;
-import de.macniel.campaignwriter.types.LocationNote;
+import de.macniel.campaignwriter.SDK.types.LocationNote;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 

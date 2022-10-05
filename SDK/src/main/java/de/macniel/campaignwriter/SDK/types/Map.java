@@ -1,11 +1,8 @@
-package de.macniel.campaignwriter.types;
+package de.macniel.campaignwriter.SDK.types;
 
-import de.macniel.campaignwriter.SDK.Note;
 import javafx.geometry.Point2D;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.UUID;
 
 public class Map {
 

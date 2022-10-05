@@ -1,8 +1,6 @@
-package de.macniel.campaignwriter.types;
+package de.macniel.campaignwriter.SDK.types;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.SDK.FileAccessLayerInterface;
+import com.google.gson.Gson;
 import de.macniel.campaignwriter.SDK.Note;
 
 import java.util.ArrayList;
@@ -28,7 +26,7 @@ public class ActorNote extends Note<Actor> {
 
     @Override
     public String getContent() {
-        return FileAccessLayer.getInstance().getParser().toJson(content);
+        return new Gson().toJson(content);
     }
 
     @Override
@@ -37,7 +35,7 @@ public class ActorNote extends Note<Actor> {
     }
 
     public void setContent(String content) {
-        this.content = FileAccessLayer.getInstance().getParser().fromJson(content, Actor.class);
+        this.content = new Gson().fromJson(content, Actor.class);
     }
 
     @Override

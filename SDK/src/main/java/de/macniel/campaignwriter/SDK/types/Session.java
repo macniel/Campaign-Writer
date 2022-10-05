@@ -1,4 +1,4 @@
-package de.macniel.campaignwriter.types;
+package de.macniel.campaignwriter.SDK.types;
 
 import de.macniel.campaignwriter.SDK.Note;
 
