@@ -220,14 +220,14 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
             // FIXME: dynamic field in encounterdef
             combatant.getContentAsObject().getItems().stream().filter(actorNoteItem ->
-                    NAME_FIELD_NAME.equals(actorNoteItem.getLabel())
+                    FileAccessLayer.getInstance().getSetting(NAME_FIELD_NAME).get().equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent(text -> {
                 combatantName.setText(text.getContent());
             });
 
             // FIXME: dynamic field in encounterdef
             combatant.getContentAsObject().getItems().stream().filter(actorNoteItem ->
-                    PORTRAIT_FIELD_NAME.equals(actorNoteItem.getLabel())
+                    FileAccessLayer.getInstance().getSetting(PORTRAIT_FIELD_NAME).get().equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent(ani -> {
 
                 new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(entry -> {
@@ -248,10 +248,11 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
             // FIXME: dynamic field in encounterdef, also allow to display multiple resources
             combatant.getContentAsObject().getItems().stream().filter(actorNoteItem ->
-                    HITPOINTS_FIELD_NAME.equals(actorNoteItem.getLabel())
+                    FileAccessLayer.getInstance().getSetting(HITPOINTS_FIELD_NAME).get().equals(actorNoteItem.getLabel())
             ).findFirst().ifPresent(resource -> {
-                currentHP.setText("" + resource.getValue());
-                maxHP.setText("" + resource.getMax());
+
+                currentHP.setText("" + (resource.getValue() == null ? 0 : resource.getValue()));
+                maxHP.setText("" + (resource.getMax() == null ? 0 : resource.getMax()));
 
 
                 currentHP.onKeyReleasedProperty().set(event -> {
@@ -411,10 +412,10 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
             t.getContentAsObject().getCombatants().forEach(combatantNote -> { // FIXME: make it ref!
 
                 VBox combatant = new VBox();
-                combatantNote.getContentAsObject().getItems().stream().filter(i -> NAME_FIELD_NAME.equals(i.getLabel())).findFirst().ifPresent(nameProp -> {
+                combatantNote.getContentAsObject().getItems().stream().filter(i -> FileAccessLayer.getInstance().getSetting(NAME_FIELD_NAME).get().equals(i.getLabel())).findFirst().ifPresent(nameProp -> {
                     combatant.getChildren().add(new Label(nameProp.getContent()));
                 });
-                combatantNote.getContentAsObject().getItems().stream().filter(i -> PORTRAIT_FIELD_NAME.equals(i.getLabel())).findFirst().ifPresent(ani -> {
+                combatantNote.getContentAsObject().getItems().stream().filter(i -> FileAccessLayer.getInstance().getSetting(PORTRAIT_FIELD_NAME).get().equals(i.getLabel())).findFirst().ifPresent(ani -> {
                     new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(entry -> {
                         ani.setContent(entry.getKey());
                         ImageView image = new ImageView(entry.getValue());
@@ -464,7 +465,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
                     portrait.setPreserveRatio(true);
 
 
-                    item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals(PORTRAIT_FIELD_NAME)).findFirst().ifPresent(ani -> {
+                    item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals(FileAccessLayer.getInstance().getSetting(PORTRAIT_FIELD_NAME).get())).findFirst().ifPresent(ani -> {
 
                         new FileAccessLayerFactory().get().getImageFromString(ani.getContent()).ifPresent(actualImage -> {
                             ani.setContent(actualImage.getKey());
@@ -481,7 +482,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
                     initiative.setText(item.getContentAsObject().getInitiative());
 
                     Label name = new Label();
-                    item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals("Name")).findFirst().ifPresentOrElse(combatantName -> {
+                    item.getContentAsObject().getItems().stream().filter(i -> i.getLabel() != null && i.getLabel().equals(FileAccessLayer.getInstance().getSetting(NAME_FIELD_NAME).get())).findFirst().ifPresentOrElse(combatantName -> {
                         name.setText(combatantName.getContent());
                     }, () -> {
                         name.setText("Unbenannt");
