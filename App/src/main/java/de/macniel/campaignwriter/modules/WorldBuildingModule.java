@@ -2,6 +2,7 @@ package de.macniel.campaignwriter.modules;
 
 import de.macniel.campaignwriter.*;
 import de.macniel.campaignwriter.SDK.*;
+import de.macniel.campaignwriter.SDK.types.TextNote;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -23,32 +24,36 @@ import java.util.*;
 
 public class WorldBuildingModule extends ModulePlugin {
 
-    private ObservableList<Note> notes;
-
-    private Note activeNote;
-
+    private final ResourceBundle i18n;
     @FXML
-    public ListView<Note> notesLister;
-
+    public TreeView<Note> notesLister;
     @FXML
     public TextArea editor;
-    private EditorPlugin lastCreationAction;
-
-    @FXML
-    private SplitMenuButton creationMenuButton;
-
-    private ArrayList<EditorPlugin> plugins;
-
     int dragPosition;
     Note dragElement;
-
+    private ObservableList<Note> notes;
+    private Note activeNote;
+    private EditorPlugin lastCreationAction;
+    @FXML
+    private SplitMenuButton creationMenuButton;
+    private ArrayList<EditorPlugin> plugins;
     private Stage stage;
-
     private Callback<UUID, Boolean> requester;
-
-    private ResourceBundle i18n;
     private int lastNote;
+    @FXML
+    private BorderPane editorWindow;
+    @FXML
+    private ToolBar editorToolbar;
 
+
+    public WorldBuildingModule() {
+        super();
+        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
+    }
+
+    public static String getLocalizationBase() {
+        return "i18n.buildingview";
+    }
 
     @Override
     public void requestLoadNote(Callback<UUID, Boolean> cb) {
@@ -60,11 +65,6 @@ public class WorldBuildingModule extends ModulePlugin {
         return "building-view.fxml";
     }
 
-
-    public static String getLocalizationBase() {
-        return "i18n.buildingview";
-    }
-
     @Override
     public String defineViewerHandlerPrefix() {
         return "building";
@@ -74,7 +74,6 @@ public class WorldBuildingModule extends ModulePlugin {
     public String getMenuItemLabel() {
         return i18n.getString("WorldbuildingViewMenuItem");
     }
-
 
     @Override
     public void requestSave() {
@@ -109,9 +108,23 @@ public class WorldBuildingModule extends ModulePlugin {
         registry.registerModule(this);
     }
 
-    public WorldBuildingModule() {
-        super();
-        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
+    private TreeItem<Note> findInTree(TreeItem<Note> root, Note toFind) {
+        System.out.println("Entering " + root + " with " + root.getChildren().size() + " children");
+        if (root.getValue() != null &&
+                root.getValue().getReference().equals(toFind.getReference())) {
+            System.out.println("Found " + root.getValue().getLabel());
+            return root;
+        }
+        if (root.getChildren().size() > 0) {
+            for (TreeItem<Note> child : root.getChildren()) {
+                System.out.println("visting " + child);
+                TreeItem<Note> tmp = findInTree(child, toFind);
+                if (tmp != null) {
+                    return tmp;
+                }
+            }
+        }
+        return null;
     }
 
     @Override
@@ -122,26 +135,27 @@ public class WorldBuildingModule extends ModulePlugin {
             new FileAccessLayerFactory().get().getSetting("lastNote").ifPresent(lastLoadedNote -> {
                 new FileAccessLayerFactory().get().getAllNotes().stream().filter(sn -> sn.getReference().toString().equals(lastLoadedNote)).findFirst().ifPresent(note -> {
                     activeNote = note;
-                    notesLister.getSelectionModel().select(activeNote);
+                    TreeItem<Note> activeItem = findInTree(notesLister.getRoot(), activeNote);
+                    if (activeItem != null) {
+                        notesLister.getSelectionModel().select(activeItem);
+                    }
                 });
             });
         }
     }
+
     @FXML
     public void initialize() {
 
         plugins = Registry.getInstance().getEditorsByPrefix("building");
+        TreeItem tmpTarget = new TreeItem();
+        final boolean[] isTmpTargetSet = {false};
 
-        List<Note> listOfBuildingNotes = new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note.getType().startsWith("building")).toList();
-
-                System.out.println("reading " + listOfBuildingNotes.size() + " of " + new FileAccessLayerFactory().get().getAllNotes().size() + " notes");
-
-        notes = FXCollections.observableArrayList(listOfBuildingNotes);
-
-        notesLister.setItems(notes);
-
+        // before, after, inside?
         notesLister.setCellFactory(listView -> {
-            ListCell<Note> t = new NotesRenderer();
+            TreeCell<Note> t = new NotesTreeRenderer();
+
+            tmpTarget.setGraphic(new Label("Drop here"));
 
             t.onDragOverProperty().set(e -> {
                 dragPosition = t.getIndex();
@@ -150,10 +164,24 @@ public class WorldBuildingModule extends ModulePlugin {
             });
 
             t.onDragExitedProperty().set(e -> {
-
+                if (tmpTarget.getParent() != null && !tmpTarget.getParent().equals(t.getTreeItem())) {
+                    if (t.getTreeItem() != null) {
+                        t.getTreeItem().getChildren().remove(tmpTarget);
+                        isTmpTargetSet[0] = false;
+                    }
+                }
             });
 
             t.onDragEnteredProperty().set(e -> {
+                if (!dragElement.equals(t.getItem()) && t.getTreeItem() != null
+                        && !tmpTarget.equals(t.getTreeItem())
+                        && !tmpTarget.equals(tmpTarget.getParent())) {
+                    if (!isTmpTargetSet[0]) {
+                        t.getTreeItem().getChildren().add(tmpTarget);
+                        isTmpTargetSet[0] = true;
+                        t.getTreeItem().setExpanded(true);
+                    }
+                }
                 dragPosition = t.getIndex();
                 e.acceptTransferModes(TransferMode.MOVE);
                 e.consume();
@@ -161,9 +189,36 @@ public class WorldBuildingModule extends ModulePlugin {
 
             t.onDragDroppedProperty().set(e -> {
                 if (dragElement != null) {
-                    new FileAccessLayerFactory().get().removeNote(dragElement);
-                    new FileAccessLayerFactory().get().addNote(dragPosition, dragElement);
-                    updateLister();
+
+                    TreeItem<Note> draggedItem = findInTree(notesLister.getRoot(), dragElement);
+
+                    if (draggedItem.isLeaf()) {
+                        new FileAccessLayerFactory().get().removeNote(dragElement);
+                        new FileAccessLayerFactory().get().addNote(dragPosition, dragElement);
+                    } else {
+                        // TODO: move the entire subtree
+                    }
+
+                    if (tmpTarget.equals(t.getTreeItem())) {
+                        System.out.println("dropped onto drop-placeholder");
+                        dragElement.setLevel(t.getTreeItem().getParent().getValue().getLevel() + 1);
+
+                        updateLister();
+                    } else if (notesLister.getRoot().equals(t.getTreeItem())) {
+                        System.out.println("dropped onto root");
+                        dragElement.setLevel(0);
+
+                        updateLister();
+                    } else {
+                        System.out.println("dropped onto another element");
+                        dragElement.setLevel(t.getItem().getLevel());
+                        updateLister();
+                    }
+
+                    TreeItem<Note> child = findInTree(notesLister.getRoot(), dragElement);
+                    if (child != null) {
+                        child.getParent().setExpanded(true);
+                    }
                 }
                 e.setDropCompleted(true);
                 e.consume();
@@ -171,6 +226,7 @@ public class WorldBuildingModule extends ModulePlugin {
 
 
             t.onDragDetectedProperty().set(e -> {
+
                 dragElement = t.getItem();
                 dragPosition = t.getIndex();
                 Dragboard db = t.startDragAndDrop(TransferMode.ANY);
@@ -187,8 +243,8 @@ public class WorldBuildingModule extends ModulePlugin {
 
         ContextMenu notesListerMenu = new ContextMenu();
         MenuItem deleteNoteMenuItem = new MenuItem(i18n.getString("DeleteNote"));
-        deleteNoteMenuItem.onActionProperty().set( event -> {
-            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+        deleteNoteMenuItem.onActionProperty().set(event -> {
+            Note contextedNote = notesLister.getSelectionModel().getSelectedItem().getValue();
             lastNote = notesLister.getSelectionModel().getSelectedIndex();
             new FileAccessLayerFactory().get().removeNote(contextedNote);
             try {
@@ -200,8 +256,8 @@ public class WorldBuildingModule extends ModulePlugin {
             notesLister.refresh();
         });
         MenuItem renameNoteMenuItem = new MenuItem(i18n.getString("RenameNote"));
-        renameNoteMenuItem.onActionProperty().set( event -> {
-            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+        renameNoteMenuItem.onActionProperty().set(event -> {
+            Note contextedNote = notesLister.getSelectionModel().getSelectedItem().getValue();
             lastNote = notesLister.getSelectionModel().getSelectedIndex();
 
             TextInputDialog input = new TextInputDialog();
@@ -211,18 +267,18 @@ public class WorldBuildingModule extends ModulePlugin {
             notesLister.refresh();
         });
         MenuItem indentNoteMenuItem = new MenuItem(i18n.getString("IndentNote"));
-        indentNoteMenuItem.onActionProperty().set( event -> {
-            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+        indentNoteMenuItem.onActionProperty().set(event -> {
+            Note contextedNote = notesLister.getSelectionModel().getSelectedItem().getValue();
             lastNote = notesLister.getSelectionModel().getSelectedIndex();
-            contextedNote.setLevel(contextedNote.getLevel()+1);
-            notesLister.refresh();
+            contextedNote.setLevel(contextedNote.getLevel() + 1);
+            updateLister();
         });
         MenuItem deindentNoteMenuItem = new MenuItem(i18n.getString("DeindentNote"));
-        deindentNoteMenuItem.onActionProperty().set( event -> {
-            Note contextedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+        deindentNoteMenuItem.onActionProperty().set(event -> {
+            Note contextedNote = notesLister.getSelectionModel().getSelectedItem().getValue();
             lastNote = notesLister.getSelectionModel().getSelectedIndex();
-            contextedNote.setLevel(contextedNote.getLevel()-1);
-            notesLister.refresh();
+            contextedNote.setLevel(contextedNote.getLevel() - 1);
+            updateLister();
         });
         notesListerMenu.getItems().add(renameNoteMenuItem);
         notesListerMenu.getItems().add(indentNoteMenuItem);
@@ -231,38 +287,51 @@ public class WorldBuildingModule extends ModulePlugin {
         notesListerMenu.getItems().add(deleteNoteMenuItem);
         notesLister.setContextMenu(notesListerMenu);
 
-        notesLister.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Note>() {
+        notesLister.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<TreeItem<Note>>() {
 
             @Override
-            public void changed(ObservableValue observableValue, Note old, Note selected) {
-                if (old != selected && selected != null) {
+            public void changed(ObservableValue<? extends TreeItem<Note>> observable, TreeItem<Note> oldValue, TreeItem<Note> newValue) {
+                if (newValue != null && oldValue != null &&
+                        newValue.getValue() != null &&
+                        oldValue.getValue() != null &&
+                        oldValue.getValue() != newValue.getValue()) {
                     lastNote = notesLister.getSelectionModel().getSelectedIndex();
 
-                    new FileAccessLayerFactory().get().updateSetting("lastNote", selected.getReference().toString());
-                    saveAndLoad(old, selected);
+                    new FileAccessLayerFactory().get().updateSetting("lastNote", newValue.getValue().getReference().toString());
+                    saveAndLoad(oldValue.getValue(), newValue.getValue());
                 }
             }
+
         });
 
         creationMenuButton.getItems().clear();
         plugins.forEach(plugin -> {
             MenuItem tmp = new MenuItem();
             tmp.setText(plugin.defineHandler());
-            tmp.onActionProperty().set( (ActionEvent e) -> {
+            tmp.onActionProperty().set((ActionEvent e) -> {
                 createNote(plugin);
             });
             creationMenuButton.getItems().add(tmp);
         });
-
+        updateLister();
     }
 
     public void createNote(EditorPlugin editor) {
 
         Note newNote = editor.createNewNote();
-
         new FileAccessLayerFactory().get().getAllNotes().add(newNote);
-        notesLister.getItems().add(newNote);
-        notesLister.getSelectionModel().select(newNote);
+
+
+        if (notesLister.getSelectionModel().getSelectedItem() != null &&
+                notesLister.getSelectionModel().getSelectedItem().getValue() != null) {
+            newNote.setLevel(notesLister.getSelectionModel().getSelectedItem().getValue().getLevel() + 1);
+            notesLister.getSelectionModel().getSelectedItem().getChildren().add(new TreeItem<>(newNote));
+            notesLister.getSelectionModel().getSelectedItem().setExpanded(true);
+        } else {
+            newNote.setLevel(0);
+            notesLister.getRoot().getChildren().add(new TreeItem<>(newNote));
+        }
+        //updateLister();
         saveAndLoad(activeNote, newNote);
         lastCreationAction = editor;
         creationMenuButton.setText(newNote.getType());
@@ -291,8 +360,7 @@ public class WorldBuildingModule extends ModulePlugin {
                 }
             });
         }
-        Optional<EditorPlugin> newEditor = Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/"+ newNote.getType());
-
+        Optional<EditorPlugin> newEditor = Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/" + newNote.getType());
 
 
         newEditor.ifPresent(ne -> {
@@ -316,20 +384,15 @@ public class WorldBuildingModule extends ModulePlugin {
     }
 
     @FXML
-    private BorderPane editorWindow;
-
-
-    @FXML
-    private ToolBar editorToolbar;
-
-    @FXML public void createNewNote(ActionEvent event) {
+    public void createNewNote(ActionEvent event) {
         if (lastCreationAction != null) {
             createNote(lastCreationAction);
         }
     }
 
-    @FXML public void deleteCurrentNote() {
-        Note selectedNote = (Note) notesLister.getSelectionModel().getSelectedItem();
+    @FXML
+    public void deleteCurrentNote() {
+        Note selectedNote = notesLister.getSelectionModel().getSelectedItem().getValue();
         if (selectedNote != null) {
             new FileAccessLayerFactory().get().removeNote(selectedNote);
             updateLister();
@@ -342,9 +405,46 @@ public class WorldBuildingModule extends ModulePlugin {
     }
 
     void updateLister() {
-        notesLister.setItems(FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(n -> Registry.getInstance().getEditorByFullName("building/" + n.getType()).isPresent()).toList()));
+        List<Note> listOfBuildingNotes = new FileAccessLayerFactory().get().getAllNotes();
 
-        notesLister.getSelectionModel().select(Math.min(lastNote, notesLister.getItems().size()-1));
+        System.out.println("reading " + listOfBuildingNotes.size() + " of " + new FileAccessLayerFactory().get().getAllNotes().size() + " notes");
+
+        final TreeItem<Note> root = new TreeItem<>();
+
+        final TreeItem<Note>[] lastChild = new TreeItem[]{null};
+        final Note[] previousNote = {null};
+        listOfBuildingNotes.forEach(note -> {
+            System.out.println("prev " + previousNote[0] + " curr " + note);
+            if (previousNote[0] != null && lastChild[0] != null) {
+                if (note.getLevel() == previousNote[0].getLevel()) { // same level add as
+                    TreeItem<Note> tmp = new TreeItem<>(note);
+                    System.out.println("same level as previous, add as sibling");
+                    lastChild[0].getParent().getChildren().add(tmp);
+                    lastChild[0] = tmp;
+                } else {
+                    if (note.getLevel() > previousNote[0].getLevel()) { // child of last
+                        System.out.println("higher than previous, so add as child");
+                        TreeItem<Note> tmp = new TreeItem<>(note);
+                        lastChild[0].getChildren().add(tmp);
+                        lastChild[0] = tmp;
+                    } else { // belongs to parent
+                        System.out.println("lower than previous, so add to previous parents parents child");
+                        TreeItem<Note> tmp = new TreeItem<>(note);
+                        lastChild[0].getParent().getParent().getChildren().add(tmp);
+                        lastChild[0] = tmp;
+                    }
+                }
+            } else {
+                System.out.println("add " + note + " into root");
+                lastChild[0] = new TreeItem<>(note);
+                root.getChildren().add(lastChild[0]);
+            }
+            previousNote[0] = note;
+        });
+        notesLister.setShowRoot(true);
+        notesLister.setRoot(root);
+        root.setExpanded(true);
+
     }
 
     void setStage(Stage stage) {
