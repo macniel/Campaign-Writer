@@ -7,7 +7,9 @@ import de.macniel.campaignwriter.SDK.FileAccessLayerInterface;
 import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.adapters.ColorAdapter;
 import de.macniel.campaignwriter.SDK.types.Actor;
+import de.macniel.campaignwriter.adapters.Point2DAdapter;
 import javafx.application.HostServices;
+import javafx.geometry.Point2D;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 
@@ -36,6 +38,7 @@ public class FileAccessLayer implements FileAccessLayerInterface {
         gsonParser = new GsonBuilder()
                 .registerTypeAdapter(Note.class, new NoteAdapter())
                 .registerTypeAdapter(Color.class, new ColorAdapter())
+                .registerTypeAdapter(Point2D.class, new Point2DAdapter())
                 .create();
 
 

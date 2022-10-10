@@ -13,6 +13,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -32,41 +33,27 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin<MapNote> {
+    private final ResourceBundle i18n;
     private Callback<String, MapNote> onNoteRequest;
     private Callback<String, Boolean> onNoteLoadRequest;
-
     private ScrollPane viewer;
-
     private ImageView backgroundLayer;
-
     private MapPin selectedPin;
-
     private MapNote actualNote;
     private Pane root;
     private PropertySheet mapProperties;
     private TextField labelProp;
     private ColorPicker colorProp;
     private ComboBox<Note> noteReferenceProp;
-
     private Button deletePinButton;
     private VBox mapPropertiesPane;
     private Mode mode;
     private Line rulerLine;
-
     private double rulerStartX;
     private double rulerStartY;
-
     private boolean dragging;
     private double rulerEndX;
-
     private double rulerEndY;
-    private ResourceBundle i18n;
-
-    private enum Mode {
-        POINTER,
-        MEASURE,
-        FOG, SCALE
-    }
 
     public MapNoteEditor() {
         this.i18n = ResourceBundle.getBundle("i18n.buildingview");
@@ -100,7 +87,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
                     actualNote.getContentAsObject().setZoomFactor(1);
                     updateView();
                 });
-                
+
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
@@ -112,7 +99,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
 
         fogModeButton.setToggleGroup(modeGroup);
 
-        modeGroup.selectedToggleProperty().addListener( (observable, oldValue, newValue) -> {
+        modeGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             if (pointerModeButton.equals(newValue)) {
                 this.mode = Mode.POINTER;
             } else if (scaleModeButton.equals(newValue)) {
@@ -160,10 +147,8 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
 
     void updateView() {
         if (actualNote != null) {
-            root.getChildren().clear();
-            root.getChildren().add(backgroundLayer);
             new FileAccessLayerFactory().get().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
-                WritableImage image = new WritableImage(entry.getValue().getPixelReader(), (int)entry.getValue().getWidth(), (int)entry.getValue().getHeight());
+                WritableImage image = new WritableImage(entry.getValue().getPixelReader(), (int) entry.getValue().getWidth(), (int) entry.getValue().getHeight());
                 if (actualNote.getContentAsObject().getFog() == null) {
                     actualNote.getContentAsObject().setFog(new ArrayList<>());
                 }
@@ -171,33 +156,19 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
 
                     int fogColor = 50 << 24;
 
-                    image.getPixelWriter().setArgb((int)point.getX(), (int)point.getY(), fogColor);
+                    image.getPixelWriter().setArgb((int) point.getX(), (int) point.getY(), fogColor);
 
                 });
 
-                backgroundLayer.imageProperty().set(image);
-                viewer.setScaleZ(actualNote.getContentAsObject().getZoomFactor());
+                if (backgroundLayer.getImage() == null || !backgroundLayer.getImage().equals(image)) {
+                    backgroundLayer.imageProperty().set(image);
+                    System.out.println("recovered " + actualNote.getContentAsObject().getScrollPositionX() + " v " + actualNote.getContentAsObject().getScrollPositionY());
+                    viewer.setHvalue(actualNote.getContentAsObject().getScrollPositionX());
+                    viewer.setVvalue(actualNote.getContentAsObject().getScrollPositionY());
+                }
             });
 
 
-           
-            BorderPane bp = (BorderPane) viewer.getParent();
-            viewer.setContent(null);
-            bp.setCenter(null);
-            viewer = new ScrollPane();
-            viewer.setContent(root);
-
-            viewer.onScrollProperty().set(scrollEvent -> {
-
-                actualNote.getContentAsObject().setScrollPositionX(actualNote.getContentAsObject().getScrollPositionX() + scrollEvent.getDeltaX());
-                actualNote.getContentAsObject().setScrollPositionY(actualNote.getContentAsObject().getScrollPositionY() + scrollEvent.getDeltaY());
-            });
-            viewer.setPannable(true);
-
-            viewer.setHvalue(actualNote.getContentAsObject().getScrollPositionX());
-            viewer.setVvalue(actualNote.getContentAsObject().getScrollPositionY());
-
-            bp.setCenter(viewer);
             refreshDragAndDropHandler();
 
             if (actualNote.getContentAsObject().getPins() == null) {
@@ -209,8 +180,8 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
 
     double getDistance(double sX, double sY, double eX, double eY) {
         return Math.sqrt(
-                Math.pow(( Math.max(sX, eX) - Math.min(eX, sX) ), 2) +
-                        Math.pow(( Math.max(sY, eY) - Math.min(eY, sY) ), 2));
+                Math.pow((Math.max(sX, eX) - Math.min(eX, sX)), 2) +
+                        Math.pow((Math.max(sY, eY) - Math.min(eY, sY)), 2));
 
     }
 
@@ -220,12 +191,22 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         viewer = new ScrollPane();
         root = new Pane();
         backgroundLayer = new ImageView();
-        root.getChildren().add(backgroundLayer);
+        //root.getChildren().add(backgroundLayer);
         backgroundLayer.setX(0);
         backgroundLayer.setY(0);
-        viewer.setContent(root);
+        viewer.setContent(backgroundLayer);
+        System.out.println("everything go");
+        viewer.hvalueProperty().addListener(scrollEvent -> {
+            System.out.println("hvalue changed " + viewer.getHvalue() + " v " + viewer.getVvalue());
+            actualNote.getContentAsObject().setScrollPositionX(viewer.getHvalue());
+        });
+        viewer.vvalueProperty().addListener(scrollEvent -> {
+            System.out.println("vvalue changed " + viewer.getHvalue() + " v " + viewer.getVvalue());
+            actualNote.getContentAsObject().setScrollPositionY(viewer.getVvalue());
+        });
+        viewer.setPannable(true);
 
-        root.setOnMouseMoved(e -> {
+        backgroundLayer.setOnMouseMoved(e -> {
             if (dragging) {
                 dragging = false;
 
@@ -249,7 +230,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
             }
         });
 
-        root.setOnMouseDragged(e -> {
+        backgroundLayer.setOnMouseDragged(e -> {
             switch (mode) {
                 case FOG -> {
                     System.out.println(e.getButton());
@@ -298,7 +279,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
             }
         });
 
-        root.setOnMouseClicked(e -> {
+        backgroundLayer.setOnMouseClicked(e -> {
             switch (mode) {
                 case POINTER -> {
                     if (e.getButton() == MouseButton.SECONDARY) {
@@ -316,7 +297,8 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
                         mapPropertiesPane.setVisible(false);
                     }
                 }
-                case SCALE -> {}
+                case SCALE -> {
+                }
             }
         });
 
@@ -380,7 +362,6 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         populateNoteReferenceProp();
         refreshDragAndDropHandler();
         this.mode = Mode.POINTER;
-
         return bp;
     }
 
@@ -411,8 +392,8 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         Button pinButton = new Button("", new FontIcon("icm-location:32:" + pin.getColor().toString()));
         pinButton.setBackground(Background.EMPTY);
         pinButton.setBorder(Border.EMPTY);
-        pinButton.setLayoutX(pin.getX() - (pinSize/2));
-        pinButton.setLayoutY(pin.getY() - (pinSize/2));
+        pinButton.setLayoutX(pin.getX() - (pinSize / 2));
+        pinButton.setLayoutY(pin.getY() - (pinSize / 2));
         pinButton.setPrefWidth(pinSize);
         pinButton.setPrefHeight(pinSize);
         pinButton.setCursor(Cursor.HAND);
@@ -432,7 +413,9 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
                 mapPropertiesPane.setVisible(false);
             }
         });
+
         pinButton.setTooltip(p);
+        // FIXME: cant be placed anymore since root no longer is part of the scene graph, draw directly onto backgroundLayer instead
         root.getChildren().add(pinButton);
     }
 
@@ -467,7 +450,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
                 ImageView view = new ImageView(entry.getValue());
 
                 view.setPreserveRatio(true);
-                view.setFitHeight(view.getImage().getHeight() /2);
+                view.setFitHeight(view.getImage().getHeight() / 2);
 
                 view.onMouseClickedProperty().set(e -> {
                     if (e.getClickCount() == 2) {
@@ -505,9 +488,15 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         registry.registerType("map", MapNote.class);
     }
 
-
     @Override
     public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
 
+    }
+
+
+    private enum Mode {
+        POINTER,
+        MEASURE,
+        FOG, SCALE
     }
 }
