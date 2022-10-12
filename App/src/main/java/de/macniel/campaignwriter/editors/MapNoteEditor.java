@@ -54,6 +54,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
     private boolean dragging;
     private double rulerEndX;
     private double rulerEndY;
+    private Button selectedPinButton;
 
     public MapNoteEditor() {
         this.i18n = ResourceBundle.getBundle("i18n.buildingview");
@@ -147,6 +148,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
 
     void updateView() {
         if (actualNote != null) {
+            System.out.println("updating view");
             new FileAccessLayerFactory().get().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
                 WritableImage image = new WritableImage(entry.getValue().getPixelReader(), (int) entry.getValue().getWidth(), (int) entry.getValue().getHeight());
                 if (actualNote.getContentAsObject().getFog() == null) {
@@ -191,17 +193,15 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         viewer = new ScrollPane();
         root = new Pane();
         backgroundLayer = new ImageView();
-        //root.getChildren().add(backgroundLayer);
+        root.getChildren().add(backgroundLayer);
         backgroundLayer.setX(0);
         backgroundLayer.setY(0);
-        viewer.setContent(backgroundLayer);
+        viewer.setContent(root);
         System.out.println("everything go");
         viewer.hvalueProperty().addListener(scrollEvent -> {
-            System.out.println("hvalue changed " + viewer.getHvalue() + " v " + viewer.getVvalue());
             actualNote.getContentAsObject().setScrollPositionX(viewer.getHvalue());
         });
         viewer.vvalueProperty().addListener(scrollEvent -> {
-            System.out.println("vvalue changed " + viewer.getHvalue() + " v " + viewer.getVvalue());
             actualNote.getContentAsObject().setScrollPositionY(viewer.getVvalue());
         });
         viewer.setPannable(true);
@@ -350,6 +350,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         deletePinButton.onActionProperty().set(e -> {
             if (selectedPin != null) {
                 actualNote.getContentAsObject().getPins().remove(selectedPin);
+                root.getChildren().remove(selectedPinButton);
                 selectedPin = null;
                 updateView();
                 mapPropertiesPane.setVisible(false);
@@ -381,10 +382,14 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         if (selectedPin.getNoteReference() != null) {
             noteReferenceProp.getSelectionModel().select(onNoteRequest.call(selectedPin.getNoteReference().toString()));
         }
+
+        colorProp.setValue(selectedPin.getColor());
+
         mapPropertiesPane.setVisible(true);
     }
 
     void renderPin(MapPin pin) {
+        System.out.println("render " + pin);
         double pinSize = 32 * actualNote.getContentAsObject().getZoomFactor();
         if (pin.getColor() == null) {
             pin.setColor(Color.RED);
@@ -405,6 +410,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         pinButton.onMouseClickedProperty().set(e -> {
             if (e.getButton() == MouseButton.SECONDARY) {
                 selectedPin = pin;
+                selectedPinButton = pinButton;
                 updateEditor();
             } else {
                 if (pin.getNoteReference() != null) {
