@@ -34,6 +34,7 @@ import java.util.ResourceBundle;
 
 public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin<MapNote> {
     private final ResourceBundle i18n;
+    MapPin draggedElement;
     private Callback<String, MapNote> onNoteRequest;
     private Callback<String, Boolean> onNoteLoadRequest;
     private ScrollPane viewer;
@@ -205,7 +206,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
             actualNote.getContentAsObject().setScrollPositionY(viewer.getVvalue());
         });
         viewer.setPannable(true);
-
+/*
         backgroundLayer.setOnMouseMoved(e -> {
             if (dragging) {
                 dragging = false;
@@ -228,8 +229,8 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
                 }
 
             }
-        });
-
+        });*/
+/*
         backgroundLayer.setOnMouseDragged(e -> {
             switch (mode) {
                 case FOG -> {
@@ -277,7 +278,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
                     }
                 }
             }
-        });
+        });*/
 
         backgroundLayer.setOnMouseClicked(e -> {
             switch (mode) {
@@ -380,7 +381,9 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         labelProp.setText(selectedPin.getLabel());
 
         if (selectedPin.getNoteReference() != null) {
-            noteReferenceProp.getSelectionModel().select(onNoteRequest.call(selectedPin.getNoteReference().toString()));
+            new FileAccessLayerFactory().get().findByReference(selectedPin.getNoteReference()).ifPresent(note -> {
+                noteReferenceProp.getSelectionModel().select(note);
+            });
         }
 
         colorProp.setValue(selectedPin.getColor());
@@ -420,8 +423,31 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
             }
         });
 
+        backgroundLayer.onDragEnteredProperty().set(e -> {
+
+            System.out.println("dragging");
+        });
+
+        backgroundLayer.onDragDroppedProperty().set(e -> {
+            e.acceptTransferModes(TransferMode.MOVE);
+            System.out.println("Drag ended: " + e.getX() + " " + e.getY());
+            if (draggedElement != null) {
+                draggedElement.setX(e.getX());
+                draggedElement.setY(e.getY());
+                updateView();
+            }
+
+        });
+
+        pinButton.onDragDetectedProperty().set(e -> {
+            System.out.println("Drag detected");
+            pinButton.startDragAndDrop(TransferMode.MOVE);
+
+            draggedElement = pin;
+        });
+
+
         pinButton.setTooltip(p);
-        // FIXME: cant be placed anymore since root no longer is part of the scene graph, draw directly onto backgroundLayer instead
         root.getChildren().add(pinButton);
     }
 
