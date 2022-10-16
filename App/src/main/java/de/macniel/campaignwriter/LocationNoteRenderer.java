@@ -12,7 +12,7 @@ public final class LocationNoteRenderer extends ListCell<LocationNote> {
     @Override
     protected void updateItem(LocationNote note, boolean empty) {
         super.updateItem(note, empty);
-        if (empty) {
+        if (empty || note == null) {
             setGraphic(null);
         } else {
             notesController.setItem(note);

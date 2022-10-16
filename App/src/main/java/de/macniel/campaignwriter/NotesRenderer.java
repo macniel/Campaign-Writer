@@ -12,7 +12,7 @@ public final class NotesRenderer extends ListCell<Note> {
     @Override
     protected void updateItem(Note note, boolean empty) {
         super.updateItem(note, empty);
-        if (empty) {
+        if (empty || note == null) {
             setGraphic(null);
         } else {
             notesController.setItem(note);

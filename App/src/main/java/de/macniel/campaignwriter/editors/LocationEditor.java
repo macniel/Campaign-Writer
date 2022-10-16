@@ -1,6 +1,8 @@
 package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.FileAccessLayer;
+import de.macniel.campaignwriter.LocationNoteRenderer;
+import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.SDK.types.LocationNote;
 import javafx.collections.FXCollections;
@@ -9,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
@@ -20,18 +23,16 @@ import java.util.ResourceBundle;
 
 public class LocationEditor extends EditorPlugin<LocationNote> implements ViewerPlugin<LocationNote> {
 
+    private final ResourceBundle i18n;
     LocationNote actualNote;
-
     private TextField locationNameProp;
     private ComboBox<Note> pictureProp;
     private TextArea historyProp;
     private TextArea descriptionProp;
     private TextArea ambianceProp;
-    private ComboBox<Note> parentLocationProp;
+    private ComboBox<LocationNote> parentLocationProp;
     private TextField locationCanonicalNameProp;
-
     private Callback onNoteLoadRequest;
-    private ResourceBundle i18n;
 
     public LocationEditor() {
         this.i18n = ResourceBundle.getBundle("i18n.buildingview");
@@ -77,6 +78,8 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
         parentLocationPropLineLabel.setPrefWidth(120);
         parentLocationPropLineLabel.setPrefWidth(120);
         parentLocationProp = new ComboBox<>();
+        parentLocationProp.setButtonCell(new LocationNoteRenderer());
+        parentLocationProp.setCellFactory(listView -> new LocationNoteRenderer());
         parentLocationPropLine.getChildren().addAll(parentLocationPropLineLabel, parentLocationProp);
 
         HBox ambiancePropLine = new HBox();
@@ -146,7 +149,7 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
 
     private void updateView() {
         if (actualNote != null) {
-            List<Note> locationNotes = new ArrayList<>(FileAccessLayer
+            List<LocationNote> locationNotes = new ArrayList<>(FileAccessLayer
                     .getInstance()
                     .getAllNotes()
                     .stream()
@@ -154,12 +157,13 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
                     .filter(n -> {
                         return n.getType().equals("location");
                     })
+                    .map(n -> (LocationNote) n)
                     .filter(n -> n != actualNote)
                     .toList());
             locationNotes.add(0, null);
             parentLocationProp.setItems(FXCollections.observableArrayList(locationNotes));
             new FileAccessLayerFactory().get().findByReference(actualNote.getContentAsObject().getParentLocation()).ifPresent(parentLocation -> {
-                parentLocationProp.getSelectionModel().select(parentLocation);
+                parentLocationProp.getSelectionModel().select((LocationNote) parentLocation);
             });
 
             locationNameProp.setText(actualNote.getContentAsObject().getName());

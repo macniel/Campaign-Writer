@@ -35,6 +35,10 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
     private TextArea longDescriptionProp;
     private Callback<String, Boolean> requester;
 
+    public SceneEditor() {
+        this.i18n = ResourceBundle.getBundle("i18n.buildingview");
+    }
+
     @Override
     public String defineHandler() {
         return "building/scene";
@@ -47,10 +51,6 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
         t.setVisible(false);
     }
 
-    public SceneEditor() {
-        this.i18n = ResourceBundle.getBundle("i18n.buildingview");
-    }
-
     @Override
     public Node defineEditor() {
         VBox box = new VBox();
@@ -61,7 +61,7 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
         shortDescriptionPropLine.getChildren().add(shortDescriptionPropLineLabel);
         shortDescriptionProp = new TextField();
 
-        shortDescriptionProp.textProperty().addListener( (observable, oldText, newText) -> {
+        shortDescriptionProp.textProperty().addListener((observable, oldText, newText) -> {
             actualNote.getContentAsObject().setShortDescription(newText);
         });
         shortDescriptionPropLine.getChildren().add(shortDescriptionProp);
@@ -76,9 +76,11 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
         ObservableList<LocationNote> locations = FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(Objects::nonNull).filter(note -> note.getType().equals("location")).map(note -> (LocationNote) note).toList());
 
         locationProp = new ComboBox<>(locations);
+
         locationProp.getSelectionModel().clearSelection();
 
         locationProp.setCellFactory(noteListView -> new LocationNoteRenderer());
+        locationProp.setButtonCell(new LocationNoteRenderer());
         locationProp.getSelectionModel().selectedItemProperty().addListener((observableValue, note, newLocation) -> {
             actualNote.getContentAsObject().setLocation(newLocation.getReference());
         });
@@ -97,7 +99,7 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
         actorListProp = new ListView<>(actors);
         actorListProp.setCellFactory(noteListView -> new ActorNoteRenderer());
         actorListProp.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        actorListProp.getSelectionModel().selectedItemProperty().addListener( (observable, oldValue, newValue) -> {
+        actorListProp.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             actualNote.getContentAsObject().setActors(actorListProp.getSelectionModel().getSelectedItems().stream().map(actor -> actor.getReference()).toList());
         });
 
@@ -105,7 +107,6 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
         actorListProp.setMinHeight(32);
         actorListProp.setMaxHeight(32);
         HBox.setHgrow(actorListProp, Priority.ALWAYS);
-
 
 
         actorListPropLine.getChildren().add(actorListProp);
@@ -145,8 +146,8 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
 
             if (actualNote.getContentAsObject().getLocation() != null) {
                 new FileAccessLayerFactory().get().findByReference(actualNote.getContentAsObject().getLocation()).ifPresent(location -> {
-                        locationProp.getSelectionModel().clearSelection();
-                        locationProp.getSelectionModel().select((LocationNote) location);
+                    locationProp.getSelectionModel().clearSelection();
+                    locationProp.getSelectionModel().select((LocationNote) location);
                 });
             }
             MultipleSelectionModel<ActorNote> selectionModel = actorListProp.getSelectionModel();
