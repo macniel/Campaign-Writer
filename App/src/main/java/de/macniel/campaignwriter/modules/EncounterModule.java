@@ -22,20 +22,24 @@ import javafx.util.Callback;
 
 public class EncounterModule extends ModulePlugin {
     private final ResourceBundle i18n;
+    EncounterNote activeNote;
+    List<EncounterNote> encounters;
     @FXML
     private ListView<EncounterNote> notesLister;
     @FXML
     private ToolBar editorToolbar;
-
     @FXML
     private BorderPane editorWindow;
-
     private Callback<UUID, Boolean> requester;
-
-    EncounterNote activeNote;
-
-    List<EncounterNote> encounters;
     private Stage stage;
+
+    public EncounterModule() {
+        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
+    }
+
+    public static String getLocalizationBase() {
+        return "i18n.encounters";
+    }
 
     @Override
     public String getPathToFxmlDefinition() {
@@ -93,8 +97,9 @@ public class EncounterModule extends ModulePlugin {
         this.requester = cb;
     }
 
-    public static String getLocalizationBase() {
-        return "i18n.encounters";
+    @Override
+    public void openNote(Note toOpen) {
+        saveAndLoad(null, (EncounterNote) toOpen);
     }
 
     @Override
@@ -102,18 +107,13 @@ public class EncounterModule extends ModulePlugin {
         return "encounter";
     }
 
-    public EncounterModule() {
-        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
-    }
-
-
     @FXML
     public void initialize() {
 
         notesLister.setCellFactory(noteListView -> new EncounterNoteRenderer());
 
 
-        notesLister.getSelectionModel().selectedItemProperty().addListener( (observableValue, oldNote, newNote) -> {
+        notesLister.getSelectionModel().selectedItemProperty().addListener((observableValue, oldNote, newNote) -> {
             if (newNote != null) {
                 activeNote = newNote;
                 new FileAccessLayerFactory().get().updateSetting("lastNote", newNote.getReference().toString());
@@ -139,10 +139,11 @@ public class EncounterModule extends ModulePlugin {
                 }
                 try {
                     new FileAccessLayerFactory().get().saveToFile();
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                }
             });
         }
-        Optional<EditorPlugin> newEditor = Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/"+ newNote.getType());
+        Optional<EditorPlugin> newEditor = Registry.getInstance().getEditorByFullName(this.defineViewerHandlerPrefix() + "/" + newNote.getType());
         System.out.println("found editor " + newEditor + " for requested type " + this.defineViewerHandlerPrefix() + "/" + newNote.getType());
 
 

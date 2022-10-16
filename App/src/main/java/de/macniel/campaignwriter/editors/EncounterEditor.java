@@ -21,11 +21,10 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
+import org.kordamp.ikonli.javafx.FontIcon;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public class EncounterEditor extends EditorPlugin<EncounterNote> implements ViewerPlugin<EncounterNote>, Configurable {
@@ -377,7 +376,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
     }
 
     @Override
-    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
+    public void setOnNoteLoadRequest(Callback<UUID, Boolean> stringBooleanCallback) {
 
     }
 
@@ -443,16 +442,60 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
     @Override
     public Node getStandaloneVersion(EncounterNote t, Stage wnd) {
         BorderPane bp = new BorderPane();
+
         VBox info = new VBox();
         info.getChildren().add(new Label(t.getContentAsObject().getEncounterName()));
         bp.setTop(info);
 
         ListView<CombatantNote> combatants = new ListView<>();
-        bp.setLeft(combatants);
+        ButtonBar combatantsButtons = new ButtonBar();
+
+        Button sortCombatantsByInitiative = new Button("", new FontIcon("icm-sort-numberic-desc"));
+        Button addCombatantStandIn = new Button("", new FontIcon("icm-plus"));
+
+        combatantsButtons.getButtons().addAll(sortCombatantsByInitiative, addCombatantStandIn);
 
         List<CombatantNote> list = t.getContentAsObject().getCombatants();
+        AtomicReference<ObservableList<CombatantNote>> observableList = new AtomicReference<>(FXCollections.observableArrayList(list));
 
-        combatants.setItems(FXCollections.observableArrayList(list));
+        sortCombatantsByInitiative.onActionProperty().set(e -> {
+            combatants.setItems(combatants.getItems().sorted((a, b) ->
+                    Integer.parseInt(b.getContentAsObject().initiative) - Integer.parseInt(a.getContentAsObject().initiative)
+            ));
+        });
+
+        addCombatantStandIn.onActionProperty().set(e -> {
+            TextInputDialog newName = new TextInputDialog();
+            newName.showAndWait();
+            if (newName.getResult() != null) {
+                CombatantNote standIn = new CombatantNote();
+                standIn.label = newName.getResult();
+                ActorNoteItem nameProp = new ActorNoteItem();
+                nameProp.setType(ActorNoteItem.ActorNoteItemType.STRING);
+                nameProp.setLabel(NAME_FIELD_NAME);
+                nameProp.setContent(newName.getResult());
+                standIn.getContentAsObject().getItems().add(nameProp);
+                ActorNoteItem hitpointsProp = new ActorNoteItem();
+                hitpointsProp.setType(ActorNoteItem.ActorNoteItemType.RESOURCE);
+                hitpointsProp.setLabel(HITPOINTS_FIELD_NAME);
+                standIn.getContentAsObject().getItems().add(hitpointsProp);
+                ActorNoteItem portraitProp = new ActorNoteItem();
+                portraitProp.setType(ActorNoteItem.ActorNoteItemType.IMAGE);
+                portraitProp.setLabel(PORTRAIT_FIELD_NAME);
+                standIn.getContentAsObject().getItems().add(portraitProp);
+                t.getContentAsObject().getCombatants().add(standIn);
+
+                combatants.setItems(FXCollections.observableArrayList(t.getContentAsObject().getCombatants()));
+            }
+
+        });
+
+        BorderPane combatantsPane = new BorderPane();
+        combatantsPane.setCenter(combatants);
+        combatantsPane.setBottom(combatantsButtons);
+        bp.setLeft(combatantsPane);
+
+        combatants.setItems(observableList.get());
 
         combatants.setCellFactory(l -> new ListCell<>() {
             @Override
@@ -505,7 +548,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
             Registry.getInstance().getViewerBySuffix("combatant").ifPresentOrElse(viewer -> {
                 System.out.println("rendering with " + viewer.defineHandler());
-                bp.setCenter(viewer.getPreviewVersionOf(newValue));
+                bp.setCenter(new ScrollPane(viewer.getPreviewVersionOf(newValue)));
             }, () -> {
                 System.err.println("no viewer registered for type " + newValue.getType());
             });

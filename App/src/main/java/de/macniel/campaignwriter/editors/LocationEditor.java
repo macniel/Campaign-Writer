@@ -2,7 +2,6 @@ package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.LocationNoteRenderer;
-import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.SDK.types.LocationNote;
 import javafx.collections.FXCollections;
@@ -11,15 +10,11 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class LocationEditor extends EditorPlugin<LocationNote> implements ViewerPlugin<LocationNote> {
 
@@ -32,7 +27,7 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
     private TextArea ambianceProp;
     private ComboBox<LocationNote> parentLocationProp;
     private TextField locationCanonicalNameProp;
-    private Callback onNoteLoadRequest;
+    private Callback<UUID, Boolean> requester;
 
     public LocationEditor() {
         this.i18n = ResourceBundle.getBundle("i18n.buildingview");
@@ -51,8 +46,8 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
     }
 
     @Override
-    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
-
+    public void setOnNoteLoadRequest(Callback<UUID, Boolean> stringBooleanCallback) {
+        this.requester = stringBooleanCallback;
     }
 
     @Override

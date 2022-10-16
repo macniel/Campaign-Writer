@@ -23,7 +23,25 @@ public class SessionModule extends ModulePlugin {
 
     private final ResourceBundle i18n;
     public ToolBar toolBar;
+    int dragPosition;
+    SessionNote dragElement;
     private Callback<UUID, Boolean> onNoteLoadRequest;
+    @SuppressWarnings("unused")
+    private Callback<UUID, Note> requester;
+    @FXML
+    private ListView<SessionNote> notesLister;
+    private ObservableList<SessionNote> notes;
+    private SessionNote activeNote;
+    @FXML
+    private ScrollPane scroller;
+
+    public SessionModule() {
+        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
+    }
+
+    public static String getLocalizationBase() {
+        return "i18n.sessions";
+    }
 
     @Override
     public void requestLoadNote(Callback<UUID, Boolean> cb) {
@@ -31,21 +49,29 @@ public class SessionModule extends ModulePlugin {
     }
 
     @Override
+    public void openNote(Note toOpen) {
+        activeNote = (SessionNote) toOpen;
+        new FileAccessLayerFactory().get().updateSetting("lastNote", toOpen.getReference().toString());
+
+        Registry.getInstance().getEditorByFullName("session/session").ifPresent(editorPlugin -> {
+            editorPlugin.prepareToolbar(toolBar, null);
+            Node editor = editorPlugin.defineEditor();
+
+            scroller.setContent(editor);
+            scroller.setFitToWidth(true);
+            editorPlugin.setOnNoteLoadRequest(this.onNoteLoadRequest);
+            editorPlugin.defineLoadCallback().call(toOpen);
+        });
+    }
+
+    @Override
     public String getPathToFxmlDefinition() {
         return "session-view.fxml";
     }
 
-    public static String getLocalizationBase() {
-        return "i18n.sessions";
-    }
-
-    public SessionModule() {
-        this.i18n = ResourceBundle.getBundle(getLocalizationBase());
-    }
-
     @Override
     public String getMenuItemLabel() {
-        return  i18n.getString("SessionViewMenuItem");
+        return i18n.getString("SessionViewMenuItem");
     }
 
     @Override
@@ -76,7 +102,8 @@ public class SessionModule extends ModulePlugin {
             }
             try {
                 new FileAccessLayerFactory().get().saveToFile();
-            } catch (IOException e) {}
+            } catch (IOException e) {
+            }
         });
     }
 
@@ -89,23 +116,6 @@ public class SessionModule extends ModulePlugin {
     public String defineViewerHandlerPrefix() {
         return "session";
     }
-
-    @SuppressWarnings("unused")
-    private Callback<UUID, Note> requester;
-
-    @FXML
-    private ListView<SessionNote> notesLister;
-
-    private ObservableList<SessionNote> notes;
-
-    private SessionNote activeNote;
-
-    @FXML
-    private ScrollPane scroller;
-
-    int dragPosition;
-
-    SessionNote dragElement;
 
     @FXML
     public void initialize() {
@@ -144,7 +154,7 @@ public class SessionModule extends ModulePlugin {
 
 
             t.onDragDetectedProperty().set(e -> {
-                dragElement = (SessionNote) t.getItem();
+                dragElement = t.getItem();
                 dragPosition = t.getIndex();
                 Dragboard db = t.startDragAndDrop(TransferMode.ANY);
                 ClipboardContent c = new ClipboardContent();

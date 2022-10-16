@@ -1,7 +1,6 @@
 package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.ActorNoteRenderer;
-import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.LocationNoteRenderer;
 import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.SDK.types.Actor;
@@ -22,18 +21,19 @@ import javafx.util.Callback;
 
 import java.util.Objects;
 import java.util.ResourceBundle;
+import java.util.UUID;
 
 public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin<SceneNote> {
 
+    final String NAME_FIELD_NAME = "Name";
     private final ResourceBundle i18n;
-
     SceneNote actualNote;
 
     private ComboBox<LocationNote> locationProp;
     private TextField shortDescriptionProp;
     private ListView<ActorNote> actorListProp;
     private TextArea longDescriptionProp;
-    private Callback<String, Boolean> requester;
+    private Callback<UUID, Boolean> requester;
 
     public SceneEditor() {
         this.i18n = ResourceBundle.getBundle("i18n.buildingview");
@@ -180,14 +180,15 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
         introductionLabel.setText(t.getContentAsObject().getShortDescription());
 
         t.getContentAsObject().getActors().forEach(actorRef -> {
-            new FileAccessLayerFactory().get().findByReference(actorRef).ifPresent(actor -> {
+            FileAccessLayerInterface fal = new FileAccessLayerFactory().get();
+            fal.findByReference(actorRef).ifPresent(actor -> {
                 Actor a = (Actor) actor.getContentAsObject();
-                a.getItems().stream().filter(e -> e.getLabel() != null && e.getLabel().equals("Name")).findFirst().ifPresent(name -> {
+                a.getItems().stream().filter(e -> e.getLabel() != null && e.getLabel().equals(fal.getSetting(NAME_FIELD_NAME).get())).findFirst().ifPresent(name -> {
                     Label actorLink = new Label(name.getContent());
                     actorLink.getStyleClass().add("link");
                     actorLink.onMouseClickedProperty().set(ev -> {
                         if (requester != null) {
-                            requester.call(actorRef.toString());
+                            requester.call(actorRef);
                         }
                     });
                     actors.getChildren().add(actorLink);
@@ -218,7 +219,7 @@ public class SceneEditor extends EditorPlugin<SceneNote> implements ViewerPlugin
     }
 
     @Override
-    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
+    public void setOnNoteLoadRequest(Callback<UUID, Boolean> stringBooleanCallback) {
         this.requester = stringBooleanCallback;
     }
 }

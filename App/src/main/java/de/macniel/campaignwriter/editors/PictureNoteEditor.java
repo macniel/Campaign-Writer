@@ -1,6 +1,5 @@
 package de.macniel.campaignwriter.editors;
 
-import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.SDK.types.PictureNote;
 import javafx.geometry.Rectangle2D;
@@ -23,11 +22,13 @@ import javafx.util.Callback;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.File;
+import java.util.UUID;
 
 public class PictureNoteEditor extends EditorPlugin<PictureNote> implements ViewerPlugin<PictureNote> {
     private ImageView viewer;
 
     private PictureNote actualNote;
+    private Callback<UUID, Boolean> requester;
 
     @Override
     public String defineHandler() {
@@ -89,14 +90,14 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> implements View
                     popoutViewer.imageProperty().set(entry.getValue());
                     double width = Math.min(rect.getWidth(), popoutViewer.imageProperty().get().getWidth());
                     double height = Math.min(rect.getHeight(), popoutViewer.imageProperty().get().getHeight());
-    
+
                     if (width > height) {
                         popoutViewer.setFitHeight(height);
                     } else {
                         popoutViewer.setFitWidth(width);
                     }
                 });
-                
+
 
                 parentNode.setFitToHeight(true);
                 parentNode.setFitToWidth(true);
@@ -176,7 +177,8 @@ public class PictureNoteEditor extends EditorPlugin<PictureNote> implements View
 
 
     @Override
-    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
+    public void setOnNoteLoadRequest(Callback<UUID, Boolean> stringBooleanCallback) {
+        this.requester = stringBooleanCallback;
 
     }
 }

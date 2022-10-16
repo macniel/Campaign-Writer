@@ -1,6 +1,5 @@
 package de.macniel.campaignwriter.editors;
 
-import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.Registry;
 import de.macniel.campaignwriter.SDK.EditorPlugin;
@@ -9,21 +8,24 @@ import de.macniel.campaignwriter.SDK.Note;
 import de.macniel.campaignwriter.SDK.RegistryInterface;
 import de.macniel.campaignwriter.SDK.types.SessionNote;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.UUID;
 
 public class SessionEditor extends EditorPlugin<SessionNote> {
 
@@ -31,7 +33,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
     SessionNote actualNote;
     private ComboBox<Note> sectionProp;
     private VBox scroll;
-    private Callback<String, Boolean> requester;
+    private Callback<UUID, Boolean> requester;
 
 
     public SessionEditor() {
@@ -55,14 +57,16 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
         Label addSection = new Label(i18n.getString("AddSection"));
 
         sectionProp = new ComboBox<>();
-        sectionProp.setCellFactory(view -> new NotesRenderer());
+        sectionProp.setCellFactory(view -> new NotesRenderer(true));
+        sectionProp.setButtonCell(new NotesRenderer(true));
         populateSectionProp();
 
-        sectionProp.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+        sectionProp.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null && oldValue != newValue) {
                 actualNote.getContentAsObject().getNotes().add(newValue.getReference());
-                sectionProp.getSelectionModel().select(null);
+                System.out.println("here?");
                 updateView();
+                // FIXME: needs to be cleared
             }
         });
 
@@ -93,10 +97,13 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
         };
     }
 
-    void populateSectionProp() {
-        List<Note> notes = new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> !note.getType().equals("session")).filter(note -> Registry.getInstance().getViewerBySuffix(note.getType()).isPresent()).toList();
-        sectionProp.setItems(FXCollections.observableArrayList(notes));
-        sectionProp.getSelectionModel().select(null);
+    ObservableList<Note> populateSectionProp() {
+        List<Note> notes = new ArrayList<>(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> !note.getType().equals("session")).filter(note -> Registry.getInstance().getViewerBySuffix(note.getType()).isPresent()).toList());
+        ObservableList<Note> list = FXCollections.observableArrayList(notes);
+
+        sectionProp.setItems(list);
+        //sectionProp.getSelectionModel().select(null);
+        return list;
     }
 
     void updateView() {
@@ -105,7 +112,6 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
 
         actualNote.getContentAsObject().getNotes().forEach(uuid -> {
             new FileAccessLayerFactory().get().findByReference(uuid).ifPresent(note -> {
-
                 Registry.getInstance().getViewerBySuffix(note.getType()).ifPresentOrElse(viewer -> {
 
                     VBox content = new VBox();
@@ -116,7 +122,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
                     content.setFillWidth(true);
                     Node preview = viewer.getPreviewVersionOf(note);
                     if (preview == null) {
-                        throw new NullPointerException();
+                        preview = new Text("Error in rendering preview of note " + note.getReference() + " of type " + note.getType());
                     }
                     VBox.setMargin(preview, new Insets(5, 20, 5, 20));
                     HBox controls = new HBox();
@@ -140,7 +146,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
 
                     openFullNote.onActionProperty().set(e -> {
                         if (requester != null) {
-                            requester.call(uuid.toString());
+                            requester.call(uuid);
                         }
                     });
 
@@ -149,8 +155,16 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
 
 
                         Node standalone = viewer.getStandaloneVersion(note, null);
+                        BorderPane p = new BorderPane();
+                        if (standalone == null) {
+                            p.setCenter(new Label("Error in displaying standalone version for note " + note.getReference() + " as type " + note.getType()));
+                        } else {
+                            p.setCenter(standalone);
+                            VBox.setVgrow(p, Priority.ALWAYS);
+                            HBox.setHgrow(p, Priority.ALWAYS);
+                        }
 
-                        popout.setScene(new Scene(new VBox(standalone)));
+                        popout.setScene(new Scene(p, 400, 300));
 
                         popout.setWidth(400);
                         popout.setHeight(300);
@@ -186,7 +200,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
     }
 
     @Override
-    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
+    public void setOnNoteLoadRequest(Callback<UUID, Boolean> stringBooleanCallback) {
         this.requester = stringBooleanCallback;
     }
 

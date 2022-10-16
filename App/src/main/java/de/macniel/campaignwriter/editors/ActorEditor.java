@@ -1,7 +1,6 @@
 package de.macniel.campaignwriter.editors;
 
 import com.google.gson.stream.JsonWriter;
-import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.SDK.types.Actor;
 import de.macniel.campaignwriter.SDK.types.ActorNote;
@@ -35,17 +34,18 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ResourceBundle;
+import java.util.UUID;
+
 public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin<ActorNote> {
 
-    ActorNote actualNote;
-
-    private ScrollPane editor;
-
-    private ComboBox setTemplateProp;
-
-    private HashMap<String, Actor> actorTemplates;
     private final ResourceBundle i18n;
-
+    ActorNote actualNote;
+    int dragposition;
+    ActorNoteItem dragelement;
+    private ScrollPane editor;
+    private ComboBox setTemplateProp;
+    private HashMap<String, Actor> actorTemplates;
+    private Callback<UUID, Boolean> requester;
 
     public ActorEditor() {
         super();
@@ -63,8 +63,8 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
     }
 
     @Override
-    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
-
+    public void setOnNoteLoadRequest(Callback<UUID, Boolean> stringBooleanCallback) {
+        this.requester = stringBooleanCallback;
     }
 
     @Override
@@ -82,7 +82,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
         previewMode.setToggleGroup(viewMode);
         editMode.setToggleGroup(viewMode);
 
-        viewMode.selectedToggleProperty().addListener( (observableValue, toggle, newValue) -> {
+        viewMode.selectedToggleProperty().addListener((observableValue, toggle, newValue) -> {
             if (previewMode.equals(newValue)) {
                 editor.setContent(getPreviewVersionOf(actualNote));
                 setTemplateProp.setDisable(true);
@@ -108,13 +108,13 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
                 updateActorSheetToTemplate(actorTemplates.get(newValue));
             }
         });
-        
+
         t.getItems().addAll(new Label(i18n.getString("TemplateLabel")), setTemplateProp);
 
         saveAsTemplateButton.onActionProperty().set(event -> {
             saveTemplate(w);
         });
-        
+
         t.getItems().add(saveAsTemplateButton);
 
         t.setVisible(true);
@@ -136,7 +136,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
         saveDialog.setInitialDirectory(Paths.get(System.getProperty("user.home"), ".campaignwriter", "templates").toFile());
         File f = saveDialog.showSaveDialog(owner);
         try (JsonWriter writer = new JsonWriter(new FileWriter(f))) {
-            
+
             new FileAccessLayerFactory().get().getParser().toJson(def, Actor.class, writer);
             writer.flush();
         } catch (IOException e) {
@@ -152,7 +152,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
 
         template.getItems().forEach(templateItem -> {
             actualNote.getContentAsObject().getItems().stream().filter(item ->
-            templateItem.getLabel().equals(item.getLabel())
+                    templateItem.getLabel().equals(item.getLabel())
             ).findFirst().ifPresent(previousValue -> {
                 ActorNoteItem tmp = new ActorNoteItem();
                 tmp.setContent(previousValue.getContent());
@@ -163,7 +163,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
             });
         });
         actualNote.getContentAsObject().setItems(merged);
-        
+
         editor.setContent(getEditableVersion());
     }
 
@@ -176,9 +176,6 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
 
         return editor;
     }
-
-    int dragposition;
-    ActorNoteItem dragelement;
 
     private HBox renderItem(ActorNoteItem item) {
         return renderItem(item, true);
@@ -193,7 +190,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
         });
 
 
-        switch(item.getType()) {
+        switch (item.getType()) {
             case TEXT -> {
                 if (editable) {
                     TextField label = new TextField();
@@ -205,11 +202,11 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
 
                     HBox.setHgrow(texteditor, Priority.ALWAYS);
 
-                    label.textProperty().addListener( (editor, oldText, newText) -> {
+                    label.textProperty().addListener((editor, oldText, newText) -> {
                         item.setLabel(newText);
                     });
 
-                    texteditor.textProperty().addListener( (editor, oldText, newText) -> {
+                    texteditor.textProperty().addListener((editor, oldText, newText) -> {
 
                         item.setContent(newText);
                     });
@@ -404,9 +401,6 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
         VBox lines = new VBox();
         lines.setFillWidth(true);
         if (t != null) {
-            System.out.println("Rendering " + actualNote.getContentAsObject().getItems().size() + " elements");
-
-
             t.getContentAsObject().getItems().forEach(item -> {
                 HBox line = renderItem(item, false);
                 HBox.setHgrow(line, Priority.ALWAYS);
@@ -425,7 +419,7 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
         t.getContentAsObject().getItems().forEach(item -> {
             HBox line = new HBox();
             HBox.setHgrow(line, Priority.ALWAYS);
-            switch(item.getType()) {
+            switch (item.getType()) {
                 case TEXT -> {
                     Label label = new Label();
                     label.setPrefWidth(120);
@@ -571,10 +565,10 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
         newType.setPromptText(i18n.getString("AddPropLine"));
         newType.setPrefWidth(120);
         newType.onActionProperty().set(e -> {
-                ActorNoteItem added = new ActorNoteItem();
-                added.setType(newType.getValue());
-                actualNote.getContentAsObject().getItems().add(added);
-                editor.setContent(getEditableVersion());
+            ActorNoteItem added = new ActorNoteItem();
+            added.setType(newType.getValue());
+            actualNote.getContentAsObject().getItems().add(added);
+            editor.setContent(getEditableVersion());
 
         });
         VBox v = new VBox();

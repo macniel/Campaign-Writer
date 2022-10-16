@@ -1,24 +1,20 @@
 package de.macniel.campaignwriter.editors;
 
-import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.SDK.types.MapNote;
 import de.macniel.campaignwriter.SDK.types.MapPin;
 import javafx.collections.FXCollections;
-import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
-import javafx.scene.shape.StrokeLineCap;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -29,8 +25,8 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.UUID;
 
 public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin<MapNote> {
     private final ResourceBundle i18n;
@@ -56,6 +52,8 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
     private double rulerEndX;
     private double rulerEndY;
     private Button selectedPinButton;
+    private Button updatePinButton;
+    private Callback<UUID, Boolean> requester;
 
     public MapNoteEditor() {
         this.i18n = ResourceBundle.getBundle("i18n.buildingview");
@@ -76,8 +74,8 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         ToggleGroup modeGroup = new ToggleGroup();
 
         ToggleButton scaleModeButton = new ToggleButton("S");
-        ToggleButton pointerModeButton = new ToggleButton("P");
-        ToggleButton fogModeButton = new ToggleButton("F");
+        ToggleButton pointerModeButton = new ToggleButton("", new FontIcon("icm-location"));
+        ToggleButton fogModeButton = new ToggleButton("", new FontIcon("icm-cloud"));
 
         Button loadButton = new Button("", new FontIcon("icm-image"));
         loadButton.onActionProperty().set(e -> {
@@ -149,7 +147,6 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
 
     void updateView() {
         if (actualNote != null) {
-            System.out.println("updating view");
             new FileAccessLayerFactory().get().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
                 WritableImage image = new WritableImage(entry.getValue().getPixelReader(), (int) entry.getValue().getWidth(), (int) entry.getValue().getHeight());
                 if (actualNote.getContentAsObject().getFog() == null) {
@@ -165,7 +162,6 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
 
                 if (backgroundLayer.getImage() == null || !backgroundLayer.getImage().equals(image)) {
                     backgroundLayer.imageProperty().set(image);
-                    System.out.println("recovered " + actualNote.getContentAsObject().getScrollPositionX() + " v " + actualNote.getContentAsObject().getScrollPositionY());
                     viewer.setHvalue(actualNote.getContentAsObject().getScrollPositionX());
                     viewer.setVvalue(actualNote.getContentAsObject().getScrollPositionY());
                 }
@@ -198,7 +194,6 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         backgroundLayer.setX(0);
         backgroundLayer.setY(0);
         viewer.setContent(root);
-        System.out.println("everything go");
         viewer.hvalueProperty().addListener(scrollEvent -> {
             actualNote.getContentAsObject().setScrollPositionX(viewer.getHvalue());
         });
@@ -206,79 +201,6 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
             actualNote.getContentAsObject().setScrollPositionY(viewer.getVvalue());
         });
         viewer.setPannable(true);
-/*
-        backgroundLayer.setOnMouseMoved(e -> {
-            if (dragging) {
-                dragging = false;
-
-                TextInputDialog measuredLength = new TextInputDialog();
-                measuredLength.setTitle(i18n.getString("MeasureLengthDialogTitle"));
-
-                double distance = getDistance(rulerStartX, rulerStartY, rulerEndX, rulerEndY);
-
-                measuredLength.setHeaderText(String.format(i18n.getString("MeasureLengthDialogHint"), distance));
-                Optional<String> result = measuredLength.showAndWait();
-                if (result.isPresent()) {
-
-                    // Skalierungsfaktor = 1 zu X
-                    double uniformedFactor = Double.valueOf(result.get());
-
-                    actualNote.getContentAsObject().scale = uniformedFactor / distance;
-                    root.getChildren().remove(rulerLine);
-                    rulerLine = null;
-                }
-
-            }
-        });*/
-/*
-        backgroundLayer.setOnMouseDragged(e -> {
-            switch (mode) {
-                case FOG -> {
-                    System.out.println(e.getButton());
-                    if (actualNote.getContentAsObject().getFog() == null) {
-                        actualNote.getContentAsObject().setFog(new ArrayList<>());
-                    }
-                    if (e.getButton() == MouseButton.PRIMARY) {
-                        actualNote.getContentAsObject().getFog().add(new Point2D(e.getX(), e.getY()));
-                    } else {
-                        actualNote.getContentAsObject().getFog().stream().filter(p -> p.getX() == e.getX() && p.getY() == e.getY()).findFirst().ifPresent(point -> {
-                            actualNote.getContentAsObject().getFog().remove(point);
-                        });
-                    }
-                    e.consume();
-                    updateView();
-                }
-                case SCALE -> {
-                    System.out.println(dragging + " from " + rulerStartX + "by" + rulerStartY);
-                    if (!dragging) {
-                        rulerStartX = e.getX();
-                        rulerStartY = e.getY();
-                        if (rulerLine != null) {
-                            root.getChildren().remove(rulerLine);
-                        }
-                        rulerLine = new Line();
-                        root.getChildren().add(rulerLine);
-                        rulerLine.setStartX(rulerStartX);
-                        rulerLine.setStartY(rulerStartY);
-                        rulerLine.setStrokeLineCap(StrokeLineCap.ROUND);
-                        rulerLine.setStrokeWidth(2);
-                        rulerLine.setStroke(Color.RED);
-
-                        dragging = true;
-                    } else {
-                        if (rulerLine != null) {
-                            rulerEndX = e.getX();
-                            rulerEndY = e.getY();
-                            rulerLine.setEndX(e.getX());
-                            rulerLine.setEndY(e.getY());
-                            if (actualNote.getContentAsObject().scale != 0) {
-                                double pixelDistance = getDistance(rulerStartX, rulerStartY, rulerEndX, rulerEndY);
-                            }
-                        }
-                    }
-                }
-            }
-        });*/
 
         backgroundLayer.setOnMouseClicked(e -> {
             switch (mode) {
@@ -310,43 +232,38 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         noteReferenceProp = new ComboBox<Note>();
         deletePinButton = new Button(i18n.getString("RemovePin"));
 
+        updatePinButton = new Button("update Pin");
+
 
         mapPropertiesPane.getChildren().add(new Label(i18n.getString("PinLabel")));
         mapPropertiesPane.getChildren().add(labelProp);
 
-        labelProp.onActionProperty().set(e -> {
-            if (selectedPin != null) {
-                selectedPin.setLabel(labelProp.getText());
-                updateView();
-            }
-
-        });
-
         mapPropertiesPane.getChildren().add(new Label(i18n.getString("PinColor")));
         mapPropertiesPane.getChildren().add(colorProp);
-
-        colorProp.onActionProperty().set(e -> {
-            if (selectedPin != null) {
-                selectedPin.setColor(colorProp.getValue());
-                updateView();
-            }
-        });
 
         mapPropertiesPane.getChildren().add(new Label(i18n.getString("PinLink")));
         mapPropertiesPane.getChildren().add(noteReferenceProp);
 
-        noteReferenceProp.onActionProperty().set(e -> {
-            Note selected = noteReferenceProp.getValue();
-            if (selectedPin != null && selected != null) {
-                selectedPin.setNoteReference(selected.getReference());
-                updateView();
-            }
-        });
-
-
         mapPropertiesPane.getChildren().add(new Separator());
 
+        mapPropertiesPane.getChildren().add(updatePinButton);
+
         mapPropertiesPane.getChildren().add(deletePinButton);
+
+        updatePinButton.onActionProperty().set(e -> {
+            if (selectedPin != null) {
+                System.out.println(actualNote.getContentAsObject().getPins().indexOf(selectedPin));
+                if (noteReferenceProp.getValue() != null) {
+                    selectedPin.setNoteReference(noteReferenceProp.getValue().getReference());
+                } else {
+                    selectedPin.setNoteReference(null);
+                }
+                selectedPin.setColor(colorProp.getValue());
+                selectedPin.setLabel(labelProp.getText());
+                updateView();
+                mapPropertiesPane.setVisible(false);
+            }
+        });
 
         deletePinButton.onActionProperty().set(e -> {
             if (selectedPin != null) {
@@ -370,8 +287,9 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
     void populateNoteReferenceProp() {
         List<Note> notes = new FileAccessLayerFactory().get().getAllNotes(); // TODO: this should not be possible, request maincontroller instead
         noteReferenceProp.setItems(FXCollections.observableArrayList(notes));
-
+        noteReferenceProp.getItems().add(0, null);
         noteReferenceProp.setCellFactory(noteListView -> new NotesRenderer());
+        noteReferenceProp.setButtonCell(new NotesRenderer());
 
     }
 
@@ -379,11 +297,16 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         populateNoteReferenceProp();
 
         labelProp.setText(selectedPin.getLabel());
+        System.out.println("null?" + selectedPin.getNoteReference());
 
         if (selectedPin.getNoteReference() != null) {
             new FileAccessLayerFactory().get().findByReference(selectedPin.getNoteReference()).ifPresent(note -> {
                 noteReferenceProp.getSelectionModel().select(note);
             });
+        } else {
+            System.out.println("null");
+            noteReferenceProp.getSelectionModel().clearSelection();
+            noteReferenceProp.setValue(null);
         }
 
         colorProp.setValue(selectedPin.getColor());
@@ -392,7 +315,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
     }
 
     void renderPin(MapPin pin) {
-        System.out.println("render " + pin);
+        System.out.println("render " + pin + " pointing " + pin.getNoteReference());
         double pinSize = 32 * actualNote.getContentAsObject().getZoomFactor();
         if (pin.getColor() == null) {
             pin.setColor(Color.RED);
@@ -411,16 +334,10 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
 
 
         pinButton.onMouseClickedProperty().set(e -> {
-            if (e.getButton() == MouseButton.SECONDARY) {
-                selectedPin = pin;
-                selectedPinButton = pinButton;
-                updateEditor();
-            } else {
-                if (pin.getNoteReference() != null) {
-                    onNoteLoadRequest.call(pin.getNoteReference().toString());
-                }
-                mapPropertiesPane.setVisible(false);
-            }
+            selectedPin = pin;
+            selectedPinButton = pinButton;
+            updateEditor();
+            e.consume();
         });
 
         backgroundLayer.onDragEnteredProperty().set(e -> {
@@ -521,7 +438,8 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
     }
 
     @Override
-    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
+    public void setOnNoteLoadRequest(Callback<UUID, Boolean> stringBooleanCallback) {
+        this.requester = stringBooleanCallback;
 
     }
 

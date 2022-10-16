@@ -39,6 +39,7 @@ public class FileAccessLayer implements FileAccessLayerInterface {
                 .registerTypeAdapter(Note.class, new NoteAdapter())
                 .registerTypeAdapter(Color.class, new ColorAdapter())
                 .registerTypeAdapter(Point2D.class, new Point2DAdapter())
+                .setPrettyPrinting()
                 .create();
 
 

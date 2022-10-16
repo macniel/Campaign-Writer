@@ -19,6 +19,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 
 import java.io.*;
+import java.util.UUID;
 
 public class TextNoteEditor extends EditorPlugin<TextNote> implements ViewerPlugin<TextNote> {
 
@@ -28,6 +29,7 @@ public class TextNoteEditor extends EditorPlugin<TextNote> implements ViewerPlug
     private Callback<String, Note> onNoteRequest;
 
     private TextNote actualNote;
+    private Callback<UUID, Boolean> requester;
 
 
     @Override
@@ -107,7 +109,7 @@ public class TextNoteEditor extends EditorPlugin<TextNote> implements ViewerPlug
                     StringBuffer content = new StringBuffer();
                     String line;
                     while ((line = fis.readLine()) != null) {
-                        content.append(line +"\n");
+                        content.append(line + "\n");
                     }
                     editor.clear();
                     editor.appendText(content.toString());
@@ -169,7 +171,7 @@ public class TextNoteEditor extends EditorPlugin<TextNote> implements ViewerPlug
     }
 
     @Override
-    public void setOnNoteLoadRequest(Callback<String, Boolean> stringBooleanCallback) {
-
+    public void setOnNoteLoadRequest(Callback<UUID, Boolean> stringBooleanCallback) {
+        this.requester = stringBooleanCallback;
     }
 }
