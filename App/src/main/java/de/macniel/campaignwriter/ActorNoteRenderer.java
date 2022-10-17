@@ -1,8 +1,10 @@
 package de.macniel.campaignwriter;
 
 import de.macniel.campaignwriter.SDK.types.ActorNote;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
+import javafx.scene.layout.HBox;
 
 public final class ActorNoteRenderer extends ListCell<ActorNote> {
 
@@ -16,6 +18,7 @@ public final class ActorNoteRenderer extends ListCell<ActorNote> {
             setGraphic(null);
         } else {
             notesController.setItem(note);
+            ((HBox) view).setPadding(Insets.EMPTY);
             setGraphic(view);
         }
     }

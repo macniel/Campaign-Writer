@@ -2,10 +2,7 @@ package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.Registry;
-import de.macniel.campaignwriter.SDK.EditorPlugin;
-import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
-import de.macniel.campaignwriter.SDK.Note;
-import de.macniel.campaignwriter.SDK.RegistryInterface;
+import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.SDK.types.SessionNote;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -22,19 +19,26 @@ import javafx.util.Callback;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.UUID;
+import java.util.*;
 
 public class SessionEditor extends EditorPlugin<SessionNote> {
 
     private final ResourceBundle i18n;
     SessionNote actualNote;
+    Callback<UUID, Boolean> openNoteInStandaloneViewCallback = param -> {
+        Optional<Note> requestedNote = new FileAccessLayerFactory().get().findByReference(param);
+        if (requestedNote.isPresent()) {
+            Registry.getInstance().getViewerBySuffix(requestedNote.get().getType()).ifPresent(subViewer -> {
+                openInStandaloneView(requestedNote.get(), subViewer);
+            });
+            return true;
+        } else {
+            return false;
+        }
+    };
     private ComboBox<Note> sectionProp;
     private VBox scroll;
     private Callback<UUID, Boolean> requester;
-
 
     public SessionEditor() {
         this.i18n = ResourceBundle.getBundle(getLocalizationBase());
@@ -104,6 +108,28 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
         return list;
     }
 
+    void openInStandaloneView(Note note, ViewerPlugin withViewer) {
+        Stage popout = new Stage();
+
+
+        Node standalone = withViewer.getStandaloneVersion(note, null);
+        BorderPane p = new BorderPane();
+        if (standalone == null) {
+            p.setCenter(new Label("Error in displaying standalone version for note " + note.getReference() + " as type " + note.getType()));
+        } else {
+            p.setCenter(standalone);
+            VBox.setVgrow(p, Priority.ALWAYS);
+            HBox.setHgrow(p, Priority.ALWAYS);
+        }
+
+        popout.setScene(new Scene(p, 400, 300));
+
+        popout.setWidth(400);
+        popout.setHeight(300);
+        popout.setTitle(note.getLabel());
+        popout.showAndWait();
+    }
+
     void updateView() {
 
         scroll.getChildren().clear();
@@ -133,6 +159,9 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
                     shareIcon.setIconColor(Color.BLUE);
                     Button popoutNote = new Button(i18n.getString("PopoutNote"), shareIcon);
 
+                    // Intercept notesrequester to open in a new standalone wnd
+                    viewer.setOnNoteLoadRequest(openNoteInStandaloneViewCallback);
+
                     deleteNote.onActionProperty().set(e -> {
                         try {
                             actualNote.getContentAsObject().getNotes().remove(uuid);
@@ -150,26 +179,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
                     });
 
                     popoutNote.onActionProperty().set(e -> {
-                        Stage popout = new Stage();
-
-
-                        Node standalone = viewer.getStandaloneVersion(note, null);
-                        BorderPane p = new BorderPane();
-                        if (standalone == null) {
-                            p.setCenter(new Label("Error in displaying standalone version for note " + note.getReference() + " as type " + note.getType()));
-                        } else {
-                            p.setCenter(standalone);
-                            VBox.setVgrow(p, Priority.ALWAYS);
-                            HBox.setHgrow(p, Priority.ALWAYS);
-                        }
-
-                        popout.setScene(new Scene(p, 400, 300));
-
-                        popout.setWidth(400);
-                        popout.setHeight(300);
-                        popout.setTitle(note.getLabel());
-                        popout.showAndWait();
-
+                        openInStandaloneView(note, viewer);
                     });
 
                     HBox spacer = new HBox();

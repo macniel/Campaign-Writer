@@ -9,17 +9,13 @@ import java.util.function.Consumer;
 
 public class Registry implements RegistryInterface {
 
-    private ArrayList<EditorPlugin> editors = new ArrayList<>();
-
-    private ArrayList<ViewerPlugin> viewers = new ArrayList<>();
-
-    private ArrayList<DataPlugin> dataProviders = new ArrayList<>();
-    private ArrayList<ModulePlugin> modules = new ArrayList<>();
-    private HashMap<String, Class<? extends Note>> noteTypes = new HashMap<>();
-
-    private HashMap<KeyCodeCombination, Consumer<Note>> shortcuts = new HashMap<>();
-
-    private static Registry instance = new Registry();
+    private static final Registry instance = new Registry();
+    private final ArrayList<EditorPlugin> editors = new ArrayList<>();
+    private final ArrayList<ViewerPlugin> viewers = new ArrayList<>();
+    private final ArrayList<DataPlugin> dataProviders = new ArrayList<>();
+    private final ArrayList<ModulePlugin> modules = new ArrayList<>();
+    private final HashMap<String, Class<? extends Note>> noteTypes = new HashMap<>();
+    private final HashMap<KeyCodeCombination, Consumer<Note>> shortcuts = new HashMap<>();
 
     public static Registry getInstance() {
         return Registry.instance;
@@ -67,19 +63,24 @@ public class Registry implements RegistryInterface {
         modules.add(viewer);
     }
 
-    public ArrayList<EditorPlugin> getEditorsByPrefix (String prefix) {
+    public ArrayList<EditorPlugin> getEditorsByPrefix(String prefix) {
         return new ArrayList<>(editors.stream().filter(editorPlugin -> editorPlugin.defineHandler().startsWith(prefix)).toList());
     }
 
-    public Optional<EditorPlugin> getEditorByFullName (String fullName) {
+    public Optional<EditorPlugin> getEditorByFullName(String fullName) {
         return editors.stream().filter(editorPlugin -> editorPlugin.defineHandler().equals(fullName)).findFirst();
     }
 
-    public Optional<ViewerPlugin> getViewerByFullName (String fullName) {
+
+    public Optional<EditorPlugin> getEditorBySuffix(String suffix) {
+        return editors.stream().filter(editorPlugin -> editorPlugin.defineHandler().endsWith(suffix)).findFirst();
+    }
+
+    public Optional<ViewerPlugin> getViewerByFullName(String fullName) {
         return viewers.stream().filter(viewerPlugin -> viewerPlugin.defineHandler().equals(fullName)).findFirst();
     }
 
-    public Optional<ViewerPlugin> getViewerBySuffix (String suffix) {
+    public Optional<ViewerPlugin> getViewerBySuffix(String suffix) {
         return viewers.stream().filter(viewerPlugin -> viewerPlugin.defineHandler().endsWith(suffix)).findFirst();
     }
 
@@ -96,9 +97,13 @@ public class Registry implements RegistryInterface {
         return dataProviders;
     }
 
-    public ArrayList<EditorPlugin> getAllEditors() { return editors; }
+    public ArrayList<EditorPlugin> getAllEditors() {
+        return editors;
+    }
 
-    public ArrayList<ViewerPlugin> getAllViewers() { return viewers; }
+    public ArrayList<ViewerPlugin> getAllViewers() {
+        return viewers;
+    }
 
     public ArrayList<Configurable> getAllConfigurables() {
         HashSet<Configurable> returnValue = new HashSet<>();

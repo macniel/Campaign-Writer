@@ -5,6 +5,7 @@ import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.SDK.types.MapNote;
 import de.macniel.campaignwriter.SDK.types.MapPin;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -391,11 +392,11 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
         p.setPannable(true);
         //p.setMaxWidth(width.get());
 
-        if (actualNote != null) {
+        if (t != null) {
 
-            new FileAccessLayerFactory().get().getImageFromString(actualNote.getContentAsObject().backgroundPath).ifPresent(entry -> {
+            new FileAccessLayerFactory().get().getImageFromString(t.getContentAsObject().backgroundPath).ifPresent(entry -> {
 
-                actualNote.getContentAsObject().setBackgroundPath(entry.getKey());
+                t.getContentAsObject().setBackgroundPath(entry.getKey());
                 ImageView view = new ImageView(entry.getValue());
 
                 view.setPreserveRatio(true);
@@ -423,7 +424,70 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
 
     @Override
     public Node getStandaloneVersion(MapNote t, Stage wnd) {
-        return getPreviewVersionOf(t);
+
+        BorderPane bp = new BorderPane();
+        ImageView view = new ImageView();
+
+        ScrollPane p = new ScrollPane();
+        p.setPannable(true);
+
+        ObservableList<MapPin> pins = FXCollections.observableArrayList(t.getContentAsObject().getPins());
+
+        ListView<MapPin> pinListView = new ListView<>(pins);
+        pinListView.setCellFactory(listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(MapPin item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty && item != null) {
+                    Label text = new Label(item.getLabel());
+                    super.setGraphic(text);
+                    text.onMouseClickedProperty().set(e -> {
+                        if (e.getButton() == MouseButton.SECONDARY) {
+                            // TODO: Open pin reference in another standalone window
+                            if (requester != null) {
+                                requester.call(item.getNoteReference());
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        pinListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                System.out.println(view.getImage().getWidth() / newValue.getX() + " x " + view.getImage().getHeight() / newValue.getY());
+                p.setHvalue(newValue.getX() / view.getImage().getWidth());
+                p.setVvalue(newValue.getY() / view.getImage().getHeight());
+            }
+        });
+
+        //p.setMaxWidth(width.get());
+
+        new FileAccessLayerFactory().get().getImageFromString(t.getContentAsObject().backgroundPath).ifPresent(entry -> {
+
+            t.getContentAsObject().setBackgroundPath(entry.getKey());
+            view.setImage(entry.getValue());
+
+            view.setPreserveRatio(true);
+            view.setFitHeight(view.getImage().getHeight() / 2);
+
+            view.onMouseClickedProperty().set(e -> {
+                if (e.getClickCount() == 2) {
+                    e.consume();
+                }
+            });
+
+            p.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            p.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+            p.setContent(view);
+            p.setPrefHeight(400);
+        });
+
+        bp.setCenter(p);
+        bp.setRight(pinListView);
+
+        return bp;
     }
 
     @Override
@@ -434,6 +498,7 @@ public class MapNoteEditor extends EditorPlugin<MapNote> implements ViewerPlugin
     @Override
     public void register(RegistryInterface registry) {
         registry.registerEditor(this);
+        registry.registerViewer(this);
         registry.registerType("map", MapNote.class);
     }
 

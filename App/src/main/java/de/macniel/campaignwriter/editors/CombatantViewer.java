@@ -17,8 +17,11 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
+import java.util.UUID;
+
 public class CombatantViewer implements ViewerPlugin<CombatantNote> {
     private Callback<CombatantNote, Boolean> changeCallback;
+    private Callback<UUID, Boolean> requester;
 
     @Override
     public void register(RegistryInterface registry) {
@@ -249,6 +252,11 @@ public class CombatantViewer implements ViewerPlugin<CombatantNote> {
             box.getChildren().add(line);
         });
         return box;
+    }
+
+    @Override
+    public void setOnNoteLoadRequest(Callback<UUID, Boolean> stringBooleanCallback) {
+        this.requester = stringBooleanCallback;
     }
 
 }

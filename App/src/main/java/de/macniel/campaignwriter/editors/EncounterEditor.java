@@ -1,8 +1,6 @@
 package de.macniel.campaignwriter.editors;
 
-import de.macniel.campaignwriter.ActorNoteRenderer;
-import de.macniel.campaignwriter.FileAccessLayer;
-import de.macniel.campaignwriter.Registry;
+import de.macniel.campaignwriter.*;
 import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.SDK.types.*;
 import javafx.collections.FXCollections;
@@ -96,6 +94,8 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
         encounterLocationPropLineLabel.setPrefWidth(120);
 
         encounterLocationProp = new ComboBox<>();
+        encounterLocationProp.setCellFactory(listView -> new LocationNoteRenderer());
+        encounterLocationProp.setButtonCell(new LocationNoteRenderer());
         encounterLocationProp.getSelectionModel().selectedItemProperty().addListener((observableValue, note, newValue) -> {
             if (newValue != null) {
                 activeNote.getContentAsObject().setEncounterLocation(newValue.getReference());
