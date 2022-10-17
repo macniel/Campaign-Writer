@@ -2,19 +2,31 @@ package de.macniel.campaignwriter.editors;
 
 import de.macniel.campaignwriter.FileAccessLayer;
 import de.macniel.campaignwriter.LocationNoteRenderer;
+import de.macniel.campaignwriter.NotesRenderer;
 import de.macniel.campaignwriter.SDK.*;
 import de.macniel.campaignwriter.SDK.types.LocationNote;
+import de.macniel.campaignwriter.SDK.types.PictureNote;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.WritableImage;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class LocationEditor extends EditorPlugin<LocationNote> implements ViewerPlugin<LocationNote> {
 
@@ -104,6 +116,13 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
         Label picturePropLineLabel = new Label(i18n.getString("LookAndFeel"));
         picturePropLineLabel.setPrefWidth(120);
         pictureProp = new ComboBox<>();
+        pictureProp.setButtonCell(new NotesRenderer(true));
+        pictureProp.setCellFactory(listView -> new NotesRenderer(true));
+
+
+        ObservableList<Note> pictures = FXCollections.observableArrayList(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> note instanceof PictureNote).toList());
+
+        pictureProp.setItems(pictures);
         picturePropLine.getChildren().addAll(picturePropLineLabel, pictureProp);
 
 
@@ -133,6 +152,14 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
 
         locationCanonicalNameProp.textProperty().addListener((observableValue, s, newValue) -> {
             actualNote.getContentAsObject().setCanonicalName(newValue);
+        });
+
+        pictureProp.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                actualNote.getContentAsObject().setPicture(newValue.getReference());
+            } else {
+                actualNote.getContentAsObject().setPicture(null);
+            }
         });
 
         box.getChildren().addAll(locationNamePropLine, locationCanonicalNamePropLine, parentLocationPropLine, ambiancePropLine, descriptionPropLine, historyPropLine, picturePropLine);
@@ -166,6 +193,9 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
             ambianceProp.setText(actualNote.getContentAsObject().getAmbiance());
             descriptionProp.setText(actualNote.getContentAsObject().getDescription());
             historyProp.setText(actualNote.getContentAsObject().getHistory());
+            new FileAccessLayerFactory().get().findByReference(actualNote.getContentAsObject().getPicture()).ifPresent(pictureNote -> {
+                pictureProp.setValue(pictureNote);
+            });
         }
     }
 
@@ -185,13 +215,109 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
 
     @Override
     public Node getPreviewVersionOf(LocationNote t) {
-        System.out.println("Rendering Location " + t.getContentAsObject().getCanonicalName() + " as standalone");
-        return new HBox(new Label("Willkommen in " + t.getContentAsObject().getCanonicalName()));
+
+        VBox box = new VBox();
+
+        FileAccessLayerInterface fal = new FileAccessLayerFactory().get();
+
+        fal.findByReference(t.getContentAsObject().getPicture())
+                .flatMap(pictureNote -> fal.getImageFromString(((PictureNote) pictureNote).getContentAsObject().getFileName()))
+                .ifPresent(entry -> {
+
+                    ScrollPane header = new ScrollPane();
+                    header.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                    header.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                    header.setFocusTraversable(false);
+
+                    header.setMaxHeight(200);
+                    header.setPrefHeight(200);
+
+                    ImageView v = new ImageView();
+                    v.setImage(entry.getValue());
+                    header.setContent(v);
+                    box.getChildren().add(header);
+                });
+
+
+        String name = t.getContentAsObject().getName();
+        String akaName = t.getContentAsObject().getCanonicalName();
+
+        Label locationName = new Label(name);
+        if (akaName != null && !akaName.isEmpty()) {
+            locationName.setText(name + " (AKA " + akaName + ")");
+        }
+
+        TextFlow description = new TextFlow(new Text(
+                t.getContentAsObject().getDescription()
+        ));
+
+
+        box.getChildren().addAll(locationName, description);
+
+        return box;
     }
 
     @Override
     public Node getStandaloneVersion(LocationNote t, Stage wnd) {
-        return getPreviewVersionOf(t);
+
+        VBox box = new VBox();
+
+        FileAccessLayerInterface fal = new FileAccessLayerFactory().get();
+
+        fal.findByReference(t.getContentAsObject().getPicture())
+                .flatMap(pictureNote -> fal.getImageFromString(((PictureNote) pictureNote).getContentAsObject().getFileName()))
+                .ifPresent(entry -> {
+
+                    ScrollPane header = new ScrollPane();
+                    header.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                    header.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                    header.setFocusTraversable(false);
+
+                    header.setMaxHeight(200);
+                    header.setPrefHeight(200);
+
+                    ImageView v = new ImageView();
+                    v.setImage(entry.getValue());
+                    header.setContent(v);
+                    box.getChildren().add(header);
+                });
+
+
+        String name = t.getContentAsObject().getName();
+        String akaName = t.getContentAsObject().getCanonicalName();
+
+        Label locationName = new Label(name);
+        if (akaName != null && !akaName.isEmpty()) {
+            locationName.setText(name + " (AKA " + akaName + ")");
+        }
+        locationName.setPadding(new Insets(0, 0, 0, 10));
+
+        TextFlow description = new TextFlow(new Text(
+                t.getContentAsObject().getDescription()
+        ));
+        description.setPadding(new Insets(0, 0, 0, 20));
+
+
+        Label ambianceLabel = new Label(i18n.getString("Ambiance"));
+        ambianceLabel.setPadding(new Insets(0, 0, 0, 10));
+
+        TextFlow ambiance = new TextFlow(new Text(
+                t.getContentAsObject().getAmbiance()
+        ));
+        ambiance.setPadding(new Insets(0, 0, 0, 20));
+
+        Label historyLabel = new Label(i18n.getString("Background"));
+        historyLabel.setPadding(new Insets(0, 0, 0, 10));
+
+        TextFlow history = new TextFlow(new Text(
+                t.getContentAsObject().getHistory()
+        ));
+        history.setPadding(new Insets(0, 0, 0, 20));
+
+
+        box.getChildren().addAll(locationName, description, ambianceLabel, ambiance, historyLabel, history);
+
+        return box;
     }
 
     @Override
@@ -202,6 +328,7 @@ public class LocationEditor extends EditorPlugin<LocationNote> implements Viewer
     @Override
     public void register(RegistryInterface registry) {
         registry.registerEditor(this);
+        registry.registerViewer(this);
         registry.registerType("location", LocationNote.class);
     }
 }

@@ -78,8 +78,6 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
     @Override
     public Node defineEditor() {
         scroll = new VBox();
-        HBox.setHgrow(scroll, Priority.ALWAYS);
-        scroll.setFillWidth(true);
         return scroll;
     }
 
@@ -109,6 +107,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
     void updateView() {
 
         scroll.getChildren().clear();
+        System.out.println(scroll.getWidth());
 
         actualNote.getContentAsObject().getNotes().forEach(uuid -> {
             new FileAccessLayerFactory().get().findByReference(uuid).ifPresent(note -> {
@@ -119,7 +118,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
 
                     content.getStyleClass().add("scroll-item");
                     content.setMinWidth(500);
-                    content.setFillWidth(true);
+                    //content.setFillWidth(true);
                     Node preview = viewer.getPreviewVersionOf(note);
                     if (preview == null) {
                         preview = new Text("Error in rendering preview of note " + note.getReference() + " of type " + note.getType());
