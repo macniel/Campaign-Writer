@@ -132,9 +132,9 @@ public class MainController {
 
                 new FileAccessLayerFactory().get().findByReference(param).ifPresent(foundNote -> {
                     System.out.println("request to open " + foundNote + " as type " + foundNote.getType());
-                    Registry.getInstance().getViewerBySuffix(foundNote.getType()).ifPresent(viewer -> {
+                    Registry.getInstance().getEditorBySuffix(foundNote.getType()).ifPresent(editorModule -> {
                         mapping.entrySet().stream().filter(entryKey -> {
-                            return viewer.defineHandler().split("/")[0].equals(entryKey.getValue().getKey().defineViewerHandlerPrefix());
+                            return editorModule.defineHandler().split("/")[0].equals(entryKey.getValue().getKey().defineViewerHandlerPrefix());
                         }).findFirst().ifPresent(moduleEntry -> {
                             moduleEntry.getKey().setSelected(true);
                             moduleEntry.getValue().getKey().openNote(foundNote);
