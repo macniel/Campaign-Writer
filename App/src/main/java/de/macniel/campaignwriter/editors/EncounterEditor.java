@@ -25,12 +25,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static de.macniel.campaignwriter.FileAccessLayer.*;
+
 public class EncounterEditor extends EditorPlugin<EncounterNote> implements ViewerPlugin<EncounterNote>, Configurable {
-
-
-    final String HITPOINTS_FIELD_NAME = "Hit Points";
-    final String PORTRAIT_FIELD_NAME = "Portrait";
-    final String NAME_FIELD_NAME = "Name";
 
     private final ResourceBundle i18n;
     private final ComboBox<ActorNote> addCombatant = new ComboBox<>();

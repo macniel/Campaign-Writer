@@ -4,6 +4,7 @@ import de.macniel.campaignwriter.SDK.FileAccessLayerFactory;
 import de.macniel.campaignwriter.SDK.ModulePlugin;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -242,4 +243,7 @@ public class MainController {
         this.parentWnd = parentWnd;
     }
 
+    public void closeApplication(ActionEvent actionEvent) {
+        this.parentWnd.close();
+    }
 }

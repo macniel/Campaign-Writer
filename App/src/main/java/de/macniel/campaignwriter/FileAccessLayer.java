@@ -23,6 +23,10 @@ import java.util.*;
 
 public class FileAccessLayer implements FileAccessLayerInterface {
 
+    public static final String HITPOINTS_FIELD_NAME = "Hit Points";
+    public static final String PORTRAIT_FIELD_NAME = "Portrait";
+    public static final String NAME_FIELD_NAME = "Name";
+
     private static final FileAccessLayer instance = new FileAccessLayer();
     private final Gson gsonParser;
     private CampaignFile file;
