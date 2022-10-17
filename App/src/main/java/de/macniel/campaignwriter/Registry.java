@@ -1,6 +1,8 @@
 package de.macniel.campaignwriter;
 
 import de.macniel.campaignwriter.SDK.*;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.input.KeyCodeCombination;
 
 import java.lang.reflect.InvocationTargetException;
@@ -71,6 +73,34 @@ public class Registry implements RegistryInterface {
         return editors.stream().filter(editorPlugin -> editorPlugin.defineHandler().equals(fullName)).findFirst();
     }
 
+    public Optional<ViewerPlugin> getViewerFor(Note note) {
+        List<ViewerPlugin> fittingViewers = viewers.stream().filter(viewerPlugin -> viewerPlugin.defineHandler().endsWith(note.getType())).toList();
+
+        if (note.getDefaultViewer() != null && getViewerByFullName(note.getDefaultViewer()).isPresent()) {
+            return getViewerByFullName(note.getDefaultViewer());
+        }
+        if (fittingViewers.size() == 1) {
+            return Optional.of(fittingViewers.get(0));
+        } else if (fittingViewers.size() > 1) {
+            ChoiceDialog<ViewerPlugin> dlg = new ChoiceDialog<>();
+            dlg.getDialogPane().getButtonTypes().add(ButtonType.APPLY);
+            dlg.setResultConverter(buttonType -> {
+                if (buttonType == ButtonType.APPLY) {
+                    System.out.println("Set viewer for this note to " + dlg.getSelectedItem());
+                    note.setDefaultViewer(dlg.getSelectedItem().defineHandler());
+                    return dlg.getSelectedItem();
+                }
+                return dlg.getSelectedItem();
+            });
+            dlg.setTitle("Open Note with the following Viewer");
+            dlg.getItems().addAll(fittingViewers);
+            Optional<ViewerPlugin> returnValue = dlg.showAndWait();
+
+            return returnValue;
+        }
+        return Optional.empty();
+
+    }
 
     public Optional<EditorPlugin> getEditorBySuffix(String suffix) {
         return editors.stream().filter(editorPlugin -> editorPlugin.defineHandler().endsWith(suffix)).findFirst();

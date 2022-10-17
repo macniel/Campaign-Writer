@@ -23,6 +23,11 @@ public class NoteAdapter implements JsonDeserializer<Note>, JsonSerializer<Note>
                 note.setContent(o.get("content").getAsString());
                 note.setReference(UUID.fromString(o.get("reference").getAsString()));
                 note.setLevel(o.get("level").getAsInt());
+                try {
+                    note.setDefaultViewer(o.get("defaultViewer").getAsString());
+                } catch (NullPointerException e) {
+                    note.setDefaultViewer("");
+                }
                 return note;
 
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
@@ -43,6 +48,11 @@ public class NoteAdapter implements JsonDeserializer<Note>, JsonSerializer<Note>
         target.addProperty("label", src.getLabel());
         target.addProperty("reference", src.getReference().toString());
         target.addProperty("level", src.getLevel());
+        if (src.getDefaultViewer() == null) {
+            target.addProperty("defaultViewer", "");
+        } else {
+            target.addProperty("defaultViewer", src.getDefaultViewer());
+        }
 
 
         return target;

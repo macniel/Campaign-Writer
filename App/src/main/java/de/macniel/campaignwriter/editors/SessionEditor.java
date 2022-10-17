@@ -28,7 +28,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
     Callback<UUID, Boolean> openNoteInStandaloneViewCallback = param -> {
         Optional<Note> requestedNote = new FileAccessLayerFactory().get().findByReference(param);
         if (requestedNote.isPresent()) {
-            Registry.getInstance().getViewerBySuffix(requestedNote.get().getType()).ifPresent(subViewer -> {
+            Registry.getInstance().getViewerFor(requestedNote.get()).ifPresent(subViewer -> {
                 openInStandaloneView(requestedNote.get(), subViewer);
             });
             return true;
@@ -100,7 +100,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
     }
 
     ObservableList<Note> populateSectionProp() {
-        List<Note> notes = new ArrayList<>(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> !note.getType().equals("session")).filter(note -> Registry.getInstance().getViewerBySuffix(note.getType()).isPresent()).toList());
+        List<Note> notes = new ArrayList<>(new FileAccessLayerFactory().get().getAllNotes().stream().filter(note -> !note.getType().equals("session")).filter(note -> Registry.getInstance().getViewerFor(note).isPresent()).toList());
         ObservableList<Note> list = FXCollections.observableArrayList(notes);
 
         sectionProp.setItems(list);
@@ -137,7 +137,7 @@ public class SessionEditor extends EditorPlugin<SessionNote> {
 
         actualNote.getContentAsObject().getNotes().forEach(uuid -> {
             new FileAccessLayerFactory().get().findByReference(uuid).ifPresent(note -> {
-                Registry.getInstance().getViewerBySuffix(note.getType()).ifPresentOrElse(viewer -> {
+                Registry.getInstance().getViewerFor(note).ifPresentOrElse(viewer -> {
 
                     VBox content = new VBox();
                     VBox.setMargin(content, new Insets(10));

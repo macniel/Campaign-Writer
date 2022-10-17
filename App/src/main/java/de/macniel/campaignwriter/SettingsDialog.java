@@ -14,6 +14,7 @@ import javafx.stage.Window;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class SettingsDialog {
@@ -85,6 +86,26 @@ public class SettingsDialog {
         generalTab.setText("General");
 
         // languages and such
+        VBox box = new VBox();
+
+        HBox resetDefaultViewer = new HBox();
+        resetDefaultViewer.setSpacing(5);
+        Label l = new Label("Viewer association");
+        resetDefaultViewer.setAlignment(Pos.CENTER);
+        Button o = new Button("reset");
+        o.onActionProperty().set(e -> {
+            FileAccessLayer.getInstance().getAllNotes().forEach(note -> {
+
+                note.setDefaultViewer("");
+            });
+            new Alert(Alert.AlertType.INFORMATION, "All Notes were reset").showAndWait();
+        });
+        resetDefaultViewer.getChildren().addAll(l, o);
+
+        box.setSpacing(5);
+        box.setPadding(new Insets(10));
+        box.getChildren().add(resetDefaultViewer);
+        generalTab.setContent(box);
 
         pane.getTabs().add(generalTab);
     }

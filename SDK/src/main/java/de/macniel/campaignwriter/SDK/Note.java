@@ -12,25 +12,34 @@ public abstract class Note<T> implements Serializable {
     public int level;
     public String label;
 
+    public String defaultViewer;
+
     abstract public Date getCreatedDate();
 
     abstract public Date getLastModifiedDate();
 
     abstract public String getContent();
 
-    abstract public T getContentAsObject();
-
     abstract public void setContent(String content);
+
+    abstract public T getContentAsObject();
 
     abstract public String getType();
 
+    public String getDefaultViewer() {
+        return this.defaultViewer;
+    }
 
-    public void setReference(UUID reference) {
-        this.reference = reference;
+    public void setDefaultViewer(String defaultViewer) {
+        this.defaultViewer = defaultViewer;
     }
 
     public UUID getReference() {
         return this.reference;
+    }
+
+    public void setReference(UUID reference) {
+        this.reference = reference;
     }
 
     public int getLevel() {

@@ -259,4 +259,9 @@ public class CombatantViewer implements ViewerPlugin<CombatantNote> {
         this.requester = stringBooleanCallback;
     }
 
+    @Override
+    public String toString() {
+        return "Default Combatant Viewer";
+    }
+
 }

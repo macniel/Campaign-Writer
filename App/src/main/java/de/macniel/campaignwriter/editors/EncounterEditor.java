@@ -404,7 +404,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
         ScrollPane p = new ScrollPane();
         HBox boxes = new HBox();
         boxes.setSpacing(10);
-        Registry.getInstance().getViewerBySuffix("combatant").ifPresent(viewer -> {
+        Registry.getInstance().getViewerFor(t).ifPresent(viewer -> {
             t.getContentAsObject().getCombatants().forEach(combatantNote -> { // FIXME: make it ref!
 
                 VBox combatant = new VBox();
@@ -543,7 +543,7 @@ public class EncounterEditor extends EditorPlugin<EncounterNote> implements View
 
         combatants.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 
-            Registry.getInstance().getViewerBySuffix("combatant").ifPresentOrElse(viewer -> {
+            Registry.getInstance().getViewerFor(newValue).ifPresentOrElse(viewer -> {
                 System.out.println("rendering with " + viewer.defineHandler());
                 bp.setCenter(new ScrollPane(viewer.getPreviewVersionOf(newValue)));
             }, () -> {
