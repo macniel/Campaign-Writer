@@ -237,14 +237,10 @@ public class FileAccessLayer implements FileAccessLayerInterface {
     }
 
     public void loadFromFile(File f) throws IOException {
-        try {
-            keepFile = f;
-            file = gsonParser.fromJson(new JsonReader(new FileReader(f)), CampaignFile.class);
-            System.out.println("loaded " + file.getNotes().size() + " notes from file");
-            updateGlobal("lastFilePath", f.getAbsolutePath());
-        } catch (Exception e) {
-            System.err.println(e);
-        }
+        keepFile = f;
+        file = gsonParser.fromJson(new JsonReader(new FileReader(f)), CampaignFile.class);
+        System.out.println("loaded " + file.getNotes().size() + " notes from file");
+        updateGlobal("lastFilePath", f.getAbsolutePath());
     }
 
     public CampaignFile getFile() {

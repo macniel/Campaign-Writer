@@ -160,8 +160,8 @@ public class MainController {
     }
 
     private void openLastViewer() {
-        new FileAccessLayerFactory().get().getSetting("lastModule").ifPresentOrElse(compaignSettingLastViewer -> {
-            viewMode.getToggles().stream().filter(t -> ((RadioMenuItem) t).getText().equals(compaignSettingLastViewer)).findFirst().ifPresent(toggle -> {
+        new FileAccessLayerFactory().get().getSetting("lastModule").ifPresentOrElse(campaignSettingLastViewer -> {
+            viewMode.getToggles().stream().filter(t -> ((RadioMenuItem) t).getText().equals(campaignSettingLastViewer)).findFirst().ifPresent(toggle -> {
                 switchViewer(toggle);
                 viewMode.selectToggle(toggle);
             });
@@ -178,6 +178,10 @@ public class MainController {
             try {
                 new FileAccessLayerFactory().get().loadFromFile(this.currentFile);
 
+                if (this.currentFile == null) {
+                    throw new IOException();
+                }
+
                 if (activeInterface != null) {
                     activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
                 }
@@ -185,6 +189,7 @@ public class MainController {
 
                 openLastViewer();
             } catch (IOException e) {
+                new Alert(Alert.AlertType.ERROR, "There has an error occurred while trying to open the campaign file").show();
                 e.printStackTrace();
             }
         }
@@ -199,13 +204,18 @@ public class MainController {
         File newFile = dialog.showOpenDialog(null);
         this.currentFile = newFile;
         if (newFile != null) {
-            new FileAccessLayerFactory().get().loadFromFile(this.currentFile);
-            if (activeInterface != null) {
-                activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
-            }
-            title.set(this.currentFile.getName());
+            try {
+                new FileAccessLayerFactory().get().loadFromFile(this.currentFile);
+                if (activeInterface != null) {
+                    activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
+                }
+                title.set(this.currentFile.getName());
 
-            openLastViewer();
+                openLastViewer();
+            } catch (IOException e) {
+                new Alert(Alert.AlertType.ERROR, "There has an error occurred while trying to open the campaign file").show();
+                e.printStackTrace();
+            }
         }
     }
 
@@ -214,8 +224,13 @@ public class MainController {
         if (activeInterface != null) {
             activeInterface.requestSave();
             new FileAccessLayerFactory().get().saveToFile();
-            new FileAccessLayerFactory().get().loadFromFile(this.currentFile);
-            activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
+            try {
+                new FileAccessLayerFactory().get().loadFromFile(this.currentFile);
+                activeInterface.requestLoad(new FileAccessLayerFactory().get().getFile());
+            } catch (IOException e) {
+                new Alert(Alert.AlertType.ERROR, "There has an error occurred while trying to open the campaign file").show();
+                e.printStackTrace();
+            }
         }
     }
 

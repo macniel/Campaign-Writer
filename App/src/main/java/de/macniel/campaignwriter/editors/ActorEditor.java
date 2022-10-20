@@ -126,6 +126,9 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
             ActorNoteItem tmp = new ActorNoteItem();
             tmp.setLabel(item.getLabel());
             tmp.setType(item.getType());
+            if (item.getType() == ActorNoteItem.ActorNoteItemType.HEADER) {
+                tmp.setContent(item.getContent());
+            }
             sanitized.add(tmp);
         });
         Actor def = new Actor();
@@ -153,12 +156,21 @@ public class ActorEditor extends EditorPlugin<ActorNote> implements ViewerPlugin
         template.getItems().forEach(templateItem -> {
             actualNote.getContentAsObject().getItems().stream().filter(item ->
                     templateItem.getLabel().equals(item.getLabel())
-            ).findFirst().ifPresent(previousValue -> {
+            ).findFirst().ifPresentOrElse(previousValue -> {
                 ActorNoteItem tmp = new ActorNoteItem();
                 tmp.setContent(previousValue.getContent());
                 tmp.setMax(previousValue.getMax());
                 tmp.setValue(previousValue.getValue());
                 tmp.setType(previousValue.getType());
+                tmp.setLabel(templateItem.getLabel());
+                merged.add(tmp);
+            }, () -> {
+                ActorNoteItem tmp = new ActorNoteItem();
+                tmp.setContent(templateItem.getContent());
+                tmp.setMax(templateItem.getMax());
+                tmp.setValue(templateItem.getValue());
+                tmp.setType(templateItem.getType());
+                tmp.setLabel(templateItem.getLabel());
                 merged.add(tmp);
             });
         });
